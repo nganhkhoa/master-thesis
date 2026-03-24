@@ -1,0 +1,41 @@
+name: Build and Release PDF
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    if: "startsWith(github.event.head_commit.message, 'ci:') || github.event_name == 'workflow_dispatch'"
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Run setup script (Fonts, etc.)
+        run: |
+          chmod +x setup.sh
+          ./setup.sh
+
+      - name: Install Tectonic
+        uses: wtfjoke/setup-tectonic@v3
+        with:
+          # Uses the latest stable GitHub release of Tectonic
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build PDF with Tectonic
+        run: tectonic -X build
+
+      - name: Create Release and Upload PDF
+        uses: softprops/action-gh-release@v2
+        if: startsWith(github.ref, 'refs/tags/')
+        with:
+          # Adjust the path below if your Tectonic.toml outputs to a different filename
+          files: build/default/default.pdf
+          generate_release_notes: true
