@@ -24,5 +24,5 @@ Requirements:
 - Node and `npx`
 
 ```sh
-tectonic -X watch
+./live.sh
 ```
