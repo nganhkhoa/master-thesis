@@ -1,0 +1,143 @@
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Adapting from nuthesis-template.tex by Miguel A, Lerma
+% Text by Anh Khoa Nguyen
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\frontmatter
+
+\maketitle
+
+\copyrightpage
+
+
+\abstract
+
+
+
+\acknowledgements
+
+Text for acknowledgments.
+
+\preface
+
+This is the preface.
+
+
+%% A few more optional pages (uncomment if needed)
+%
+%\listofabbreviations
+%
+%This is the list of abbreviations (optional).
+%
+%\glossary
+%
+%This is the glossary (optional).
+%
+%\nomenclature
+%
+%This is the nomenclature (optional).
+%
+%% Note that the dedication text must be passed as an argument
+%% of the \dedication command
+%\dedication{This is the dedication (optional).}
+%
+
+\clearpage\phantomsection % needed for the hyperlinks to work correctly
+\tableofcontents	% Table of Contents will be automatically
+			% generated and placed here.
+
+\clearpage\phantomsection % needed for the hyperlinks to work correctly
+\listoftables		% List of Tables and List of Figures will be placed
+
+\clearpage\phantomsection % needed for the hyperlinks to work correctly
+\listoffigures		% here, if applicable (optional).
+
+
+
+\mainmatter             % Actual text starts here.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Actual text starts here %
+%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+% If there is an introduction it must be the first chapter
+
+\chapter{Introduction or Title of First Chapter}	% The first chapter.
+				% \chapter command is of the form
+				% \chapter[..]{..} or \chapter{..} where
+	... text ...		% {chapter heading} and [entry in table of
+				% contents].
+\section{First section of chapter 1}
+				% IMPORTANT: If your chapter heading consists
+				% of more than one lines, it will be auto-
+	... text ...		% matically broken into separate lines.
+				% However, if you don't like the way LaTeX
+				% breaks the chapter heading into lines, use
+\section{Another section}	% `\newheadline' command to break lines.
+				% Never use \\ in sectional (e.g., chapter,
+	... text ...		% section, subsection) headings.
+
+\chapter{Title of Second Chapter}	% Chapter 2.
+
+	... text ...
+
+\section{First section of chapter 2}
+
+	... text...
+
+\subsection{A subsection}
+
+	... more text ...
+
+\subsubsection{A subsubsection}
+
+	... more text ...
+
+
+% Alternatively, you may write the chapters in separate
+% files, say chap1.tex, chap2.tex, etc., and include them
+% with commands:
+
+%\include{chap1}
+
+%\include{chap2}
+
+% The command \includeonly above allows to include a selected
+% set of chapters only.
+
+% Uncomment the 'singlespace' environment and '\bibsep' command
+% if needed - some bibliographic styles overide the definition
+% of 'thebibliography' in nuthesis.cls
+%
+\begin{singlespace}
+%\bibsep 12pt
+\clearpage\phantomsection % needed for hyperlikns to work correctly
+\begin{thebibliography}{xxx}
+
+\bibitem{label1} A bibliographic item.  A bibliographic item.  A
+bibliographic item.  A bibliographic item.
+\bibitem{label2} Another bibliographic item.
+\bibitem{label3} Yet another bibliographic item.
+% The usages of \bibitem and \cite{..} are
+% explained in Section 4.3 (page 73) of % LaTeX manual.
+% Or you may use BibTeX.
+\end{thebibliography}
+\end{singlespace}
+
+% (The following suggested by Francisco Iacobelli - 5/11/2010)
+% In case, you want to use BibTeX, you should replace (or comment)
+% the bibliography environment.
+% Instead uncomment the following lines and replace <bib file>
+% with your .bib file:
+% \begin{singlespace}
+% \bibsep 12pt
+% \bibliographystyle{acm} %or another suitable style.
+% \bibliography{<bib file>}
+% \end{singlespace}
+
+
+\appendix
+
+
+\end{document}
+
