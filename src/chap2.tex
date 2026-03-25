@@ -88,28 +88,34 @@ The surface syntax for Contracts language is provided in Table \ref{tab:contract
 
 Following the paper Effectful Contracts for the proofs needed.
 
+We define a partial evaluation function $\kw{eval}$ that takes a closed expression and yields an answer. ...
+
 \begin{theorem}[Functional Evaluation]
+  Two facts about the evaluator holds:
 
-  What?
-
-% Contracts is safe by Progress and Preservation. If $\types{}{e}{\tau}$ then:
-
-% \begin{itemize}
-%   \item[] $e$ is a value of type $\tau$, or
-%   \item[] Exists $\types{}{e'}{\tau}$ such that $e \rightarrow e'$
-% \end{itemize}
+  \begin{itemize}
+    \item[] $\kw{eval}$ is a partial function, or
+    \item[] If $e$ is a program, then either (i) $\kw{eval}(e)$ is defined or (ii) reduction starting from $e$ is unbounded
+  \end{itemize}
 
 \end{theorem}
+
+Define good value $b=?$.
+
+Contracts enhances a program by placing monitors to watch for violations. With this premise, a program after placing monitors should maintain its semantics, or signal an error. Such property is \textit{contract erasure}. We define an erasure function $\mathscr{E}$ removing all monitors placed on the program.
 
 \begin{theorem}[Contract Erasure]
-If $\types{}{e}{\tau}$ then:
-
-\begin{itemize}
-  \item[] $e$ is a value of type $\tau$, or
-  \item[] Exists $\types{}{e'}{\tau}$ such that $e \rightarrow e'$
-\end{itemize}
+  If $\kw{eval}(e) = b$ then $\kw{eval}(\mathscr{E}(e)) = b$
 
 \end{theorem}
+
+
+Finally, the Contracts language should satisfies \textit{blame correctness}. In other words, if the program signals an error, it should blame the correct component.
+
+\begin{theorem}[Blame Correctness]
+
+\end{theorem}
+
 
 \section{Effect Handlers}
 

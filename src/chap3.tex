@@ -1,0 +1,13 @@
+\chapter{Theorectical Compiler}
+
+We define a compiler $\mathscr{C}$ taking an expression of Contracts language and outputs an equivalent expression in Effects. We also define a type conversion $\mathscr{C}_t$ from Contracts type system to Effects type system.
+
+\begin{theorem}[Type Preservation]
+    If $e \in \texttt{Contracts}$ and $\types{}{e}{τ}$ then $\types{}{\mathscr{C}(e)}{\mathscr{C}_t (τ)}$
+\end{theorem}
+
+\begin{theorem}[Observable Equivalance]
+If $e \in \texttt{Contracts}$ and $e \rightarrow^* v$ then $\mathscr{C}(e) \rightarrow^* \mathscr{C}(v)$
+\end{theorem}
+
+
