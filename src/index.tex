@@ -12,6 +12,14 @@
 
 \abstract
 
+Design by Contracts is a development strategy focuses on placing contracts in
+function arguments, ensuring inputs and outputs are valid during runtime.
+Moreover, once a contract is broken, the runtime can report the developer which
+part of the code is responsible. In this thesis, we attemp to implement contracts
+using effect handlers, a unified approach to computational effects. We showed that
+contracts can be implemented as a wrapper around effect handlers. We also provided
+an implementation in OCaml, a language that has native support for effect handlers
+but not for contracts.
 
 
 \acknowledgements
@@ -62,7 +70,7 @@ This is the preface.
 
 % If there is an introduction it must be the first chapter
 
-\chapter{Introduction or Title of First Chapter}	% The first chapter.
+\chapter{Introduction}	% The first chapter.
 				% \chapter command is of the form
 				% \chapter[..]{..} or \chapter{..} where
 	... text ...		% {chapter heading} and [entry in table of
@@ -77,22 +85,8 @@ This is the preface.
 				% Never use \\ in sectional (e.g., chapter,
 	... text ...		% section, subsection) headings.
 
-\chapter{Title of Second Chapter}	% Chapter 2.
 
-	... text ...
-
-\section{First section of chapter 2}
-
-	... text...
-
-\subsection{A subsection}
-
-	... more text ...
-
-\subsubsection{A subsubsection}
-
-	... more text ...
-
+\include{chap2}
 
 % Alternatively, you may write the chapters in separate
 % files, say chap1.tex, chap2.tex, etc., and include them
@@ -105,35 +99,16 @@ This is the preface.
 % The command \includeonly above allows to include a selected
 % set of chapters only.
 
-% Uncomment the 'singlespace' environment and '\bibsep' command
-% if needed - some bibliographic styles overide the definition
-% of 'thebibliography' in nuthesis.cls
-%
-\begin{singlespace}
-%\bibsep 12pt
-\clearpage\phantomsection % needed for hyperlikns to work correctly
-\begin{thebibliography}{xxx}
-
-\bibitem{label1} A bibliographic item.  A bibliographic item.  A
-bibliographic item.  A bibliographic item.
-\bibitem{label2} Another bibliographic item.
-\bibitem{label3} Yet another bibliographic item.
-% The usages of \bibitem and \cite{..} are
-% explained in Section 4.3 (page 73) of % LaTeX manual.
-% Or you may use BibTeX.
-\end{thebibliography}
-\end{singlespace}
-
 % (The following suggested by Francisco Iacobelli - 5/11/2010)
 % In case, you want to use BibTeX, you should replace (or comment)
 % the bibliography environment.
 % Instead uncomment the following lines and replace <bib file>
 % with your .bib file:
-% \begin{singlespace}
+\begin{singlespace}
 % \bibsep 12pt
-% \bibliographystyle{acm} %or another suitable style.
-% \bibliography{<bib file>}
-% \end{singlespace}
+\bibliographystyle{acm} %or another suitable style.
+\bibliography{refs}
+\end{singlespace}
 
 
 \appendix

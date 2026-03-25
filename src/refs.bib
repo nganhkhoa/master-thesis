@@ -1,0 +1,99 @@
+@article{10.1145/3632930,
+author = {Moy, Cameron and Dimoulas, Christos and Felleisen, Matthias},
+title = {Effectful Software Contracts},
+year = {2024},
+issue_date = {January 2024},
+publisher = {Association for Computing Machinery},
+address = {New York, NY, USA},
+volume = {8},
+number = {POPL},
+url = {https://doi.org/10.1145/3632930},
+doi = {10.1145/3632930},
+abstract = {Software contracts empower programmers to describe functional properties of components. When it comes to constraining effects, though, the literature offers only one-off solutions for various effects. It lacks a universal principle. This paper presents the design of an effectful contract system in the context of effect handlers. A key metatheorem shows that contracts cannot unduly interfere with a program’s execution. An implementation of this design, along with an evaluation of its generality, demonstrates that the theory can guide practice.},
+journal = {Proc. ACM Program. Lang.},
+month = jan,
+articleno = {88},
+numpages = {28},
+keywords = {effect handlers, software contracts}
+}
+
+@article{cpcf,
+author = {Dimoulas, Christos and Felleisen, Matthias},
+title = {On contract satisfaction in a higher-order world},
+year = {2011},
+issue_date = {November 2011},
+publisher = {Association for Computing Machinery},
+address = {New York, NY, USA},
+volume = {33},
+number = {5},
+issn = {0164-0925},
+url = {https://doi.org/10.1145/2039346.2039348},
+doi = {10.1145/2039346.2039348},
+abstract = {Behavioral software contracts have become a popular mechanism for specifying and ensuring logical claims about a program's flow of values. While contracts for first-order functions come with a natural interpretation and are well understood, the various incarnations of higher-order contracts adopt, implicitly or explicitly, different views concerning the meaning of contract satisfaction. In this article, we define various notions of contract satisfaction in terms of observational equivalence and compare them with each other and notions in the literature. Specifically, we introduce a small model language with higher-order contracts and use it to formalize different notions of contract satisfaction. Each of them demands that the contract parties satisfy certain observational equivalences.},
+journal = {ACM Trans. Program. Lang. Syst.},
+month = nov,
+articleno = {16},
+numpages = {29},
+keywords = {higher-order contracts, Contract satisfaction}
+}
+
+@techreport{leijen2016algebraic,
+author = {Leijen, Daan},
+title = {Algebraic Effects for Functional Programming},
+year = {2016},
+month = {August},
+abstract = {Algebraic effect handlers, are recently gaining in popularity as a purely functional approach to modeling effects. In this article, we give an end-to-end overview of practical algebraic effects in the context of a compiled implementation in the Koka language. In particular, we show how algebraic effects generalize over common constructs like exception handling, state, iterators and async-await. We give an effective type inference algorithm based on extensible effect rows using scoped labels, and a direct operational semantics. Finally, we show an efficient compilation scheme to common runtime platforms (such as JavaScript, the JVM, or .NET) using a type directed selective CPS translation.},
+url = {https://www.microsoft.com/en-us/research/publication/algebraic-effects-for-functional-programming/},
+pages = {15},
+number = {MSR-TR-2016-29},
+}
+@article{MOY_FELLEISEN_2023, title={Trace contracts}, volume={33}, DOI={10.1017/S0956796823000096}, journal={Journal of Functional Programming}, author={MOY, CAMERON and FELLEISEN, MATTHIAS}, year={2023}, pages={e14}}
+
+@inproceedings{completemonitors,
+  title={Complete monitors for behavioral contracts},
+  author={Dimoulas, Christos and Tobin-Hochstadt, Sam and Felleisen, Matthias},
+  booktitle={European Symposium on Programming},
+  pages={214--233},
+  year={2012},
+  organization={Springer}
+}
+
+@article{introeffecthandlers,
+  title={An introduction to algebraic effects and handlers. invited tutorial paper},
+  author={Pretnar, Matija},
+  journal={Electronic notes in theoretical computer science},
+  volume={319},
+  pages={19--35},
+  year={2015},
+  publisher={Elsevier}
+}
+
+@article{bauer2014effect,
+  title={An effect system for algebraic effects and handlers},
+  author={Bauer, Andrej and Pretnar, Matija},
+  journal={Logical methods in computer science},
+  volume={10},
+  year={2014},
+  publisher={Episciences. org}
+}
+
+@inproceedings{sivaramakrishnan2021retrofitting,
+  title={Retrofitting effect handlers onto OCaml},
+  author={Sivaramakrishnan, KC and Dolan, Stephen and White, Leo and Kelly, Tom and Jaffer, Sadiq and Madhavapeddy, Anil},
+  booktitle={Proceedings of the 42nd ACM SIGPLAN International Conference on Programming Language Design and Implementation},
+  pages={206--221},
+  year={2021}
+}
+
+@article{kiselyov2018eff,
+  title={Eff directly in OCaml},
+  author={Kiselyov, Oleg and Sivaramakrishnan, KC},
+  journal={arXiv preprint arXiv:1812.11664},
+  year={2018}
+}
+
+@misc{xu2014dynamic,
+  title={Dynamic Contract Checking for OCaml},
+  author={Xu, Dana N},
+  year={2014}
+}
