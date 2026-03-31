@@ -1,3 +1,4 @@
+% \listfiles
 \documentclass[12pt]{nuthesis}
 
 \author{Anh Khoa Nguyen}
@@ -12,11 +13,6 @@
 
 \graduationyear{2026}
 
-
-\usepackage{amsmath, amssymb, amsthm}
-\usepackage{fontspec}
-\usepackage[utf8]{inputenc}
-\usepackage{unicode-math}
 
 \usepackage{stmaryrd}
 \usepackage{mathpartir}
@@ -36,6 +32,7 @@
 % \floatstyle{boxed}
 % \restylefloat{table}
 
+
 \usepackage[capitalize]{cleveref}
 
 \theoremstyle{definition}
@@ -44,28 +41,72 @@
 \newtheorem{definition}[theorem]{Definition}
 
 % fonts setup
+\usepackage{lmodern}
+\usepackage{amsmath, amssymb, amsthm, amsfonts}
+\usepackage{fontspec}
+\usepackage[utf8]{inputenc}
+\usepackage{unicode-math}
 
-\setmainfont{LibertinusSerif-Regular.otf}[
-    Path = ../fonts/libertinus/static/OTF/,
-    BoldFont = LibertinusSerif-Bold.otf,
-    ItalicFont = LibertinusSerif-Italic.otf,
-    BoldItalicFont = LibertinusSerif-BoldItalic.otf
+
+% \let\arrowvert\relax
+% \let\Arrowvert\relax
+% \let\bracevert\relax
+% \usepackage[minion]{newtxmath}
+
+% \setmainfont{LibertinusSerif-Regular.otf}[
+%     Path = ../fonts/libertinus/static/OTF/,
+%     BoldFont = LibertinusSerif-Bold.otf,
+%     ItalicFont = LibertinusSerif-Italic.otf,
+%     BoldItalicFont = LibertinusSerif-BoldItalic.otf
+% ]
+
+% \setsansfont{LibertinusSans-Regular.otf}[
+%     Path = ../fonts/libertinus/static/OTF/,
+%     BoldFont = LibertinusSans-Bold.otf,
+%     ItalicFont = LibertinusSans-Italic.otf
+% ]
+
+% \setmonofont{LibertinusMono-Regular.otf}[
+%     Path = ../fonts/libertinus/static/OTF/,
+%     Scale = MatchLowercase
+% ]
+
+% \setmathfont{LibertinusMath-Regular.otf}[
+%     Path = ../fonts/libertinus/static/OTF/
+% ]
+
+\setmainfont{MinionPro-Regular.otf}[
+    Path = ../fonts/minion-pro/,
+    Extension = .otf,
+    BoldFont = MinionPro-Semibold,
+    ItalicFont = MinionPro-It,
+    BoldItalicFont = MinionPro-SemiboldIt
 ]
-
-\setsansfont{LibertinusSans-Regular.otf}[
-    Path = ../fonts/libertinus/static/OTF/,
-    BoldFont = LibertinusSans-Bold.otf,
-    ItalicFont = LibertinusSans-Italic.otf
-]
-
-\setmonofont{LibertinusMono-Regular.otf}[
-    Path = ../fonts/libertinus/static/OTF/,
+% \setsansfont{Latin Modern Sans}
+\setmonofont{lmmono10-regular.otf}[
+    Path = ../fonts/lmmono/,
+    Extension = .otf,
     Scale = MatchLowercase
 ]
 
-\setmathfont{LibertinusMath-Regular.otf}[
-    Path = ../fonts/libertinus/static/OTF/
+\setmathfont{latinmodern-math.otf}
+\setmathfont{MinionPro-It.otf}[
+    Path = ../fonts/minion-pro/,
+    range=it/{Latin,latin,Greek,greek}
 ]
+\setmathfont{MinionPro-Regular.otf}[
+    Path = ../fonts/minion-pro/,
+    range=up/{num,Latin,latin,Greek,greek}
+]
+
+\setminted{
+    linenos=true,               % Add line numbers
+    frame=lines,                % Add lines above and below
+    framesep=2mm,
+    baselinestretch=1,
+    fontsize=\small,
+    breaklines=true             % Wrap long lines
+}
 
 % --- 1. BASE TYPES & SHARED CONSTRUCTORS ---
 \newcommand{\Tnum}{\mathsf{num}}
@@ -85,7 +126,7 @@
 \newcommand{\Tcon}[1]{\mathsf{con}(#1)}
 \newcommand{\Kflat}[1]{\mathbf{flat}(#1)}
 \newcommand{\Karrow}[2]{#1 \mapsto #2}
-\newcommand{\Kdarrow}[4]{#1 \xmapsto{d} \lambda #2:#3. #4}
+\newcommand{\Kdarrow}[4]{#1 \overset{\mathrm{d}}{\mapsto} \lambda #2:#3. #4}
 \newcommand{\Ksubst}[3]{\{#1 / #2\}#3}
 \newcommand{\mon}[5]{\mathbf{mon}^{#1, #2}_{#3}(#4, #5)}
 \newcommand{\error}[2]{\mathbf{error}^{#1}_{#2}}
@@ -109,10 +150,18 @@
 \newcommand{\ext}[3]{#1, #2:#3}
 \newcommand{\types}[3]{#1 \vdash #2 : #3}
 \newcommand{\red}{\to}          % Local reduction
-\newcommand{\step}{\longmapsto}  % Global step
+\newcommand{\step}{\longrightarrow}  % Global step
+\newcommand{\stepmany}{\longrightarrow^{*}}  % Global step
+\newcommand{\stepmanyone}{\longrightarrow^{+}}  % Global step
 \newcommand{\effstep}{\leadsto}  % Effect reduction
 
 \raggedbottom
+
+\newcommand{\langc}{\texttt{Contracts}}
+\newcommand{\lange}{\texttt{Effects}}
+\newcommand{\systemf}{System $\mathsf{F}$}
+\newcommand{\systemfw}{System $\mathsf{F}_\omega$}
+\newcommand{\systemfe}{System $\mathsf{F}^\epsilon$}
 
 % Update arrow macro to match the image's \mapsto
 % \renewcommand{\Karrow}[2]{#1 \mapsto #2}
@@ -122,6 +171,7 @@
 % \input{./ott/effects.tex}
 % \renewcommand{\Cprodline}[1]{\quad \mid \quad} 
 % \renewcommand{\Eprodline}[1]{\quad \mid \quad}
+
 
 % Use \includeonly to select the
 %\includeonly{chap1,chap2,...}	% chapters to include if you are

@@ -1,0 +1,16 @@
+\chapter{OCaml}
+\label{chap:ocaml}
+
+Yapping about OCaml here.
+
+\section{Effect Handlers support}
+
+OCaml added support for Effect Handlers since OCaml 5.0, released in 2022. The feature was added to Multicore OCaml following the work of \cite{sivaramakrishnan2021retrofitting}, which is later merged into main branch of development. Before the official support of Effect Handlers, \cite{kiselyov2018eff} implemented Effect Handlers by embedding Eff into OCaml using Module Functors.
+
+\section{Software Contracts support}
+
+Software Contracts are not realized in OCaml. Previously, \cite{xu2014dynamic} implemented software contracts into OCaml. However, it has never been merged into the official OCaml.
+
+\section{Metaprogramming in OCaml}
+
+OCaml has support for metaprogramming through preprocessing. A preprocessor can modify the AST freely before compilation stage.

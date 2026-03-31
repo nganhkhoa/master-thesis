@@ -7,3 +7,4 @@ name = "default"
 type = "pdf"
 
 shell_escape = true
+shell_escape_cwd = "."

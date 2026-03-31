@@ -70,24 +70,13 @@ This is the preface.
 
 % If there is an introduction it must be the first chapter
 
-\chapter{Introduction}	% The first chapter.
-				% \chapter command is of the form
-				% \chapter[..]{..} or \chapter{..} where
-	... text ...		% {chapter heading} and [entry in table of
-				% contents].
-\section{First section of chapter 1}
-				% IMPORTANT: If your chapter heading consists
-				% of more than one lines, it will be auto-
-	... text ...		% matically broken into separate lines.
-				% However, if you don't like the way LaTeX
-				% breaks the chapter heading into lines, use
-\section{Another section}	% `\newheadline' command to break lines.
-				% Never use \\ in sectional (e.g., chapter,
-	... text ...		% section, subsection) headings.
-
-
-\include{chap2}
-\include{chap3}
+\include{intro}
+% \include{backgrounds}
+\include{contracts}
+\include{effects}
+\include{compiler}
+\include{ocaml}
+\include{implementation}
 
 % Alternatively, you may write the chapters in separate
 % files, say chap1.tex, chap2.tex, etc., and include them

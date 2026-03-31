@@ -43,7 +43,7 @@
 
             for (let i = 1; i <= pdfDoc.numPages; i++) {
                 const page = await pdfDoc.getPage(i);
-                const viewport = page.getViewport({scale: 1.5});
+                const viewport = page.getViewport({scale: 2.5});
 
                 const wrapper = document.createElement('div');
                 wrapper.className = 'page-wrapper';
