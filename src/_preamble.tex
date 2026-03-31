@@ -47,34 +47,6 @@
 \usepackage[utf8]{inputenc}
 \usepackage{unicode-math}
 
-
-% \let\arrowvert\relax
-% \let\Arrowvert\relax
-% \let\bracevert\relax
-% \usepackage[minion]{newtxmath}
-
-% \setmainfont{LibertinusSerif-Regular.otf}[
-%     Path = ../fonts/libertinus/static/OTF/,
-%     BoldFont = LibertinusSerif-Bold.otf,
-%     ItalicFont = LibertinusSerif-Italic.otf,
-%     BoldItalicFont = LibertinusSerif-BoldItalic.otf
-% ]
-
-% \setsansfont{LibertinusSans-Regular.otf}[
-%     Path = ../fonts/libertinus/static/OTF/,
-%     BoldFont = LibertinusSans-Bold.otf,
-%     ItalicFont = LibertinusSans-Italic.otf
-% ]
-
-% \setmonofont{LibertinusMono-Regular.otf}[
-%     Path = ../fonts/libertinus/static/OTF/,
-%     Scale = MatchLowercase
-% ]
-
-% \setmathfont{LibertinusMath-Regular.otf}[
-%     Path = ../fonts/libertinus/static/OTF/
-% ]
-
 \setmainfont{MinionPro-Regular.otf}[
     Path = ../fonts/minion-pro/,
     Extension = .otf,
@@ -82,21 +54,15 @@
     ItalicFont = MinionPro-It,
     BoldItalicFont = MinionPro-SemiboldIt
 ]
-% \setsansfont{Latin Modern Sans}
 \setmonofont{lmmono10-regular.otf}[
     Path = ../fonts/lmmono/,
     Extension = .otf,
     Scale = MatchLowercase
 ]
 
-\setmathfont{latinmodern-math.otf}
-\setmathfont{MinionPro-It.otf}[
-    Path = ../fonts/minion-pro/,
-    range=it/{Latin,latin,Greek,greek}
-]
-\setmathfont{MinionPro-Regular.otf}[
-    Path = ../fonts/minion-pro/,
-    range=up/{num,Latin,latin,Greek,greek}
+\setmathfont{STIXTwoMath-Regular.ttf}[
+    Path = ../fonts/stix-two/,
+    Scale = MatchUppercase
 ]
 
 \setminted{
@@ -104,7 +70,7 @@
     frame=lines,                % Add lines above and below
     framesep=2mm,
     baselinestretch=1,
-    fontsize=\small,
+    fontsize=\footnotesize,
     breaklines=true             % Wrap long lines
 }
 

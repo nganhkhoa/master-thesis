@@ -1,16 +1,77 @@
 \chapter{OCaml}
 \label{chap:ocaml}
 
-Yapping about OCaml here.
+OCaml is a programming language in the flavour of ML-style family. It was first designed as a research language, and gradually became a mainstream programming language. The language is now open sourced on Github\footnote{\href{https://github.com/ocaml/ocaml}{https://github.com/ocaml/ocaml}}.
 
 \section{Effect Handlers support}
 
-OCaml added support for Effect Handlers since OCaml 5.0, released in 2022. The feature was added to Multicore OCaml following the work of \cite{sivaramakrishnan2021retrofitting}, which is later merged into main branch of development. Before the official support of Effect Handlers, \cite{kiselyov2018eff} implemented Effect Handlers by embedding Eff into OCaml using Module Functors.
+OCaml added support for Effect Handlers since OCaml 5.0\footnote{\href{https://ocaml.org/manual/5.4/effects.html}{https://ocaml.org/manual/5.4/effects.html}}, released in 2022. This feature was added to Multicore OCaml following the work of \cite{sivaramakrishnan2021retrofitting}, which is later merged into main branch (OCaml 5.0). Before the official support of Effect Handlers, \cite{kiselyov2018eff} implemented Effect Handlers by embedding Eff into OCaml using Module Functors.
+
+In OCaml, effects must be defined by extending the Effect type with variants. These variants is also the effect's name (or label in \lange). The effect can receive none or at most one argument, and must return an effect type. To invoke a certain effect, $\texttt{Effect.perform}$ is called with the effect variant (and argument if exists).
+
+Handlers are defined using multiple syntaxes, as effects can be pattern matched. A basic syntax is by matching the computation in $\texttt{try computation () with}$, illustrated in Listen \ref{code:effects1}. This is a standard syntax for exception handling in OCaml, extended to support effects by matching an $\texttt{effect (EffectName param), kontinuation}$. An alternative syntax is by $\texttt{match computation () with}$ with the same idea.
+
+\begin{listing}
+\begin{minted}{ocaml}
+type _ Effect.t += Incr: int -> int t
+let compute () = perform (Incr 0)
+
+try compute () with
+| effect (Incr n), k -> continue k (n + 1)
+\end{minted}
+\caption{OCaml effects handler extended by exception handler}
+\label{code:effects1}
+\end{listing}
+
+Using the exception handling syntax is short but it does not provide the full Effect Handler capability. For example, an effect handler with state cannot be expressed in this syntax. Therefore, OCaml official syntax for handling effects is by using \texttt{Effect.Deep.match\_with} for deep handlers, and \texttt{Effect.Shallow.continue\_with} for shallow handlers. These functions provides the same handler structure as in \langc, with return handler, and effect handlers. This handler also support exception handlers as well. If return handlers and exception handlers are ignored, then OCaml provides \texttt{Effect.Deep.try\_with} that accepts only effect handlers. Listing \ref{code:effects2} shows an effect handler with state.
+
+\begin{listing}
+\begin{minted}{ocaml}
+type _ Effect.t +=
+  | Get : int Effect.t
+  | Set : int -> unit Effect.t
+
+let run_state (f : unit -> 'a) (init : int) : 'a =
+  let handler = {
+    retc = (fun x _state -> x);
+    exnc = raise;
+    effc = (fun (type a) (eff : a Effect.t) ->
+      match eff with
+      | Get -> Some (fun (k : (a, int -> 'b) continuation) ->
+          fun state -> continue k state state)
+      | Set s -> Some (fun (k : (a, int -> 'b) continuation) ->
+          fun _state -> continue k () s)
+      | _ -> None)
+  } in
+  Effect.Deep.match_with f () handler init
+
+let program () =
+  let v = Effect.perform Get in
+  Effect.perform (Set (v + 10));
+  Effect.perform Get
+
+let result = run_state program 5
+\end{minted}
+\caption{OCaml effects handler with state by \texttt{Effect.Deep.match\_with}}
+\label{code:effects2}
+\end{listing}
 
 \section{Software Contracts support}
 
-Software Contracts are not realized in OCaml. Previously, \cite{xu2014dynamic} implemented software contracts into OCaml. However, it has never been merged into the official OCaml.
+Software Contracts are not supported in OCaml. Previously, \cite{xu2014dynamic} implemented software contracts into the OCaml language. However, it has never been merged into the official OCaml, and the work is staled in the \texttt{contract-3.1.1} branch\footnote{\href{https://github.com/ocaml/ocaml/tree/contracts-3.11}{https://github.com/ocaml/ocaml/tree/contracts-3.11}}.
 
 \section{Metaprogramming in OCaml}
 
-OCaml has support for metaprogramming through preprocessing. A preprocessor can modify the AST freely before compilation stage.
+OCaml allows sophisticated macros for metaprogramming. In fact, OCaml allows any program to change the source code before compiling. OCaml provides a toolset for parsing and modifying the OCaml at the AST level, instead of writing a customized parser/modifier from scratch. The utility is often referred to as the \textit{PPX}, or the Preprocessor of OCaml. With a given Preprocessor \texttt{ppx} library, the OCaml compiler can be specified to run the preprocessor before compilation. This entire process is supported also by Dune, the OCaml project manager.
+
+\subsection{Attributes}
+
+When writing a preprocessor, the developer would want to focus on rewriting a certain part of the code. Therefore, as a suggestion, preprocessor should rewrite code annotated with their defined attribute(s). Attributes\footnote{\href{https://ocaml.org/manual/5.4/attributes.html}{https://ocaml.org/manual/5.4/attributes.html}} are OCaml metadata appended to the AST, by the syntax of \texttt{[@attribute-id]} or \texttt{[@@attribute-id]} (depending on their position on the code). Attributes can also carry at most one structured payload. An example attribute, provided in Listing \ref{code:attributes}, that can annotate a preprocessor to rename variable to the variable in the payload.
+
+\begin{listing}
+\begin{minted}{ocaml}
+let [@rename y] x = 1
+\end{minted}
+\caption{Example attribute}
+\label{code:attributes}
+\end{listing}

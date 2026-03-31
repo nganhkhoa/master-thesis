@@ -7,7 +7,12 @@ We have identified OCaml Effect Handlers are similar to \lange. Therefore we can
 
 In Listing \ref{code:example1} is the code annotated with contracts, including contracts for values, functions, higher-order function, and dependent contracts.
 
+\begin{listing}
 \inputminted{ocaml}{code/example1.ml}
+\caption{Example contracts annotations in OCaml}
+\label{code:example1}
+\end{listing}
+
 
 Annotations are built using an attribute \texttt{@contract} attached to the \texttt{let} expression. This attribute is only valid when the \texttt{let} expression is a value, or a function, and must be annotated with its types.
 
