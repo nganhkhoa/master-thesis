@@ -7,85 +7,101 @@ Algebraic Effect Handlers adapts the use of Call-By-Push-Value \cite{levy2013cal
 
 In another spectrum, Effect Handlers are modeled by a combination of row types on top of \systemfw, named \systemfe \cite{xie2020effect}. The type rules are adjusted to accompany with a list of effects for an expression. This formal model usually provides evaluation contexts for its semantics.
 
+\section{Examples}
+
 \section{Language \lange}
 
 In this section, we introduce \lange, a formal model of the Algebraic Effect Handlers as a model language for our target language for the compiler. Previously mentioned, we have two main choices for the formal language, (i) in the flavour of fine-grain call-by-value or (ii) in the flavour of \systemfe. We have chosen to adapt the (ii) flavour into the formal language due to its evaluation context semantics, which is helpful for our proofs.
 
-
-BELOW IS NOT EDITED
-
-
-The type system in Effects separates between a basic value and a computation. A computation type is accompanied with a list of possible effects, denoting a series of effects that are possible when running the computation. Many expression is of computation type, therefore to use a value, one may need to wrap it into a computation using $\kw{return}$.
-An effect $\mathsf{op}$ is invoked with argument $v$ through $\vop{op}{v}{y.c}$. Once the result is available, it will be available as $y$ in the continuation $c$. The continuation is helpful to keep reduction and bubbling up effect invocation to a handler that has it.
+Following \cite{xie2020effect}, we adopt the \textit{dot notation} to decompose and compose evaluation contexts, as defined in Figure \ref{fig:f-epsilon-dot}. We would write $v \cdot \text{handle } h \cdot E \cdot e$ as a shorthand for $v \, (\text{handle } h \, (E[e]))$.
 
 \begin{singlespace}
-
-\begin{itemize}
-    \item[] \begin{tabular}{llll}
-        Value $v$ & $::=$ & $x \mid \vtrue \mid \vfalse \mid n \mid \vfun{x}{c} \mid h$ & \text{Values} \\
-        Handler $h$ & $::=$ & $\vhandler \{ \kw{return} \ x \mapsto c_r, \mathsf{op}_i(x; k) \mapsto c_i \}$ & \text{Handlers} \\
-        Computation $c$ & $::=$ & $\vreturn{v} \mid \vop{op}{v}{y.c} \mid \vdo{x}{c_1}{c_2}$ & \text{Computations} \\
-        & $\mid$ & $\vif{v}{c_1}{c_2} \mid v_1 \ v_2 \mid \vwith{v}{c}$ & \\
-        Value Type $A, B$ & $::=$ & $\Tnum \mid \Tbool \mid A \to \underline{C} \mid \underline{C} \Rightarrow \underline{D}$ & \\
-        Comp. Type $\underline{C}, \underline{D}$ & $::=$ & $A!\{\mathsf{op}_1, \dots, \mathsf{op}_n\}$ & \\
-    \end{tabular}
-\end{itemize}
-
-\begin{mathpar}
-\inferrule[Do-Ret]
-  {\strut}
-  {\vdo{x}{\vreturn{v}}{c} \effstep \Ksubst{v}{x}{c}}
-
-\inferrule[Do-Op]
-  {\strut}
-  {\vdo{x}{\vop{op}{v}{y.c_1}}{c_2} \effstep \vop{op}{v}{y. \vdo{x}{c_1}{c_2}}}
-
-\inferrule[App]
-  {\strut}
-  {(\vfun{x}{c}) \ v \effstep \Ksubst{v}{x}{c}}
-
-\inferrule[With-Ret]
-  {h = \vhandler \{ \kw{return} \ x \mapsto c_r, \dots \}}
-  {\vwith{h}{\vreturn{v}} \effstep \Ksubst{v}{x}{c_r}}
-
-\inferrule[With-Op]
-  {h = \vhandler \{ \dots, \mathsf{op}_i(x; k) \mapsto c_i, \dots \}}
-  {\vwith{h}{\vop{op_i}{v}{y.c} \effstep \Ksubst{v}{x}{\Ksubst{\vfun{y}{\vwith{h}{c}}}{k}{c_i}}}}
-
-\inferrule[With-Prop]
-  {\mathsf{op} \notin \{\mathsf{op}_1, \dots, \mathsf{op}_n\}}
-  {\vwith{h}{\vop{op}{v}{y.c}} \effstep \vop{op}{v}{y. \vwith{h}{c}}}
-\end{mathpar}
-
-\begin{mathpar}
-\inferrule[T-Handler]
-  {\types{\ext{\ctx}{x}{A}}{c_r}{B!\Delta'} \\
-   [\types{\Gamma, x:A_i, k:\Tarrow{B_i}{B!\Delta'}}{c_i}{B!\Delta'}]_{1 \leq i \leq n} \\
-   \Delta \setminus \{\mathsf{op}_1, \dots, \mathsf{op}_n\} \subseteq \Delta'}
-  {\types{\ctx}{\vhandler \{ \vreturn x \mapsto c_r, \mathsf{op}_i(x; k) \mapsto c_i, \dots \mathsf{op}_n(x; k) \mapsto c_n\}}
-    {A!Δ  \Rightarrow B!Δ'}}
-
-\inferrule[T-Op]
-  {(\mathsf{op} : A_{\mathsf{op}} \to B_{\mathsf{op}}) \in \Sigma \\ \types{\ctx}{v}{A_{\mathsf{op}}} \\
-   \types{\ext{\ctx}{y}{B_{\mathsf{op}}}}{c}{A!\Delta} \\ \mathsf{op} \in \Delta}
-  {\types{\ctx}{\vop{op}{v}{y.c}}{A!\Delta}}
-
-\inferrule[T-With]
-  {\types{\ctx}{v}{\underline{C} \Rightarrow \underline{D}} \\ \types{\ctx}{c}{\underline{C}}}
-  {\types{\ctx}{\vwith{v}{c}}{\underline{D}}}
-\end{mathpar}
+\begin{figure}[h]
+  \centering
+  \begin{itemize}
+      \item[] \begin{tabular}{llll}
+          Context Composition & $E \cdot e$ & $\doteq$ & $E[e]$ \\
+          Argument Evaluation & $\square \ e \cdot E$ & $\doteq$ & $E \ e$ \\
+          Function Evaluation & $v \ \square \cdot E$ & $\doteq$ & $v \cdot E \ \doteq \ v \ E$ \\
+          Handler Application & $\text{handle} \ h \ \square \cdot E$ & $\doteq$ & $\text{handle} \ h \cdot E \ \doteq \text{handle} \ h \ E$ 
+      \end{tabular}
+  \end{itemize}
+  
+  \caption{System $F^\epsilon$ Dot Notation}
+  \label{fig:f-epsilon-dot}
+\end{figure}
 
 \end{singlespace}
 
-\begin{theorem}
-Effects is safe by Progress and Preservation. If $\types{}{c}{A!Δ}$ then:
+\begin{singlespace}
 
-\begin{itemize}
-  \item[] $c = \vreturn v$ for some $\types{}{v}{A}$, or
-  \item[] $c = \vop{op}{v}{y.c}$ for some $\mathsf{op} ∈ Δ$, or
-  \item[] Exists $\types{}{c'}{A!Δ}$ such that $c \rightarrow c'$
-\end{itemize}
+\begin{figure}[h]
+  \centering
+  \begin{itemize}
+      \item[] \begin{tabular}{llll}
+          Expressions & $e$ & $::=$ & $v \mid e_1 \ e_2 \mid e[\sigma] \mid \text{handle}^\epsilon \ h \ e$ \\
+          Values      & $v$ & $::=$ & $x \mid \lambda^\epsilon x:\sigma. e \mid \Lambda \alpha^k. v \mid \text{handler}^\epsilon \ h \mid \text{perform}^\epsilon \ op \ \overline{\sigma}$ \\
+          Handlers    & $h$ & $::=$ & $\{op_1 \to f_1, \dots, op_n \to f_n\}$ \\
+          Eval Contexts & $F$ & $::=$ & $\square \mid F \ e \mid v \ F \mid F[\sigma]$ \\
+          & $E$ & $::=$ & $\square \mid E \ e \mid v \ E \mid E[\sigma] \mid \text{handle}^\epsilon \ h \ E$ \\
+          Types       & $\sigma$ & $::=$ & $\alpha^k \mid c^k \ \sigma \dots \sigma \mid \sigma \to \epsilon \ \sigma \mid \forall \alpha^k. \sigma$ \\
+          Kinds       & $k$ & $::=$ & $* \mid k \to k \mid \text{eff} \mid \text{lab}$
+      \end{tabular}
+  \end{itemize}
+  \caption{System $F^\epsilon$ Syntax}
+  \label{fig:f-epsilon-syntax}
+\end{figure}
 
-\end{theorem}
+\begin{figure}[h]
+  \centering
+  \begin{mathpar}
+  \inferrule[T-Var]
+    {x : \sigma \in \Gamma}
+    {\Gamma \vdash_{\text{val}} x : \sigma}
 
+  \inferrule[T-Abs]
+    {\Gamma, x : \sigma_1 \vdash e : \sigma_2 \mid \epsilon}
+    {\Gamma \vdash_{\text{val}} \lambda^\epsilon x : \sigma_1 . e : \sigma_1 \to^\epsilon \sigma_2}
 
+  \inferrule[T-Val]
+    {\Gamma \vdash_{\text{val}} v : \sigma}
+    {\Gamma; w \vdash v : \sigma \mid \epsilon}
+
+  \inferrule[T-App]
+    {\Gamma; w \vdash e_1 : \sigma_1 \to^\epsilon \sigma \mid \epsilon \\ \Gamma; w \vdash e_2 : \sigma_1 \mid \epsilon}
+    {\Gamma; w \vdash e_1 \, e_2 : \sigma \mid \epsilon}
+
+  \inferrule[T-Handle]
+    {\Gamma \vdash_{\text{ops}} h : \sigma \mid l \mid \epsilon \\ \Gamma; w \vdash e : \sigma \mid \langle l \mid \epsilon \rangle}
+    {\Gamma; w \vdash \text{handle}^\epsilon \, h \, e : \sigma \mid \epsilon}
+  \end{mathpar}
+  \caption{System $F^\epsilon$ Selected Type Rules}
+  \label{fig:f-epsilon-type}
+\end{figure}
+
+\begin{figure}[h]
+  \centering
+  \begin{mathpar}
+  \inferrule[App]
+    {\strut}
+    {(\lambda^\epsilon x : \sigma . e) \, v \longrightarrow e[x := v]}
+
+  \inferrule[Handler]
+    {\strut}
+    {(\text{handler}^\epsilon \, h) \, v \longrightarrow \text{handle}^\epsilon \, h \cdot v \, ()}
+
+  \inferrule[Return]
+    {\strut}
+    {\text{handle}^\epsilon \, h \cdot v \longrightarrow v}
+
+  \inferrule[Perform]
+    {op \notin \text{bop}(E) \wedge (op \to f) \in h \\
+     op : \forall \overline{\alpha} . \sigma_1 \to \sigma_2 \in \Sigma(l) \\
+     k = \lambda^\epsilon x : \sigma_2[\overline{\alpha} := \overline{\sigma}] . \text{handle}^\epsilon \, h \cdot E \cdot x}
+    {\text{handle}^\epsilon \, h \cdot E \cdot \text{perform} \, op \, \overline{\sigma} \, v \longrightarrow f[\overline{\sigma}] \, v \, k}
+  \end{mathpar}
+  \caption{System $F^\epsilon$ Reduction Rules}
+  \label{fig:f-epsilon-reduction}
+\end{figure}
+
+\end{singlespace}

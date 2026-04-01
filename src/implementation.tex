@@ -28,7 +28,7 @@ A flat contract is applied for a single value $\rho$, annotated using a single n
 
 A function is composabled by many flat contracts in the form $\rho \rightarrow ... \rightarrow \rho$. In OCaml a function can receive many arguments. These arguments can be values or functions. Part of the OCaml type signature, which we utilized for contract annotation, parenthesis can be used to separate between the main function contract, and contracts for arguments that are functions.
 
-A dependent contract is strictly a function receiving a single argument $\rho \rightarrow \rho\ dep$. This choice is made to keep the semantics similar to \langc. Alternatively, we can choose to implement the dependent contract as checking with all arguments, $\rho \rightarrow .. \rightarrow \rho\ dep$. For this thesis, we keep the contract simple simple and allow only for single argument.
+A dependent contract is strictly a function receiving a single argument $\rho \rightarrow \rho\ dep$. This choice is made to keep the semantics similar to \langc. Alternatively, we can choose to implement the dependent contract as checking with all arguments, $\rho \rightarrow .. \rightarrow \rho\ dep$. For this thesis, we keep the contract system simple and allow only for single argument.
 
 \section{Preprocessor Rewriting}
 

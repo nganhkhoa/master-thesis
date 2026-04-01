@@ -14,6 +14,8 @@ If an error is issued, the correct party is blamed.
 
 \end{itemize}
 
+\section{Examples}
+
 \section{Language \langc}
 
 In this section, we reintroduce CPCF \cite{cpcf,completemonitors} as \langc. This language has been proven with the following theorems:
@@ -38,80 +40,100 @@ In this section, we reintroduce CPCF \cite{cpcf,completemonitors} as \langc. Thi
     Where $\Gamma; l \Vdash e$ is a well-formedness judgement; $|e|^k$ denotes ownership as specified in \cite{completemonitors}.
 \end{itemize}
 
+Figure \ref{fig:langc} describes the language of \langc, with its type rules defined in \ref{fig:langc-type} excluding common type rules in \textit{PCF}. Values are basic number, booleans, and functions. Expressions are the usual forms of CPCF, with an extra expression $\mon{k}{l}{j}{\kappa}{e}$ that guards the expression $e$ with a contract $\kappa$. A contract can be a flat contract $\Kflat{c}$, which can only be applied to a value, and verify the value against function $c$; a function contract $\Karrow{\kappa_1}{\kappa_2}$, which guards the input arguments with a domain contract $\kappa_1$ and guards the output/return value with a range contract $\kappa_2$. Dependent contract $\kappa_1 \xrightarrow{d} (λ x: τ. \kappa_2)$ behaves similarly to a function contract but the range contract can use the input value.
 
-The surface syntax for Contracts language is provided in Table \ref{tab:contracts_syntax}. The type rules are provided in Table \ref{tab:contracts_type_rules}. Reductions are provided in Table \ref{tab:contracts_reduction}.
+Reduction rules for \langc\ is provided in Figure \ref{fig:langc-reduction}. A flat contract monitor expression reduces into an if expression checking if the value meets the contract predicate. Else, the entire program reduces to an error. A function contract monitor expression reduces into a function where its argument are wrapped with the domain contract, and the application result is wrapped with the range contract. Argument contract labels are changed for blame correctness. Dependent contract is similarly reduces like a function contract, but the range contract has the input value wrapped up with the domain contract with different labels set. The labels set used in dependent contract is by the indy semantics, which has been proven about its correctness \cite{completemonitors}. To distinguish from the reduction of \lange\ modeling the Effect Handlers, reduction in \langc\ is denoted using $\step$.
 
 \begin{singlespace}
-\begin{itemize}
-    \item[] \begin{tabular}{llll}
-        Types & $\tau$ & $::=$ & $\Tnum \mid \Tbool \mid \Tarrow{\tau_1}{\tau_2} \mid \Tcon{\tau}$ \\
-        Contracts & $\kappa$ & $::=$ & $\Kflat{e} \mid \Karrow{\kappa_1}{\kappa_2} \mid \kappa_1 \xrightarrow{d} (\lambda x:\tau. \kappa_2)$ \\
-        Expressions & $e$ & $::=$ & $0, 1, ... \mid \ttval \mid \ffval \mid x \mid \lam{x}{\tau}{e} \mid \fix{x}{\tau}{e}$ \\
-        & & $\mid$ & $e_1 + e_2 \mid e_1 \wedge e_2 \mid e_1 \vee e_2 \mid e_1 \ e_2$ \\
-        & & $\mid$ & $\text{if } e_1 \text{ then } e_2 \text{ else } e_3 \mid \zeroq{e}$ \\
-        & & $\mid$ & $\mon{k}{l}{j}{\kappa}{e} \mid \error{l}{p}$ \\
-        Values & $v$ & $::=$ & $0, 1, ... \mid \ttval \mid \ffval \mid λ x. e \mid \mu x. e$ \\
-        Contexts & $E$ & $::=$ & $\hole \mid E + e \mid v + E \mid E \wedge e \mid v \wedge E \mid E \vee e \mid v \vee E$ \\
-        & & $\mid$ & $E \ e \mid v \ E \mid \mon{k}{l}{j}{\kappa}{E}$
-    \end{tabular}
-\end{itemize}
+\begin{figure}[h]
+  \centering
+  \begin{itemize}
+      \item[] \begin{tabular}{llll}
+          Basic Types & $o$ & $::=$ & $\Tnum \mid \Tbool$ \\
+          Types & $\tau$ & $::=$ & $o \mid \Tarrow{\tau_1}{\tau_2} \mid \Tcon{\tau}$ \\
+          Contracts & $\kappa$ & $::=$ & $\Kflat{e} \mid \Karrow{\kappa_1}{\kappa_2} \mid \kappa_1 \xrightarrow{d} (\lambda x:\tau. \kappa_2)$ \\
+          Expressions & $e$ & $::=$ & $0, 1, ... \mid \ttval \mid \ffval \mid x \mid \lam{x}{\tau}{e} \mid \fix{x}{\tau}{e}$ \\
+          & & $\mid$ & $e_1 + e_2 \mid e_1 \wedge e_2 \mid e_1 \vee e_2 \mid e_1 \ e_2$ \\
+          & & $\mid$ & $\text{if } e_1 \text{ then } e_2 \text{ else } e_3 \mid \zeroq{e}$ \\
+          & & $\mid$ & $\mon{k}{l}{j}{\kappa}{e} \mid \error{l}{p}$ \\
+          Values & $v$ & $::=$ & $0, 1, ... \mid \ttval \mid \ffval \mid λ x. e \mid \error{l}{p}$ \\
+          Contexts & $E$ & $::=$ & $\hole \mid E + e \mid v + E \mid E \wedge e \mid v \wedge E \mid E \vee e \mid v \vee E$ \\
+          & & $\mid$ & $E \ e \mid v \ E \mid \text{if } E \text{ then } e \text{ else } e \mid \zeroq{E}$ \\
+          & & $\mid$ & $\mon{k}{l}{j}{\kappa}{E}$
+      \end{tabular}
+  \end{itemize}
 
-\begin{mathpar}
-\inferrule[If-T]
-  {\strut}
-  {\text{if } \ttval \text{ then } e_1 \text{ else } e_2 \red e_1}
+  \caption{\langc\ Language}
+  \label{fig:langc}
+\end{figure}
 
-\inferrule[If-F]
-  {\strut}
-  {\text{if } \ffval \text{ then } e_1 \text{ else } e_2 \red e_2}
+\begin{singlespace}
+\begin{figure}[h]
+  \centering
+  \begin{mathpar}
+  \inferrule[T-Error]
+    {\strut}
+    {\types{\ctx}{\error{l}{p}}{\tau}}
 
-\inferrule[Mon-Flat]
-  {\strut}
-  {\mon{k}{l}{j}{\Kflat{e}}{v} \red \text{if } e \ v \text{ then } v \text{ else } \error{j}{k}}
+  \inferrule[T-Mon]
+    {\types{\ctx}{\kappa}{\Tcon{\tau}} \\ \types{\ctx}{e}{\tau}}
+    {\types{\ctx}{\mon{k}{l}{j}{\kappa}{e}}{\tau}}
 
-\inferrule[Mon-Arr]
-  {\strut}
-  {\mon{k}{l}{j}{\Karrow{\kappa_1}{\kappa_2}}{v} \red
-   λ x . \mon{k}{l}{j}{\kappa_2}{v \ (\mon{l}{k}{j}{\kappa_1}{x})}}
+  \inferrule[T-Flat]
+    {\types{\ctx}{e}{\Tarrow{o}{\mathsf{bool}}}}
+    {\types{\ctx}{\Kflat{e}}{\Tcon{o}}}
 
-\inferrule[Mon-Dep]
-  {\strut}
-  {\mon{k}{l}{j}{\kappa_1 \xrightarrow{d} (\lam{x}{\tau}{\kappa_2})}{v} \red
-   λ x. \mon{k}{l}{j}{\Ksubst{\mon{l}{j}{j}{\kappa_1}{x}}{x}{\kappa_2}}{v \ (\mon{l}{k}{j}{\kappa_1}{x})}}
-\end{mathpar}
+  \inferrule[T-Arr]
+    {\types{\ctx}{\kappa_1}{\Tcon{\tau_1}} \\ \types{\ctx}{\kappa_2}{\Tcon{\tau_2}}}
+    {\types{\ctx}{\Karrow{\kappa_1}{\kappa_2}}{\Tcon{\Tarrow{\tau_1}{\tau_2}}}}
+
+  \inferrule[T-Dep-Arr]
+    {\types{\ctx}{\kappa_1}{\Tcon{\tau_1}} \\ \types{\ext{\ctx}{x}{\tau_1}}{\kappa_2}{\Tcon{\tau_2}}}
+    {\types{\ctx}{\Kdarrow{\kappa_1}{x}{\tau_1}{\kappa_2}}{\Tcon{\Tarrow{\tau_1}{\tau_2}}}}
+  \end{mathpar}
+  \caption{\langc\ Type Rules}
+  \label{fig:langc-type}
+\end{figure}
+
+\begin{figure}[h]
+  \centering
+  \begin{mathpar}
+  \inferrule[If-T]
+    {\strut}
+    {\text{if } \ttval \text{ then } e_1 \text{ else } e_2 \red e_1}
+
+  \inferrule[If-F]
+    {\strut}
+    {\text{if } \ffval \text{ then } e_1 \text{ else } e_2 \red e_2}
+
+  \inferrule[Mon-Flat]
+    {\strut}
+    {\mon{k}{l}{j}{\Kflat{e}}{v} \red \text{if } e \ v \text{ then } v \text{ else } \error{j}{k}}
+
+  \inferrule[Mon-Arr]
+    {\strut}
+    {\mon{k}{l}{j}{\Karrow{\kappa_1}{\kappa_2}}{v} \red
+     λ x . \mon{k}{l}{j}{\kappa_2}{v \ (\mon{l}{k}{j}{\kappa_1}{x})}}
+
+  \inferrule[Mon-Dep]
+    {\strut}
+    {\mon{k}{l}{j}{\kappa_1 \xrightarrow{d} (\lam{x}{\tau}{\kappa_2})}{v} \red
+     λ x. \mon{k}{l}{j}{\Ksubst{\mon{l}{j}{j}{\kappa_1}{x}}{x}{\kappa_2}}{v \ (\mon{l}{k}{j}{\kappa_1}{x})}}
+  \end{mathpar}
+
+  \begin{mathpar}
+  \inferrule[Context]
+    {e_1 \red e_2}
+    {E[e_1] \step E[e_2]}
+
+  \inferrule[Err-Prop]
+    {\strut}
+    {E[\error{l}{p}] \step \error{l}{p}}
+  \end{mathpar}
+
+  \caption{\langc\ Reduction Rules}
+  \label{fig:langc-reduction}
+\end{figure}
+
 \end{singlespace}
-
-\begin{singlespace}
-\begin{mathpar}
-\inferrule[Context]
-  {e_1 \red e_2}
-  {E[e_1] \step E[e_2]}
-
-\inferrule[Err-Prop]
-  {\strut}
-  {E[\error{l}{p}] \step \error{l}{p}}
-\end{mathpar}
-
-\begin{mathpar}
-\inferrule[T-Error]
-  {\strut}
-  {\types{\ctx}{\error{l}{p}}{\tau}}
-
-\inferrule[T-Mon]
-  {\types{\ctx}{\kappa}{\Tcon{\tau}} \\ \types{\ctx}{e}{\tau}}
-  {\types{\ctx}{\mon{k}{l}{j}{\kappa}{e}}{\tau}}
-
-\inferrule[T-Flat]
-  {\types{\ctx}{e}{\Tarrow{o}{\mathsf{bool}}}}
-  {\types{\ctx}{\Kflat{e}}{\Tcon{o}}}
-
-\inferrule[T-Arr]
-  {\types{\ctx}{\kappa_1}{\Tcon{\tau_1}} \\ \types{\ctx}{\kappa_2}{\Tcon{\tau_2}}}
-  {\types{\ctx}{\Karrow{\kappa_1}{\kappa_2}}{\Tcon{\Tarrow{\tau_1}{\tau_2}}}}
-
-\inferrule[T-Dep-Arr]
-  {\types{\ctx}{\kappa_1}{\Tcon{\tau_1}} \\ \types{\ext{\ctx}{x}{\tau_1}}{\kappa_2}{\Tcon{\tau_2}}}
-  {\types{\ctx}{\Kdarrow{\kappa_1}{x}{\tau_1}{\kappa_2}}{\Tcon{\Tarrow{\tau_1}{\tau_2}}}}
-\end{mathpar}
-
 \end{singlespace}

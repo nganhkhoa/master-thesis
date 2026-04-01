@@ -9,7 +9,7 @@ OCaml added support for Effect Handlers since OCaml 5.0\footnote{\href{https://o
 
 In OCaml, effects must be defined by extending the Effect type with variants. These variants is also the effect's name (or label in \lange). The effect can receive none or at most one argument, and must return an effect type. To invoke a certain effect, $\texttt{Effect.perform}$ is called with the effect variant (and argument if exists).
 
-Handlers are defined using multiple syntaxes, as effects can be pattern matched. A basic syntax is by matching the computation in $\texttt{try computation () with}$, illustrated in Listen \ref{code:effects1}. This is a standard syntax for exception handling in OCaml, extended to support effects by matching an $\texttt{effect (EffectName param), kontinuation}$. An alternative syntax is by $\texttt{match computation () with}$ with the same idea.
+Handlers are defined using multiple syntaxes, as effects can be pattern matched. A basic syntax is by matching the computation in $\texttt{try computation () with}$, illustrated in Listing \ref{code:effects1}. This is a standard syntax for exception handling in OCaml, extended to support effects by matching an $\texttt{effect (EffectName param), kontinuation}$. An alternative syntax is by $\texttt{match computation () with}$ with the same idea.
 
 \begin{listing}
 \begin{minted}{ocaml}
