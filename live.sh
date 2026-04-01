@@ -7,7 +7,7 @@ tectonic -X watch &
 TECTONIC_PID=$!
 
 echo "Starting Browser-Sync..."
-npx browser-sync start --server --files "**/*.pdf" --reload-delay 500 --no-ui &
+npx browser-sync start --server --files "build/default/default.pdf" --reload-delay 500 --no-ui &
 BS_PID=$!
 
 wait

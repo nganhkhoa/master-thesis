@@ -13,95 +13,106 @@ In another spectrum, Effect Handlers are modeled by a combination of row types o
 
 In this section, we introduce \lange, a formal model of the Algebraic Effect Handlers as a model language for our target language for the compiler. Previously mentioned, we have two main choices for the formal language, (i) in the flavour of fine-grain call-by-value or (ii) in the flavour of \systemfe. We have chosen to adapt the (ii) flavour into the formal language due to its evaluation context semantics, which is helpful for our proofs.
 
+
+Explain language here
+
+
 Following \cite{xie2020effect}, we adopt the \textit{dot notation} to decompose and compose evaluation contexts, as defined in Figure \ref{fig:f-epsilon-dot}. We would write $v \cdot \text{handle } h \cdot E \cdot e$ as a shorthand for $v \, (\text{handle } h \, (E[e]))$.
 
-\begin{singlespace}
-\begin{figure}[h]
-  \centering
-  \begin{itemize}
-      \item[] \begin{tabular}{llll}
-          Context Composition & $E \cdot e$ & $\doteq$ & $E[e]$ \\
-          Argument Evaluation & $\square \ e \cdot E$ & $\doteq$ & $E \ e$ \\
-          Function Evaluation & $v \ \square \cdot E$ & $\doteq$ & $v \cdot E \ \doteq \ v \ E$ \\
-          Handler Application & $\text{handle} \ h \ \square \cdot E$ & $\doteq$ & $\text{handle} \ h \cdot E \ \doteq \text{handle} \ h \ E$ 
-      \end{tabular}
-  \end{itemize}
-  
-  \caption{System $F^\epsilon$ Dot Notation}
-  \label{fig:f-epsilon-dot}
-\end{figure}
-
-\end{singlespace}
+This thesis introduces two languages. To effectively distinguish the languages used, we have chosen different typeset styling for both languages. \lange\ will be typeset in \attrE{red\ bold\ roman}. The reduction arrow of \lange\ is $\eStep$.
 
 \begin{singlespace}
 
+% ==========================================
+% DOT NOTATION FOR LANGUAGE E
+% ==========================================
 \begin{figure}[h]
   \centering
-  \begin{itemize}
-      \item[] \begin{tabular}{llll}
-          Expressions & $e$ & $::=$ & $v \mid e_1 \ e_2 \mid e[\sigma] \mid \text{handle}^\epsilon \ h \ e$ \\
-          Values      & $v$ & $::=$ & $x \mid \lambda^\epsilon x:\sigma. e \mid \Lambda \alpha^k. v \mid \text{handler}^\epsilon \ h \mid \text{perform}^\epsilon \ op \ \overline{\sigma}$ \\
-          Handlers    & $h$ & $::=$ & $\{op_1 \to f_1, \dots, op_n \to f_n\}$ \\
-          Eval Contexts & $F$ & $::=$ & $\square \mid F \ e \mid v \ F \mid F[\sigma]$ \\
-          & $E$ & $::=$ & $\square \mid E \ e \mid v \ E \mid E[\sigma] \mid \text{handle}^\epsilon \ h \ E$ \\
-          Types       & $\sigma$ & $::=$ & $\alpha^k \mid c^k \ \sigma \dots \sigma \mid \sigma \to \epsilon \ \sigma \mid \forall \alpha^k. \sigma$ \\
-          Kinds       & $k$ & $::=$ & $* \mid k \to k \mid \text{eff} \mid \text{lab}$
-      \end{tabular}
-  \end{itemize}
-  \caption{System $F^\epsilon$ Syntax}
-  \label{fig:f-epsilon-syntax}
+  \begin{tabular}{llll}
+    Context Composition & $\attrE{E} \eDot \attrE{e}$ & $\doteq$ & $\attrE{E[e]}$ \\
+    Argument Evaluation & $\attrE{\eHole \ e} \eDot \attrE{E}$ & $\doteq$ & $\attrE{E \ e}$ \\
+    Function Evaluation & $\attrE{v \ \eHole} \eDot \attrE{E}$ & $\doteq$ & $\attrE{v} \eDot \attrE{E} \ \doteq \ \attrE{v \ E}$ \\
+    Handler Application & $\eHandle{h}{\eHole} \eDot \attrE{E}$ & $\doteq$ & $\eHandle{h}{} \eDot \attrE{E} \ \doteq \eHandle{h}{E}$
+  \end{tabular}
+  \caption{System $\lange$ Dot Notation}
+  \label{fig:lange-dot}
 \end{figure}
 
+% ==========================================
+% SYNTAX FOR LANGUAGE E
+% ==========================================
+\begin{figure}[h]
+  \centering
+  \begin{tabular}{llll}
+    Types       & $\attrE{\sigma}$ & $::=$ & $\attrE{\alpha^k} \mid \attrE{c^k \ \sigma \dots \sigma} \mid \attrE{\sigma \to \sigma} \mid \attrE{\forall \alpha^k. \sigma}$ \\
+    Kinds       & $\attrE{k}$      & $::=$ & $\attrE{*} \mid \attrE{k \to k} \mid \eKw{eff} \mid \eKw{lab}$ \\
+    \\
+    Expressions & $\attrE{e}$      & $::=$ & $\attrE{v} \mid \attrE{e_1 \ e_2} \mid \attrE{e[\sigma]} \mid \eHandle{h}{e}$ \\
+    Values      & $\attrE{v}$      & $::=$ & $\attrE{x} \mid \eLam{x:\sigma}{e} \mid \attrE{\Lambda \alpha^k. v} \mid \eHandler{h} \mid \ePerform{op}{\overline{\sigma}}$ \\
+    Handlers    & $\attrE{h}$      & $::=$ & $\attrE{\{} \attrE{op_1 \to f_1}, \attrE{\dots}, \attrE{op_n \to f_n} \attrE{\}}$ \\
+    Eval Contexts & $\attrE{F}$    & $::=$ & $\eHole \mid \attrE{F \ e} \mid \attrE{v \ F} \mid \attrE{F[\sigma]}$ \\
+                & $\attrE{E}$      & $::=$ & $\eHole \mid \attrE{E \ e} \mid \attrE{v \ E} \mid \attrE{E[\sigma]} \mid \eHandle{h}{E}$ \\
+  \end{tabular}
+  \caption{Syntax of Language $\lange$}
+  \label{fig:lange-syntax}
+\end{figure}
+
+% ==========================================
+% TYPE RULES FOR LANGUAGE E
+% ==========================================
 \begin{figure}[h]
   \centering
   \begin{mathpar}
   \inferrule[T-Var]
-    {x : \sigma \in \Gamma}
-    {\Gamma \vdash_{\text{val}} x : \sigma}
+    {\attrE{x} : \attrE{\sigma} \in \eGamma}
+    {\eTypesV{\eGamma}{x}{\sigma}}
 
   \inferrule[T-Abs]
-    {\Gamma, x : \sigma_1 \vdash e : \sigma_2 \mid \epsilon}
-    {\Gamma \vdash_{\text{val}} \lambda^\epsilon x : \sigma_1 . e : \sigma_1 \to^\epsilon \sigma_2}
+    {\eTypesC{\eGamma, \attrE{x} : \attrE{\sigma_1}}{e}{\sigma_2}{\epsilon}}
+    {\eTypesV{\eGamma}{\eLam{x:\sigma_1}{e}}{\sigma_1 \to \epsilon \sigma_2}}
 
   \inferrule[T-Val]
-    {\Gamma \vdash_{\text{val}} v : \sigma}
-    {\Gamma; w \vdash v : \sigma \mid \epsilon}
+    {\eTypesV{\eGamma}{v}{\sigma}}
+    {\eTypesC{\eGamma}{v}{\sigma}{\epsilon}}
 
   \inferrule[T-App]
-    {\Gamma; w \vdash e_1 : \sigma_1 \to^\epsilon \sigma \mid \epsilon \\ \Gamma; w \vdash e_2 : \sigma_1 \mid \epsilon}
-    {\Gamma; w \vdash e_1 \, e_2 : \sigma \mid \epsilon}
+    {\eTypesC{\eGamma}{e_1}{\sigma_1 \to \epsilon \sigma}{\epsilon} \\ \eTypesC{\eGamma}{e_2}{\sigma_1}{\epsilon}}
+    {\eTypesC{\eGamma}{e_1 \, e_2}{\sigma}{\epsilon}}
 
   \inferrule[T-Handle]
-    {\Gamma \vdash_{\text{ops}} h : \sigma \mid l \mid \epsilon \\ \Gamma; w \vdash e : \sigma \mid \langle l \mid \epsilon \rangle}
-    {\Gamma; w \vdash \text{handle}^\epsilon \, h \, e : \sigma \mid \epsilon}
+    {\eGamma \vdash_{\eKw{ops}} \attrE{h} : \attrE{\sigma \mid l \mid \epsilon} \\
+     \eTypesC{\eGamma}{e}{\sigma}{\langle l \mid \epsilon \rangle}}
+    {\eTypesC{\eGamma}{\eHandle{h}{e}}{\sigma}{\epsilon}}
   \end{mathpar}
-  \caption{System $F^\epsilon$ Selected Type Rules}
-  \label{fig:f-epsilon-type}
+  \caption{Type Rules for $\lange$}
+  \label{fig:lange-typing}
 \end{figure}
 
+% ==========================================
+% REDUCTION RULES FOR LANGUAGE E
+% ==========================================
 \begin{figure}[h]
   \centering
   \begin{mathpar}
   \inferrule[App]
     {\strut}
-    {(\lambda^\epsilon x : \sigma . e) \, v \longrightarrow e[x := v]}
+    {(\eLam{\epsilon}{x:\sigma}{e}) \, v \eStep e[x := v]}
 
   \inferrule[Handler]
     {\strut}
-    {(\text{handler}^\epsilon \, h) \, v \longrightarrow \text{handle}^\epsilon \, h \cdot v \, ()}
+    {(\eKw{handler}^\epsilon \, h) \, v \eStep \eKw{handle}^\epsilon \, h \eDot v \, ()}
 
   \inferrule[Return]
     {\strut}
-    {\text{handle}^\epsilon \, h \cdot v \longrightarrow v}
+    {\eKw{handle}^\epsilon \, h \eDot v \eStep v}
 
   \inferrule[Perform]
-    {op \notin \text{bop}(E) \wedge (op \to f) \in h \\
-     op : \forall \overline{\alpha} . \sigma_1 \to \sigma_2 \in \Sigma(l) \\
-     k = \lambda^\epsilon x : \sigma_2[\overline{\alpha} := \overline{\sigma}] . \text{handle}^\epsilon \, h \cdot E \cdot x}
-    {\text{handle}^\epsilon \, h \cdot E \cdot \text{perform} \, op \, \overline{\sigma} \, v \longrightarrow f[\overline{\sigma}] \, v \, k}
+    {op \notin \text{bop}(E) \wedge (op \attrE{\to} f) \in h \\
+     op : \attrE{\forall} \overline{\alpha} . \sigma_1 \attrE{\to} \sigma_2 \in \Sigma(l) \\
+     k = \eLam{\epsilon}{x:\sigma_2[\overline{\alpha} := \overline{\sigma}]}{\eKw{handle}^\epsilon \, h \eDot E \eDot x}}
+    {\eKw{handle}^\epsilon \, h \eDot E \eDot \eKw{perform} \, op \, \overline{\sigma} \, v \eStep f[\overline{\sigma}] \, v \, k}
   \end{mathpar}
-  \caption{System $F^\epsilon$ Reduction Rules}
-  \label{fig:f-epsilon-reduction}
+  \caption{Reduction Rules for $\lange$}
+  \label{fig:lange-reduction}
 \end{figure}
-
 \end{singlespace}

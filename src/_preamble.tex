@@ -41,7 +41,7 @@
 \newtheorem{definition}[theorem]{Definition}
 
 % fonts setup
-\usepackage{lmodern}
+% \usepackage{lmodern}
 \usepackage{amsmath, amssymb, amsthm, amsfonts}
 \usepackage{fontspec}
 \usepackage[utf8]{inputenc}
@@ -74,70 +74,58 @@
     breaklines=true             % Wrap long lines
 }
 
-% --- 1. BASE TYPES & SHARED CONSTRUCTORS ---
-\newcommand{\Tnum}{\mathsf{num}}
-\newcommand{\Tbool}{\mathsf{bool}}
-\newcommand{\Tarrow}[2]{#1 \to #2}
-\newcommand{\ttval}{\mathsf{tt}} % or \mathbf{true} depending on preference
-\newcommand{\ffval}{\mathsf{ff}} % or \mathbf{false}
-\newcommand{\lam}[3]{\lambda #1:#2. #3}
-\newcommand{\fix}[3]{\mu #1:#2. #3}
-\newcommand{\hole}{[\cdot]}
-\newcommand{\vT}[1]{#1}
-\newcommand{\cT}[1]{\underline{#1}}
-\newcommand{\Thandle}[2]{#1 \Rightarrow #2}
-\newcommand{\Tcomp}[2]{#1!#2}
-
-% --- 2. CONTRACT CALCULUS MACROS ---
-\newcommand{\Tcon}[1]{\mathsf{con}(#1)}
-\newcommand{\Kflat}[1]{\mathbf{flat}(#1)}
-\newcommand{\Karrow}[2]{#1 \mapsto #2}
-\newcommand{\Kdarrow}[4]{#1 \overset{\mathrm{d}}{\mapsto} \lambda #2:#3. #4}
-\newcommand{\Ksubst}[3]{\{#1 / #2\}#3}
-\newcommand{\mon}[5]{\mathbf{mon}^{#1, #2}_{#3}(#4, #5)}
-\newcommand{\error}[2]{\mathbf{error}^{#1}_{#2}}
-\newcommand{\zeroq}[1]{\mathsf{zero?}(#1)}
-
-% --- 3. ALGEBRAIC EFFECTS & HANDLERS (EFF) ---
-% Keywords
-\newcommand{\kw}[1]{\mathsf{#1}}
-\newcommand{\vtrue}{\kw{true}}
-\newcommand{\vfalse}{\kw{false}}
-\newcommand{\vfun}[2]{\kw{fun} \ #1 \mapsto #2}
-\newcommand{\vhandler}{\kw{handler}}
-\newcommand{\vreturn}[1]{\kw{return} \ #1}
-\newcommand{\vwith}[2]{\kw{with} \ #1 \ \kw{handle} \ #2}
-\newcommand{\vdo}[3]{\kw{do} \ #1 \leftarrow #2 \ \kw{in} \ #3}
-\newcommand{\vif}[3]{\kw{if} \ #1 \ \kw{then} \ #2 \ \kw{else} \ #3}
-\newcommand{\vop}[3]{\mathsf{#1}(#2; #3)}
-
-% --- 4. JUDGMENTS & RELATIONS ---
-\newcommand{\ctx}{\Gamma}
-\newcommand{\ext}[3]{#1, #2:#3}
-\newcommand{\types}[3]{#1 \vdash #2 : #3}
-\newcommand{\red}{\to}          % Local reduction
-\newcommand{\step}{\longrightarrow}  % Global step
-\newcommand{\stepmany}{\longrightarrow^{*}}  % Global step
-\newcommand{\stepmanyone}{\longrightarrow^{+}}  % Global step
-\newcommand{\effstep}{\leadsto}  % Effect reduction
-
-\raggedbottom
-
 \newcommand{\langc}{\texttt{Contracts}}
 \newcommand{\lange}{\texttt{Effects}}
 \newcommand{\systemf}{System $\mathsf{F}$}
 \newcommand{\systemfw}{System $\mathsf{F}_\omega$}
 \newcommand{\systemfe}{System $\mathsf{F}^\epsilon$}
 
-% Update arrow macro to match the image's \mapsto
-% \renewcommand{\Karrow}[2]{#1 \mapsto #2}
-% \renewcommand{\Kdarrow}[3]{#1 \xmapsto{d} (\lambda #2:#3. \kappa_2)}
 
-% \input{./ott/contracts.tex}
-% \input{./ott/effects.tex}
-% \renewcommand{\Cprodline}[1]{\quad \mid \quad} 
-% \renewcommand{\Eprodline}[1]{\quad \mid \quad}
+\usepackage{xcolor}
+\definecolor{colorC}{RGB}{0, 102, 204} % Blue
+\definecolor{colorE}{RGB}{204, 0, 102} % Red
 
+\newcommand{\attrC}[1]{\ensuremath{{\color{colorC}\symsf{#1}}}}
+\newcommand{\attrE}[1]{\ensuremath{{\color{colorE}\symbfup{#1}}}}
+
+\newcommand{\genLam}[4]{#1{\lambda}^{#2} #3. #4}
+\newcommand{\genTypes}[4]{#1{#2 \vdash #3 : #4}}
+
+\newcommand{\cGamma}{\attrC{Γ}}
+\newcommand{\eGamma}{\attrE{Δ}}
+
+% --- 2. LANGUAGE C MACROS (CONTRACTS) ---
+\newcommand{\cKw}[1]{\attrC{#1}}
+\newcommand{\cTnum}{\attrC{num}}
+\newcommand{\cTbool}{\attrC{bool}}
+\newcommand{\cTcon}[1]{\attrC{con(#1)}}
+\newcommand{\cTarr}[2]{\attrC{#1 \to #2}}
+
+\newcommand{\cLam}[2]{\attrC{\lambda #1. #2}}
+\newcommand{\cMon}[5]{\attrC{mon^{#1,#2}_{#3}(#4, #5)}}
+\newcommand{\cErr}[2]{\attrC{error^{#1}_{#2}}}
+\newcommand{\cIf}[3]{\attrC{if \ #1 \ then \ #2 \ else \ #3}}
+\newcommand{\cFlat}[1]{\attrC{flat(#1)}}
+\newcommand{\cKFunc}[2]{\attrC{#1 \mapsto #2}}
+\newcommand{\cKDep}[3]{\attrC{#1 \overset{d}{\mapsto} (λ #2 . #3)}}
+\newcommand{\cTypes}[3]{#1 \vdash \attrC{#2} : \attrC{#3}}
+\newcommand{\cStep}{\ \attrC{\longrightarrow}\ }
+\newcommand{\cStepMany}{\ \attrC{\longrightarrow^{*}}\ }
+\newcommand{\cStepPlus}{\ \attrC{\longrightarrow^{+}}\ }
+
+% --- 3. LANGUAGE E MACROS (EFFECTS) ---
+\newcommand{\eKw}[1]{\attrE{#1}}
+\newcommand{\eHandle}[2]{\eKw{handle} \ \attrE{#1} \ \attrE{#2}}
+\newcommand{\eHandler}[1]{\eKw{handler} \ \attrE{#1}}
+\newcommand{\ePerform}[2]{\eKw{perform} \ \attrE{#1} \ \attrE{#2}}
+\newcommand{\eLam}[2]{\attrE{\lambda} \attrE{#1} . \attrE{#2}}
+\newcommand{\eDot}{\ \attrE{\cdot}\ }
+\newcommand{\eHole}{\attrE{\square}}
+\newcommand{\eStep}{\ \attrE{\rightsquigarrow}\ }
+\newcommand{\eStepMany}{\ \attrE{\rightsquigarrow^{*}}\ }
+\newcommand{\eStepPlus}{\ \attrE{\rightsquigarrow^{+}}\ }
+\newcommand{\eTypesV}[3]{#1 \vdash_{\eKw{val}} \attrE{#2} : \attrE{#3}}
+\newcommand{\eTypesC}[4]{#1 \vdash \attrE{#2} : \attrE{#3} \mid \attrE{#4}}
 
 % Use \includeonly to select the
 %\includeonly{chap1,chap2,...}	% chapters to include if you are
@@ -146,5 +134,7 @@
 % part you are working on, which
 % is faster than latexing the entire
 % thesis.
+
+\raggedbottom
 
 \begin{document}
