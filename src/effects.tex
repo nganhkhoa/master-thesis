@@ -13,13 +13,19 @@ In another spectrum, Effect Handlers are modeled by a combination of row types o
 
 In this section, we introduce \lange, a formal model of the Algebraic Effect Handlers as a model language for our target language for the compiler. Previously mentioned, we have two main choices for the formal language, (i) in the flavour of fine-grain call-by-value or (ii) in the flavour of \systemfe. We have chosen to adapt the (ii) flavour into the formal language due to its evaluation context semantics, which is helpful for our proofs.
 
+We adopt and extend the language of \systemfe\ such that it can support all expressions available to \langc, including number type, binary operations, and if expression. We also introduce a new expression \eBlame{p} blaming the party \attrE{p}.
 
-Explain language here
+The language is polymorphic, with higher-kinded type system where effect is treated as a different kind from basic type, where in traditional effect type system, they are expressed in computational type. Effects are represented using row types, each row is indexed by a label. The environment of effect labels $\attrE{\Sigma}$ maps each labels to operations.
 
+Programmers can define operations to be handled by rows of \attrE{h}, consisting of operation names, and their behaviors. A handler is also a value, and can be applied with a function ($\eHandler{h} \ \attrE{f}$) which a shorthand to a handle expression with $\attrE{f}$ applied to unit. In general, $\eHandle{h}{e}$ is used to run $\attrE{e}$ with effect handler $\attrE{h}$. During evaluation of $\attrE{e}$, an operation can be invoked by applying $\ePerform{op}{\sigma}$ to a value. If $\attrE{op}$ is declared in any handler of the current context, then the operation is handled using the closest handler. Because we define \lange\ well-typedness as no unhandled effects, there is no such case that an operation is undeclared once the program is well-typed.
 
-Following \cite{xie2020effect}, we adopt the \textit{dot notation} to decompose and compose evaluation contexts, as defined in Figure \ref{fig:f-epsilon-dot}. We would write $v \cdot \text{handle } h \cdot E \cdot e$ as a shorthand for $v \, (\text{handle } h \, (E[e]))$.
+A basic value, booleans and numbers, has no effect. A function $\attrE{\sigma_1\to\epsilon\sigma_2}$ receiving a type $\attrE{\sigma_1}$ producing a $\attrE{\sigma_2}$ value can invoke effects in $\attrE{\epsilon}$. A handler $\attrE{h} = \attrE{\{} \attrE{op_1 \to f_1}, \attrE{\dots}, \attrE{op_n \to f_n} \attrE{\}}$ must unify all operation types into one, allowing effect label of these operations, and other effects allowed by the environment. Because there is no type unification, therefore, these operations must return the same type.
 
-This thesis introduces two languages. To effectively distinguish the languages used, we have chosen different typeset styling for both languages. \lange\ will be typeset in \attrE{red\ bold\ roman}. The reduction arrow of \lange\ is $\eStep$.
+Type judgement $\eTypesC{\eGamma}{e}{\sigma}{\epsilon}$ keeps a list of effects $\attrE{\epsilon}$ available to the expression $\attrE{e}$ being typed with type $\attrE{\sigma}$.
+
+Following \cite{xie2020effect}, we adopt the \textit{dot notation} to decompose and compose evaluation contexts, as defined in Figure \ref{fig:lange-dot}. We would write $v \cdot \text{handle } h \cdot E \cdot e$ as a shorthand for $v \, (\text{handle } h \, (E[e]))$.
+
+This thesis introduces two languages. To effectively distinguish the languages used, we have chosen different typeset styling for both languages. \lange\ will be typeset in \attrE{red\ serif}. The reduction arrow of \lange\ is $\eStep$.
 
 \begin{singlespace}
 
@@ -44,11 +50,16 @@ This thesis introduces two languages. To effectively distinguish the languages u
 \begin{figure}[h]
   \centering
   \begin{tabular}{llll}
-    Types       & $\attrE{\sigma}$ & $::=$ & $\attrE{\alpha^k} \mid \attrE{c^k \ \sigma \dots \sigma} \mid \attrE{\sigma \to \sigma} \mid \attrE{\forall \alpha^k. \sigma}$ \\
+    Types       & $\attrE{\sigma}$ & $::=$ & $\attrE{\alpha^k} \mid \attrE{c^k \ \sigma \dots \sigma} \mid \attrE{\sigma \to \epsilon\sigma} \mid \attrE{\forall \alpha^k. \sigma}$ \\
     Kinds       & $\attrE{k}$      & $::=$ & $\attrE{*} \mid \attrE{k \to k} \mid \eKw{eff} \mid \eKw{lab}$ \\
     \\
     Expressions & $\attrE{e}$      & $::=$ & $\attrE{v} \mid \attrE{e_1 \ e_2} \mid \attrE{e[\sigma]} \mid \eHandle{h}{e}$ \\
-    Values      & $\attrE{v}$      & $::=$ & $\attrE{x} \mid \eLam{x:\sigma}{e} \mid \attrE{\Lambda \alpha^k. v} \mid \eHandler{h} \mid \ePerform{op}{\overline{\sigma}}$ \\
+    & & $\mid$ & $\attrE{e_1 + e_2} \mid \attrE{e_1 - e_2} \mid \attrE{e_1 \wedge e_2} \mid \attrE{e_1 \vee e_2}$ \\
+    & & $\mid$ & $\eIf{e_1}{e_2}{e_3} \mid \attrE{zero?(e)}$ \\
+    & & $\mid$ & $\eBlame{p}$\\
+
+    Values      & $\attrE{v}$      & $::=$ & $\attrE{x} \mid \attrE{0}, \attrE{1}, ..., \attrE{N} \mid \eKw{tt} \mid \eKw{ff} \mid \eLam{x:\sigma}{e}$ \\
+    & & $\mid$ & $\attrE{\Lambda \alpha^k. v} \mid \eHandler{h} \mid \ePerform{op}{\overline{\sigma}}$ \\
     Handlers    & $\attrE{h}$      & $::=$ & $\attrE{\{} \attrE{op_1 \to f_1}, \attrE{\dots}, \attrE{op_n \to f_n} \attrE{\}}$ \\
     Eval Contexts & $\attrE{F}$    & $::=$ & $\eHole \mid \attrE{F \ e} \mid \attrE{v \ F} \mid \attrE{F[\sigma]}$ \\
                 & $\attrE{E}$      & $::=$ & $\eHole \mid \attrE{E \ e} \mid \attrE{v \ E} \mid \attrE{E[\sigma]} \mid \eHandle{h}{E}$ \\
@@ -60,59 +71,88 @@ This thesis introduces two languages. To effectively distinguish the languages u
 % ==========================================
 % TYPE RULES FOR LANGUAGE E
 % ==========================================
-\begin{figure}[h]
+\begin{figure}[htbp]
   \centering
   \begin{mathpar}
-  \inferrule[T-Var]
-    {\attrE{x} : \attrE{\sigma} \in \eGamma}
+  \inferrule[VAR]
+    {\attrE{x : \sigma} \in \eGamma}
     {\eTypesV{\eGamma}{x}{\sigma}}
 
-  \inferrule[T-Abs]
-    {\eTypesC{\eGamma, \attrE{x} : \attrE{\sigma_1}}{e}{\sigma_2}{\epsilon}}
-    {\eTypesV{\eGamma}{\eLam{x:\sigma_1}{e}}{\sigma_1 \to \epsilon \sigma_2}}
+  \inferrule[ABS]
+    {\eTypesC{\eGamma, \attrE{x : \sigma_1}}{e}{\sigma_2}{\epsilon}}
+    {\eTypesV{\eGamma}{\eLam{x:\sigma_1}{e}}{\eTArr{\sigma_1}{\epsilon\sigma_2}}}
 
-  \inferrule[T-Val]
+  \inferrule[VAL]
     {\eTypesV{\eGamma}{v}{\sigma}}
     {\eTypesC{\eGamma}{v}{\sigma}{\epsilon}}
 
-  \inferrule[T-App]
-    {\eTypesC{\eGamma}{e_1}{\sigma_1 \to \epsilon \sigma}{\epsilon} \\ \eTypesC{\eGamma}{e_2}{\sigma_1}{\epsilon}}
+  \inferrule[TABS]
+    {\eTypesV{\eGamma}{v}{\sigma} \\ \attrE{k} \neq \eKw{lab}}
+    {\eTypesV{\eGamma}{\eTAbs{\alpha^k}{v}}{\eTForall{\alpha^k}{\sigma}}}
+
+  \inferrule[APP]
+    {\eTypesC{\eGamma}{e_1}{\eTArr{\sigma_1}{\sigma}}{\epsilon} \\
+     \eTypesC{\eGamma}{e_2}{\sigma_1}{\epsilon}}
     {\eTypesC{\eGamma}{e_1 \, e_2}{\sigma}{\epsilon}}
 
-  \inferrule[T-Handle]
-    {\eGamma \vdash_{\eKw{ops}} \attrE{h} : \attrE{\sigma \mid l \mid \epsilon} \\
-     \eTypesC{\eGamma}{e}{\sigma}{\langle l \mid \epsilon \rangle}}
+  \inferrule[TAPP]
+    {\eTypesC{\eGamma}{e}{\eTForall{\alpha^k}{\sigma_1}}{\epsilon} \\
+     \eWf{\sigma}{k}}
+    {\eTypesC{\eGamma}{e[\sigma]}{\sigma_1[\alpha := \sigma]}{\epsilon}}
+
+  \inferrule[PERFORM]
+    {\attrE{op : \forall \overline{\alpha} . \sigma_1 \to \sigma_2} \in \attrE{\Sigma}(\attrE{l}) \\
+     \attrE{\overline{\alpha}} \notin \text{ftv}(\eGamma)}
+    {\eTypesV{\eGamma}{\ePerform{op}{\overline{\sigma}}}{\eTArr{\sigma_1[\overline{\alpha} := \overline{\sigma}]}{\eEff{l}{\epsilon} \, \sigma_2[\overline{\alpha} := \overline{\sigma}]}}}
+
+  \inferrule[OPS]
+    {\attrE{op_i : \forall \overline{\alpha} . \sigma_1 \to \sigma_2} \in \attrE{\Sigma}(\attrE{l}) \\
+     \attrE{\overline{\alpha}} \notin \text{ftv}(\attrE{\epsilon \, \sigma}) \\
+     \eTypesV{\eGamma}{f_i}{\eTForall{\overline{\alpha}}{\eTArr{\sigma_1}{\eTArr{(\eTArr{\sigma_2}{\epsilon\sigma})}{\epsilon\sigma}}}}}
+    {\eTypesOps{\eGamma}{\{ op_1 \to f_1, \dots, op_n \to f_n \}}{\sigma}{l}{\epsilon}}
+
+  \inferrule[HANDLER]
+    {\eTypesOps{\eGamma}{h}{\sigma}{l}{\epsilon}}
+    {\eTypesV{\eGamma}{\eHandler{h}}{\eTArr{(\eTArr{()}{\eEff{l}{\epsilon} \, \sigma})}{\sigma}}}
+
+  \inferrule[HANDLE]
+    {\eTypesOps{\eGamma}{h}{\sigma}{l}{\epsilon} \\
+     \eTypesC{\eGamma}{e}{\sigma}{\eEff{l}{\epsilon}}}
     {\eTypesC{\eGamma}{\eHandle{h}{e}}{\sigma}{\epsilon}}
   \end{mathpar}
-  \caption{Type Rules for $\lange$}
+  \caption{Type Rules for System $\lange$}
   \label{fig:lange-typing}
 \end{figure}
 
 % ==========================================
 % REDUCTION RULES FOR LANGUAGE E
 % ==========================================
-\begin{figure}[h]
+\begin{figure}[htbp]
   \centering
   \begin{mathpar}
   \inferrule[App]
     {\strut}
-    {(\eLam{\epsilon}{x:\sigma}{e}) \, v \eStep e[x := v]}
+    {(\eLam{x:\sigma}{e}) \ \attrE{v} \eStep \attrE{e[x := v]}}
+
+  \inferrule[TApp]
+    {\strut}
+    {(\eTAbs{\alpha^k}{v}) \attrE{[\sigma]} \eStep \attrE{v[\alpha := \sigma]}}
 
   \inferrule[Handler]
     {\strut}
-    {(\eKw{handler}^\epsilon \, h) \, v \eStep \eKw{handle}^\epsilon \, h \eDot v \, ()}
+    {(\eHandler{h}) \ \attrE{v} \eStep \eKw{handle} \ \attrE{h} \eDot \attrE{v \ ()}}
 
   \inferrule[Return]
     {\strut}
-    {\eKw{handle}^\epsilon \, h \eDot v \eStep v}
+    {\eKw{handle} \ \attrE{h} \eDot \attrE{v} \eStep \attrE{v}}
 
   \inferrule[Perform]
-    {op \notin \text{bop}(E) \wedge (op \attrE{\to} f) \in h \\
-     op : \attrE{\forall} \overline{\alpha} . \sigma_1 \attrE{\to} \sigma_2 \in \Sigma(l) \\
-     k = \eLam{\epsilon}{x:\sigma_2[\overline{\alpha} := \overline{\sigma}]}{\eKw{handle}^\epsilon \, h \eDot E \eDot x}}
-    {\eKw{handle}^\epsilon \, h \eDot E \eDot \eKw{perform} \, op \, \overline{\sigma} \, v \eStep f[\overline{\sigma}] \, v \, k}
+    {\attrE{op} \notin \mathrm{bop}(\attrE{E}) \wedge (\attrE{op \to f}) \in \attrE{h} \\
+     \attrE{op : \forall \overline{\alpha} . \sigma_1 \to \sigma_2} \in \attrE{\Sigma}(\attrE{l}) \\
+     \attrE{k} = \eLam{x : \sigma_2[\overline{\alpha} := \overline{\sigma}]}{\eKw{handle} \ \attrE{h} \eDot \attrE{E} \eDot \attrE{x}}}
+    {\eKw{handle} \ \attrE{h} \eDot \attrE{E} \eDot \ePerform{op}{\overline{\sigma}} \ \attrE{v} \eStep \attrE{f[\overline{\sigma}] \ v \ k}}
   \end{mathpar}
-  \caption{Reduction Rules for $\lange$}
+  \caption{Reduction Rules for System $\lange$}
   \label{fig:lange-reduction}
 \end{figure}
 \end{singlespace}

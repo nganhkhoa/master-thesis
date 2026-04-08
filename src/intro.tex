@@ -6,8 +6,16 @@
 
 \section{Contracts Checking as Effects}
 
+% Algebraic Effects are sufficient to implement a basic Contract system on top of language.
+
+% - Implenetation in Ocaml
+% - A use case of the contract system
+% - A model as a blueprint to explain sdesign
+% - Basic properties of that model
+% - Comparision with Racket contract system
+
 \section{Contributions}
 
 Our work demonstrates that effect handlers can be used to implement software contracts, proven by proving a theoretical compiler, and an accompanying proof of concept in OCaml. Our OCaml implementation is available on Github\footnote{\href{https://github.com/nganhkhoa/conteff}{https://github.com/nganhkhoa/conteff}}.
 
-The rest of the thesis is organized as follows. In Chapter \ref{chap:contracts} and Chapter \ref{chap:effects} we introduced the formal languages of Contracts as the source language and Effects as the target language after compilation. In Chapter \ref{chap:compiler}, we discuss a theoretical compiler on the formal languages. The OCaml language is introduced in Chapter \ref{chap:ocaml} and an implementation of the compiler is detailed in Chapter \ref{chap:implementation}. Finally, we conclude our remarks in Chapter \ref{chap:final}.
+The rest of the thesis is organized as follows. In Chapter \ref{chap:contracts} and Chapter \ref{chap:effects} we introduced the formal languages of Contracts as the source language and Effects as the target language after compilation. In Chapter \ref{chap:compiler}, we discuss a theoretical compiler on the formal languages. The OCaml language is introduced in Chapter \ref{chap:ocaml} and an implementation of the compiler is detailed in Chapter \ref{chap:implementation}. We compare our design and implementation by comparison with the Racket contract system in Chapter \ref{chap:compare}. Finally, we conclude our remarks in Chapter \ref{chap:final}.

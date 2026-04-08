@@ -3,7 +3,7 @@
 
 \author{Anh Khoa Nguyen}
 
-\title{Software Contract using Effect Handlers}
+\title{Contract Checking as an Effect}
 
 \degree{MASTER OF SCIENCE}
 
@@ -86,7 +86,7 @@
 \definecolor{colorE}{RGB}{204, 0, 102} % Red
 
 \newcommand{\attrC}[1]{\ensuremath{{\color{colorC}\symsf{#1}}}}
-\newcommand{\attrE}[1]{\ensuremath{{\color{colorE}\symbfup{#1}}}}
+\newcommand{\attrE}[1]{\ensuremath{{\color{colorE}\symup{#1}}}}
 
 \newcommand{\genLam}[4]{#1{\lambda}^{#2} #3. #4}
 \newcommand{\genTypes}[4]{#1{#2 \vdash #3 : #4}}
@@ -113,12 +113,15 @@
 \newcommand{\cStepMany}{\ \attrC{\longrightarrow^{*}}\ }
 \newcommand{\cStepPlus}{\ \attrC{\longrightarrow^{+}}\ }
 
-% --- 3. LANGUAGE E MACROS (EFFECTS) ---
+\newcommand{\cCompile}[4]{#1 \vdash \attrC{#2} : #3 \twoheadrightarrow \attrE{#4}}
+
 \newcommand{\eKw}[1]{\attrE{#1}}
+\newcommand{\eBlame}[1]{\eKw{blame} \ \attrE{#1}}
 \newcommand{\eHandle}[2]{\eKw{handle} \ \attrE{#1} \ \attrE{#2}}
 \newcommand{\eHandler}[1]{\eKw{handler} \ \attrE{#1}}
 \newcommand{\ePerform}[2]{\eKw{perform} \ \attrE{#1} \ \attrE{#2}}
 \newcommand{\eLam}[2]{\attrE{\lambda} \attrE{#1} . \attrE{#2}}
+\newcommand{\eIf}[3]{\attrE{if \ #1 \ then \ #2 \ else \ #3}}
 \newcommand{\eDot}{\ \attrE{\cdot}\ }
 \newcommand{\eHole}{\attrE{\square}}
 \newcommand{\eStep}{\ \attrE{\rightsquigarrow}\ }
@@ -126,6 +129,12 @@
 \newcommand{\eStepPlus}{\ \attrE{\rightsquigarrow^{+}}\ }
 \newcommand{\eTypesV}[3]{#1 \vdash_{\eKw{val}} \attrE{#2} : \attrE{#3}}
 \newcommand{\eTypesC}[4]{#1 \vdash \attrE{#2} : \attrE{#3} \mid \attrE{#4}}
+\newcommand{\eTAbs}[2]{\attrE{\Lambda} \attrE{#1} . \attrE{#2}}
+\newcommand{\eTForall}[2]{\attrE{\forall} \attrE{#1} . \attrE{#2}}
+\newcommand{\eTArr}[2]{#1 \attrE{\to} #2}
+\newcommand{\eEff}[2]{\attrE{\langle} \attrE{#1} \attrE{\mid} \attrE{#2} \attrE{\rangle}}
+\newcommand{\eTypesOps}[5]{#1 \vdash_{\eKw{ops}} \attrE{#2} : \attrE{#3} \mid \attrE{#4} \mid \attrE{#5}}
+\newcommand{\eWf}[2]{\vdash_{\eKw{wf}} \attrE{#1} : \attrE{#2}}
 
 % Use \includeonly to select the
 %\includeonly{chap1,chap2,...}	% chapters to include if you are

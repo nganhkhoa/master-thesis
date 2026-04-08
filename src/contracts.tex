@@ -57,10 +57,10 @@ This thesis introduces two languages. To effectively distinguish the languages u
     Types       & $\attrC{\tau}$   & $::=$ & $\attrC{o} \mid \cTarr{\tau_1}{\tau_2} \mid \cTcon{\tau}$ \\
     Contracts   & $\attrC{\kappa}$ & $::=$ & $\cFlat{e} \mid \cKFunc{\kappa_1}{\kappa_2} \mid \cKDep{\kappa_1}{x : τ}{\kappa_2}$ \\
     Expressions & $\attrC{e}$      & $::=$ & $\attrC{0, 1, \dots} \mid \attrC{tt} \mid \attrC{ff} \mid \attrC{x} \mid \cLam{x:\tau}{e} \mid \attrC{\mu x:\tau. e}$ \\
-                  &          & $\mid$ & $\attrC{e_1 + e_2} \mid \attrC{e_1 \wedge e_2} \mid \attrC{e_1 \vee e_2} \mid \attrC{e_1 \ e_2}$ \\
+                  &          & $\mid$ & $\attrC{e_1 + e_2} \mid \attrC{e_1 - e_2} \mid \attrC{e_1 \wedge e_2} \mid \attrC{e_1 \vee e_2} \mid \attrC{e_1 \ e_2}$ \\
                   &          & $\mid$ & $\cIf{e_1}{e_2}{e_3} \mid \attrC{zero?(e)}$ \\
                   &          & $\mid$ & $\cMon{k}{l}{j}{\kappa}{e} \mid \cErr{l}{p}$ \\
-    Values      & $\attrC{v}$      & $::=$ & $\attrC{0, 1, \dots} \mid \attrC{tt} \mid \attrC{ff} \mid \cLam{x}{e} \mid \cErr{l}{p}$ \\
+    Values      & $\attrC{v}$      & $::=$ & $\attrC{0, 1, \dots} \mid \attrC{tt} \mid \attrC{ff} \mid \cLam{x}{e}$ \\
     Contexts    & $\attrC{E}$      & $::=$ & $\attrC{[\cdot]} \mid \attrC{E + e} \mid \attrC{v + E} \mid \attrC{E \wedge e} \mid \attrC{v \wedge E} \mid \attrC{E \vee e} \mid \attrC{v \vee E}$ \\
                   &          & $\mid$ & $\attrC{E \ e} \mid \attrC{v \ E} \mid \cIf{E}{e}{e} \mid \attrC{zero?(E)}$ \\
                   &          & $\mid$ & $\cMon{k}{l}{j}{\kappa}{E}$

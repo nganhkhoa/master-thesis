@@ -1,8 +1,110 @@
 \chapter{Compiler}
 \label{chap:compiler}
 
-We define a compiler $\mathscr{C}$ taking an expression of Contracts language and outputs an equivalent expression in Effects. We also define a type conversion $\mathscr{C}_t$ from Contracts type system to Effects type system.
+In this section, we show that contract checking can be lifted into an effect. Assume that a global handler handles every contract checking effects, we can convert a contract program into an effect program. Figure \ref{fig:example-compile} demonstrates a simple compilation for a flat contract. An effect \attrE{check} is added performing the contract checking, and continue with the resumption or blame when the contract is not satisfied. The program, was a number 9, is now wrapped with a handler, and performing the effect check with the original value. The operation must not incur any other effects therefore we can type the resumption \attrE{kont} with an empty effect row. On blame, the positive label \attrC{k} is used.
 
+A function contract is then straightforward from recursive compilation. Its argument is wrapped into a monitor \attrC{mon}, as well as the result of the function. Recursively, we can compile the argument and the function's result into \lange. This introduces (at least) two operations. Higher-order contracts is also a function contract, which we recursively go inside each function and compile. Figure \ref{fig:example-compile-function} demonstrates the unrolling of function contract into single flat contracts and compiling them into their coresponsding operation invocation with their handler.
+
+Dependent contract is compiled using the same logic to function contract. This time, the dependent argument is also compiled into their handle expression, and provided into the contract of the function result.
+
+\begin{figure}
+\begin{align*}
+  \cMon{k}{l}{j}{\cFlat{\cLam{x : \cTnum}{\attrC{zero?}(x \attrC{-} 10)}}}{\attrC{9}}
+\end{align*}
+
+$\Downarrow$
+
+\begin{align*}
+  \attrE{h} \ &\triangleq \ \attrE{\{} \attrE{check \to} \\
+  &\qquad \eTAbs{\alpha}{
+    \eLam{x : \alpha}{
+      \eLam{kont : \alpha \attrE{\to \langle\rangle} \alpha}{
+        \eIf{(\eLam{x:\attrE{num}}{\attrE{zero?(x - 10)}}) \ \attrE{x}}
+            {\attrE{kont \ x}}
+            {\eBlame{k}}
+      }
+    }
+  }
+  \attrE{\}} \\[2ex]
+    &(\eHandle{h}{(\ePerform{check}{\attrE{num}} \ \attrE{9})})
+\end{align*}
+
+  \caption{Example compilation of flat contract}
+  \label{fig:example-compile}
+\end{figure}
+
+
+\begin{figure}
+\begin{align*}
+  \cMon{k}{l}{j}{\cKFunc{(\cKFunc{\cFlat{k_1}}{\cFlat{k_2}})}{\cFlat{k_3}}}{f}
+\end{align*}
+$\Downarrow$
+\begin{align*}
+  \cLam{g}{\cMon{k}{l}{j}{\cFlat{k_3}}{f \ (\cMon{l}{k}{j}{\cKFunc{\cFlat{k_1}}{\cFlat{k_2}}}{g})}}
+\end{align*}
+$\Downarrow$
+\begin{align*}
+  \cLam{g}{\cMon{k}{l}{j}{\cFlat{k_3}}{f \ (\cLam{x}{\cMon{l}{k}{j}{\cFlat{k_2}}{g \ (\cMon{k}{l}{j}{\cFlat{k_1}}{x})}})}}
+\end{align*}
+$\Downarrow$
+
+\begin{align*}
+  % 1. Define the handlers with their correct blame polarities
+  \attrE{h_1} \ &\triangleq \ \attrE{\{} \attrE{check_{k_1} \to} \dots \eBlame{k} \attrE{\}} \\
+  \attrE{h_2} \ &\triangleq \ \attrE{\{} \attrE{check_{k_2} \to} \dots \eBlame{l} \attrE{\}} \\
+  \attrE{h_3} \ &\triangleq \ \attrE{\{} \attrE{check_{k_3} \to} \dots \eBlame{k} \attrE{\}} \\[2ex]
+  % 2. Build the nested evaluations bottom-up
+  \attrE{e_1} \ &\triangleq \ (\eHandler{h_1}) \ (\eLam{\_}{\ePerform{check_{k_1}}{\tau_1} \ \attrE{x}}) \\
+  \attrE{e_2} \ &\triangleq \ (\eHandler{h_2}) \ (\eLam{\_}{\ePerform{check_{k_2}}{\tau_2} \ (\attrE{g} \ \attrE{e_1})}) \\
+  \attrE{e_3} \ &\triangleq \ (\eHandler{h_3}) \ (\eLam{\_}{\ePerform{check_{k_3}}{\tau_3} \ (\attrE{f} \ (\eLam{x}{\attrE{e_2}}))}) \\[2ex]
+  % 3. The final compiled expression
+  &\eLam{g}{\attrE{e_3}}
+\end{align*}
+
+  \caption{Example compilation of higher-order contract}
+  \label{fig:example-compile-function}
+\end{figure}
+
+
+The compilation relies heavily on the type of argument. Therefore, we provide a type-directed compilation from \langc\ to \lange.
+
+\begin{figure}[htbp]
+  \centering
+  \begin{mathpar}
+  \inferrule[C-Var]
+    {\attrC{x} : \tau \in \Gamma}
+    {\cCompile{\Gamma}{x}{\tau}{x}}
+
+  \inferrule[C-Abs]
+    {\cCompile{\Gamma, \attrC{x} : \tau_1}{e}{\tau_2}{e'}}
+    {\cCompile{\Gamma}{\cLam{x:\tau_1}{e}}{\tau_1 \to \tau_2}{\eLam{x:\tau_1}{e'}}}
+
+  \inferrule[C-App]
+    {\cCompile{\Gamma}{e_1}{\tau_1 \to \tau}{e_1'} \\
+     \cCompile{\Gamma}{e_2}{\tau_1}{e_2'}}
+    {\cCompile{\Gamma}{e_1 \ e_2}{\tau}{e_1' \ e_2'}}
+
+  \inferrule[C-MonFlat]
+    { \cCompile{\Gamma}{e}{\tau}{e'} \\
+      \attrE{h_\kappa} \triangleq \attrE{\{} \attrE{check_{\kappa} \to f} \attrE{\}} \\
+      \attrE{f} \triangleq \eTAbs{\alpha}{ \eLam{x : \alpha}{ \eLam{kont : \alpha \attrE{\to \langle\rangle} \alpha}{ \eIf{\kappa \ x} {\attrE{kont \ x}} {\eBlame{k}} } } } }
+      { \cCompile{\Gamma}{\cMon{k}{l}{j}{\cFlat{\kappa}}{e}}{\tau}{\eHandle{h_\kappa}{(\ePerform{check_{\kappa}}{\tau}\ e')}} }
+
+  \inferrule[C-MonFunc]
+    { \text{fresh } \attrC{x} \\
+      \cCompile{\Gamma, \attrC{x} : \tau_1}{\cMon{k}{l}{j}{\kappa_2}{e \ (\cMon{l}{k}{j}{\kappa_1}{x})}}{\tau_2}{e'} }
+    { \cCompile{\Gamma}{\cMon{k}{l}{j}{\kappa_1 \to \kappa_2}{e}}{\tau_1 \to \tau_2}{\eLam{x:\tau_1}{e'}} }
+
+  \inferrule[C-MonDep]
+    { \text{fresh } \attrC{y} \\
+      \cCompile{\Gamma, \attrC{y} : \tau_1}{\cMon{l}{j}{j}{\kappa_1}{y}}{\tau_1}{e_y} \\
+      \cCompile{\Gamma, \attrC{y} : \tau_1}{\cMon{k}{l}{j}{\{\attrE{e_y}/ x\}\kappa_2}{e \ (\cMon{l}{k}{j}{\kappa_1}{y})}}{\tau_2}{e'} }
+      { \cCompile{\Gamma}{\cMon{k}{l}{j}{\cKDep{\kappa_1}{x}{\kappa_2}}{e}}{\tau_1 \to \tau_2}{\eLam{y:\tau_1}{e'}} }
+
+  \end{mathpar}
+  \caption{Type-Directed Compilation from \langc\ to \lange}
+  \label{fig:compilation}
+\end{figure}
 \begin{theorem}[Type Preservation]
     % If $e \in \texttt{Contracts}$ and $\cTypes{\cGamma}{e}{τ}$ then $\eTypes{\eGammaC}{l}{\mathscr{C}(e)}{\mathscr{C}_t (τ)}{\{\}}$
 \end{theorem}
