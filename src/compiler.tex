@@ -1,6 +1,9 @@
 \chapter{Compiler}
 \label{chap:compiler}
 
+
+\section{Examples}
+
 In this section, we show that contract checking can be lifted into an effect. Assume that a global handler handles every contract checking effects, we can convert a contract program into an effect program. Figure \ref{fig:example-compile} demonstrates a simple compilation for a flat contract. An effect \attrE{check} is added performing the contract checking, and continue with the resumption or blame when the contract is not satisfied. The program, was a number 9, is now wrapped with a handler, and performing the effect check with the original value. The operation must not incur any other effects therefore we can type the resumption \attrE{kont} with an empty effect row. On blame, the positive label \attrC{k} is used.
 
 A function contract is then straightforward from recursive compilation. Its argument is wrapped into a monitor \attrC{mon}, as well as the result of the function. Recursively, we can compile the argument and the function's result into \lange. This introduces (at least) two operations. Higher-order contracts is also a function contract, which we recursively go inside each function and compile. Figure \ref{fig:example-compile-function} demonstrates the unrolling of function contract into single flat contracts and compiling them into their coresponsding operation invocation with their handler.
@@ -66,7 +69,45 @@ $\Downarrow$
 \end{figure}
 
 
-The compilation relies heavily on the type of argument. Therefore, we provide a type-directed compilation from \langc\ to \lange.
+\section{Type-Directed Compilation}
+
+The compilation relies heavily on the type of argument. Therefore, we provide a type-directed compilation from \langc\ to \lange. The compilation is recursive, types are used to form well-typed \lange\ expressions. We define the following theorems for our compiler: Type Preservation, Observable Equivalance, and Blame Preservation. Type Preservation Theorem states that a well-typed program in \langc\ compiles into a well-typed program in \lange\ typed using the same basic type and has no unhandled effects. Observable Equivalance Theorem states that if the \langc\ program reduces to a value, then the compiled \lange\ program reduces to a value also. Blame Preservation Theorem states that if \langc\ program blames a party, then the compiled \lange\ program also blame the same party.
+
+Because \lange\ has different types from \langc, we define $\symtt{T}$ as the type conversion from \cGamma\ to \eGamma. The conversion is simple because \langc\ only has basic type, so we map to the basic type of \lange.
+
+In Figure \ref{fig:compilation}, we provide some interesting compilation rules, other expressions left out should be trivial. Types used in \lange\ that copied from \langc context are assumed to be converted.
+
+\begin{figure}[htbp]
+  \centering
+  \textbf{Environment Translation}
+  \begin{align*}
+    \symtt{T}(\emptyset) \ &\triangleq \ \emptyset \\
+    \symtt{T}(\Gamma, \attrC{x : \tau}) \ &\triangleq \ \symtt{T}(\Gamma), \attrE{x : \tau^*}
+  \end{align*}
+
+  \vspace{1em}
+  \textbf{Type Translation ($\tau \mapsto \tau^*$)}
+  \begin{align*}
+    \attrC{b}^* \ &\triangleq \ \attrE{b} \qquad \text{(where } \attrC{b} \text{ is a basic type like } \attrC{num} \text{)} \\
+    (\attrC{\tau_1 \to \tau_2})^* \ &\triangleq \ \attrE{\tau_1^* \to \tau_2^*}
+  \end{align*}
+  \caption{Type and Environment Translation from \langc\ to \lange}
+  \label{fig:env-translation}
+\end{figure}
+
+\begin{theorem}[Type Preservation]
+    If $\cCompile{\cGamma}{e}{\tau}{e'}$ then $\eTypesC{\eGamma}{e'}{τ^*}{\langle\rangle}$ where $\eGamma = \symtt{T}(\cGamma)$
+\end{theorem}
+
+\begin{theorem}[Observable Equivalance]
+    If $\attrC{e} \cStepMany v$ and $\cCompile{\cdot}{e}{\tau}{e'}$ then $\attrE{e'}\eStepMany v$
+\end{theorem}
+
+\begin{theorem}[Blame Preservation]
+    If $\attrC{e} \cStepMany \cErr{l}{p}$ and $\cCompile{\cdot}{e}{\tau}{e'}$ then $\attrE{e'}\eStepMany \eBlame{p}$
+\end{theorem}
+
+
 
 \begin{figure}[htbp]
   \centering
@@ -105,12 +146,4 @@ The compilation relies heavily on the type of argument. Therefore, we provide a 
   \caption{Type-Directed Compilation from \langc\ to \lange}
   \label{fig:compilation}
 \end{figure}
-\begin{theorem}[Type Preservation]
-    % If $e \in \texttt{Contracts}$ and $\cTypes{\cGamma}{e}{τ}$ then $\eTypes{\eGammaC}{l}{\mathscr{C}(e)}{\mathscr{C}_t (τ)}{\{\}}$
-\end{theorem}
-
-\begin{theorem}[Observable Equivalance]
-If $e \in \texttt{Contracts}$ and $e \rightarrow^* v$ then $\mathscr{C}(e) \rightarrow^* \mathscr{C}(v)$
-\end{theorem}
-
 
