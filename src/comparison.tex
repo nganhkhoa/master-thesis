@@ -1,3 +1,20 @@
 \chapter{Comparison to Racket's contract system}
 \label{chap:compare}
 
+Previously, we described an implementation contract system in OCaml. Our implementation relies heavily on the preprocessor rewriting engine to wrap a value or function with its contract. Guarded values are rewritten into a function to provide blame labels and checked when all labels are provided. In this section we provided a few insight into the Racket's contract system, then compare it to our approach in OCaml. We will see that implementing contract system in OCaml is a challenge compared to Racket due to OCaml's restriction.
+
+\section{Racket's contract system}
+
+The Racket language provides two main functionalities that makes implementing contract system easier: hygenic macros, and chaperone. The contract system of Racket\footnote{\href{https://github.com/racket/racket/tree/master/racket/collects/racket/contract}{https://github.com/racket/racket/tree/master/racket/collects/racket/contract}} is implemented using (hygenic) macros to modify the sourcecode. Afterwards, guarded values are wrapped inside a chaperone. Racket macros allows implementors to manipulate the AST in a more sensible manner during compile time. It replaces the need for a preprocessor, and target specific. Chaperone on the other hand, provides a special run-time object manipulation that is useful for contract system implementation.
+
+A chaperone is an \textit{invisble proxy} over a value. When the value is used, the chaperone intercepts and perform some predefined actions. In the case of software contract, the contract checking is the chaperone action. A chaperone cannot do anything, for such is allowed by impersonator. The chaperone action can throw an exception, which is used to signal a contract violation. Chaperone cannot be used to implement flat contracts, but it can be used to implement function contracts using \texttt{chaperone-procedure}. This function takes a function and a wrapper function, which is applied for every argument, and return value(s). The wrapper function body should follows the (higher-order and dependent) functional contract semantics.
+
+Chaperone is also lazy. A chaperone action on a vector or structure only runs when accessing the element (vector) or member (structure). This can be thought of as an optimization to lazily check until the value is actually needed.
+
+\section{Comparison}
+
+OCaml preprocessor and Racket macros are both used for the sole purpose of rewriting the AST to add contract checking functionalities to the sourcecode, eventhough OCaml provides a more generic system (preprocessor can modify any part of the AST). In both implementations, the guarded value must be wrapped. Racket's chaperone has support for function wrappers, lifting heavy and complex logic into a single function invocation (by \texttt{chaperone-procedure} and its family). OCaml does not have such functionalities, nor can it be implemented on top of the language (judging by Racket's choice of implementation\footnote{Chaperone is implemented as part of the language of Racket}). Therefore, functions are modified to wrapped each arguments and the body (return value).
+
+Our current implementation limits to values (as a whole) and functions. In Racket's contract system, contracts for vectors and structures is also implemented using chaperone to guard an element access (vector), or member access (structure). A chaperone enforces contract lazily, only when an element is accessed or on member access. At the moment, if we use a contract on an array (the OCaml equivalent of Racket's vector), all array values are checked.
+
+Racket's chaperone is multi-shot contract checking, compared to our implementation of one-shot. A chaperone of vector guards its element across mutation. Our current system limits to one time contract checking, an undesired behavior for vectorized contract. We argue that having multi-shot contract checking is hard to achieve in OCaml due to the missing an invisible wrapper.

@@ -1,3 +1,10 @@
 \chapter{Conclusion}
 \label{chap:final}
 
+Our work is the first to use effects for contract checking in a contract system. We introduced a theoretical compiler that can transform a language with native support for contracts into a language with native support for effect handlers. The compiler is proven sound, and semantics are preserved. As a proof of concept we have implemented a minimal contract library in OCaml 5.0+, which has native support for effect handlers. Our library uses attributes to annotate contract similarly to how a contract system would, and transform the AST during compilation using a preprocessor rewriter.
+
+We gave a comparison of our OCaml implementation to Racket's contract system. Through the comparison, our implementation is similar to Racket's. However, Racket's use of chaperone provides better contract checking logic than ours. Moreover, our implementation is limited to one-shot contract checking, and would not be able to handle mutation.
+
+\section{Future Works}
+
+This thesis experiments with effects as contract checking, and has proven that normal contract semantics are represent-able using effect handlers alone. We have not discussed extended models of software contracts such as trace contracts, and effectful contracts, etc... Effectful contracts system integrates contracts for effects. Our work and the effectful contracts system both have effects, investigating whether their contract system can be compiled into a language supporting effect handlers is a future extension. It also follows that trace contracts are implemented if the previous work is feasible since effectful contracts system can be used to implement trace contracts.
