@@ -94,13 +94,16 @@
 \newcommand{\cGamma}{\attrC{Γ}}
 \newcommand{\eGamma}{\attrE{Δ}}
 
+\newcommand{\cHole}{\attrC{\square}}
+\newcommand{\eHole}{\attrE{\square}}
+
 % --- 2. LANGUAGE C MACROS (CONTRACTS) ---
 \newcommand{\cKw}[1]{\attrC{#1}}
 \newcommand{\cTnum}{\attrC{num}}
 \newcommand{\cTbool}{\attrC{bool}}
 \newcommand{\cTcon}[1]{\attrC{con(#1)}}
 \newcommand{\cTarr}[2]{\attrC{#1 \to #2}}
-
+\newcommand{\cFix}[2]{\attrC{\mu#1 . #2}}
 \newcommand{\cLam}[2]{\attrC{\lambda #1. #2}}
 \newcommand{\cMon}[5]{\attrC{mon^{#1,#2}_{#3}(#4, #5)}}
 \newcommand{\cErr}[2]{\attrC{error^{#1}_{#2}}}
@@ -113,17 +116,19 @@
 \newcommand{\cStepMany}{\ \attrC{\longrightarrow^{*}}\ }
 \newcommand{\cStepPlus}{\ \attrC{\longrightarrow^{+}}\ }
 
-\newcommand{\cCompile}[4]{#1 \vdash \attrC{#2} : #3 \twoheadrightarrow \attrE{#4}}
+\newcommand{\cSubst}[3]{\attrC{\{} #1 \attrC{/} \attrC{#2} \attrC{\}} #3}
+
+\newcommand{\cCompile}[4]{#1 \vdash \attrC{#2} : \attrC{#3} \twoheadrightarrow \attrE{#4}}
 
 \newcommand{\eKw}[1]{\attrE{#1}}
 \newcommand{\eBlame}[1]{\eKw{blame} \ \attrE{#1}}
 \newcommand{\eHandle}[2]{\eKw{handle} \ \attrE{#1} \ \attrE{#2}}
 \newcommand{\eHandler}[1]{\eKw{handler} \ \attrE{#1}}
 \newcommand{\ePerform}[2]{\eKw{perform} \ \attrE{#1} \ \attrE{#2}}
+\newcommand{\eFix}[2]{\attrE{\mu \ #1 . #2}}
 \newcommand{\eLam}[2]{\attrE{\lambda} \attrE{#1} . \attrE{#2}}
 \newcommand{\eIf}[3]{\attrE{if \ #1 \ then \ #2 \ else \ #3}}
 \newcommand{\eDot}{\ \attrE{\cdot}\ }
-\newcommand{\eHole}{\attrE{\square}}
 \newcommand{\eStep}{\ \attrE{\rightsquigarrow}\ }
 \newcommand{\eStepMany}{\ \attrE{\rightsquigarrow^{*}}\ }
 \newcommand{\eStepPlus}{\ \attrE{\rightsquigarrow^{+}}\ }

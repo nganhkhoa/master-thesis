@@ -89,9 +89,10 @@ In Figure \ref{fig:compilation}, we provide some interesting compilation rules, 
   \textbf{Type Translation ($\tau \mapsto \tau^*$)}
   \begin{align*}
     \attrC{b}^* \ &\triangleq \ \attrE{b} \qquad \text{(where } \attrC{b} \text{ is a basic type like } \attrC{num} \text{)} \\
-    (\attrC{\tau_1 \to \tau_2})^* \ &\triangleq \ \attrE{\tau_1^* \to \tau_2^*}
+    (\attrC{\tau_1 \to \tau_2})^* \ &\triangleq \ \attrE{\tau_1^* \to \langle\rangle\tau_2^*}
   \end{align*}
-  \caption{Type and Environment Translation from \langc\ to \lange}
+  \caption{Type and Environment Translation from \langc\ to \lange.\\
+  Basic types are converted into basic types in kind system. Function types are computation without any effects. Contract type has no equivalent type in \lange. Context type translation $\symtt{T}$ converts all variables in \langc\ into their equivalent types in \lange.}
   \label{fig:env-translation}
 \end{figure}
 
@@ -112,38 +113,40 @@ In Figure \ref{fig:compilation}, we provide some interesting compilation rules, 
 \begin{figure}[htbp]
   \centering
   \begin{mathpar}
-  \inferrule[C-Var]
-    {\attrC{x} : \tau \in \Gamma}
-    {\cCompile{\Gamma}{x}{\tau}{x}}
+  \inferrule[Compile-Var]
+    {\attrC{x} : \attrC{\tau} \in \cGamma}
+    {\cCompile{\cGamma}{x}{\tau}{x}}
 
-  \inferrule[C-Abs]
-    {\cCompile{\Gamma, \attrC{x} : \tau_1}{e}{\tau_2}{e'}}
-    {\cCompile{\Gamma}{\cLam{x:\tau_1}{e}}{\tau_1 \to \tau_2}{\eLam{x:\tau_1}{e'}}}
+  \inferrule[Compile-Lambda]
+    {\cCompile{\cGamma, \attrC{x} : \attrC{\tau_1}}{e}{\tau_2}{e'}}
+    {\cCompile{\cGamma}{\cLam{x:\tau_1}{e}}{\tau_1 \to \tau_2}{\eLam{x:\tau_1}{e'}}}
 
-  \inferrule[C-App]
-    {\cCompile{\Gamma}{e_1}{\tau_1 \to \tau}{e_1'} \\
-     \cCompile{\Gamma}{e_2}{\tau_1}{e_2'}}
-    {\cCompile{\Gamma}{e_1 \ e_2}{\tau}{e_1' \ e_2'}}
+  \inferrule[Compile-App]
+    {\cCompile{\cGamma}{e_1}{\tau_1 \to \tau}{e_1'} \\
+     \cCompile{\cGamma}{e_2}{\tau_1}{e_2'}}
+    {\cCompile{\cGamma}{e_1 \ e_2}{\tau}{e_1' \ e_2'}}
 
-  \inferrule[C-MonFlat]
-    { \cCompile{\Gamma}{e}{\tau}{e'} \\
+  \inferrule[Compile-MonFlat]
+    { \cCompile{\cGamma}{e}{\tau}{e'} \\
       \attrE{h_\kappa} \triangleq \attrE{\{} \attrE{check_{\kappa} \to f} \attrE{\}} \\
       \attrE{f} \triangleq \eTAbs{\alpha}{ \eLam{x : \alpha}{ \eLam{kont : \alpha \attrE{\to \langle\rangle} \alpha}{ \eIf{\kappa \ x} {\attrE{kont \ x}} {\eBlame{k}} } } } }
-      { \cCompile{\Gamma}{\cMon{k}{l}{j}{\cFlat{\kappa}}{e}}{\tau}{\eHandle{h_\kappa}{(\ePerform{check_{\kappa}}{\tau}\ e')}} }
+      { \cCompile{\cGamma}{\cMon{k}{l}{j}{\cFlat{\kappa}}{e}}{\tau}{\eHandle{h_\kappa}{(\ePerform{check_{\kappa}}{\tau}\ e')}} }
 
-  \inferrule[C-MonFunc]
+  \inferrule[Compile-MonFunc]
     { \text{fresh } \attrC{x} \\
-      \cCompile{\Gamma, \attrC{x} : \tau_1}{\cMon{k}{l}{j}{\kappa_2}{e \ (\cMon{l}{k}{j}{\kappa_1}{x})}}{\tau_2}{e'} }
-    { \cCompile{\Gamma}{\cMon{k}{l}{j}{\kappa_1 \to \kappa_2}{e}}{\tau_1 \to \tau_2}{\eLam{x:\tau_1}{e'}} }
+      \cCompile{\cGamma, \attrC{x} : \attrC{\tau_1}}{\cMon{k}{l}{j}{\kappa_2}{e \ (\cMon{l}{k}{j}{\kappa_1}{x})}}{\tau_2}{e'} }
+    { \cCompile{\cGamma}{\cMon{k}{l}{j}{\kappa_1 \to \kappa_2}{e}}{\tau_1 \to \tau_2}{\eLam{x:\tau_1}{e'}} }
 
-  \inferrule[C-MonDep]
+  \inferrule[Compile-MonDep]
     { \text{fresh } \attrC{y} \\
-      \cCompile{\Gamma, \attrC{y} : \tau_1}{\cMon{l}{j}{j}{\kappa_1}{y}}{\tau_1}{e_y} \\
-      \cCompile{\Gamma, \attrC{y} : \tau_1}{\cMon{k}{l}{j}{\{\attrE{e_y}/ x\}\kappa_2}{e \ (\cMon{l}{k}{j}{\kappa_1}{y})}}{\tau_2}{e'} }
-      { \cCompile{\Gamma}{\cMon{k}{l}{j}{\cKDep{\kappa_1}{x}{\kappa_2}}{e}}{\tau_1 \to \tau_2}{\eLam{y:\tau_1}{e'}} }
+      \cCompile{\cGamma, \attrC{y} : \attrC{\tau_1}}{\cMon{l}{j}{j}{\kappa_1}{y}}{\tau_1}{e_y} \\
+      \cCompile{\cGamma, \attrC{y} : \attrC{\tau_1}}{\cMon{k}{l}{j}{\{\attrE{e_y}/ x\}\kappa_2}{e \ (\cMon{l}{k}{j}{\kappa_1}{y})}}{\tau_2}{e'} }
+      { \cCompile{\cGamma}{\cMon{k}{l}{j}{\cKDep{\kappa_1}{x}{\kappa_2}}{e}}{\tau_1 \to \tau_2}{\eLam{y:\tau_1}{e'}} }
 
   \end{mathpar}
-  \caption{Type-Directed Compilation from \langc\ to \lange}
+  \caption{Type-Directed Compilation from \langc\ to \lange.\\
+  Original types in \langc\ is converted into their equivalent types in \lange\ when referenced.\\
+  \small{Rule Compile-MonDep doesn't work because we can't have a $e_y$ in \lange\ in \langc\ context. How to resolve?. Maybe add a rule to compile contract when needed?}}
   \label{fig:compilation}
 \end{figure}
 

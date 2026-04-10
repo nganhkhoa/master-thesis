@@ -74,48 +74,54 @@ This thesis introduces two languages. To effectively distinguish the languages u
 \begin{figure}[htbp]
   \centering
   \begin{mathpar}
-  \inferrule[VAR]
+  \inferrule[Type-E-X-Val]
     {\attrE{x : \sigma} \in \eGamma}
     {\eTypesV{\eGamma}{x}{\sigma}}
 
-  \inferrule[ABS]
+  \inferrule[Type-E-Lambda]
     {\eTypesC{\eGamma, \attrE{x : \sigma_1}}{e}{\sigma_2}{\epsilon}}
     {\eTypesV{\eGamma}{\eLam{x:\sigma_1}{e}}{\eTArr{\sigma_1}{\epsilon\sigma_2}}}
 
-  \inferrule[VAL]
+  \inferrule[Type-E-Val]
     {\eTypesV{\eGamma}{v}{\sigma}}
     {\eTypesC{\eGamma}{v}{\sigma}{\epsilon}}
 
-  \inferrule[TABS]
+  \inferrule[Type-E-TypeLambda]
     {\eTypesV{\eGamma}{v}{\sigma} \\ \attrE{k} \neq \eKw{lab}}
     {\eTypesV{\eGamma}{\eTAbs{\alpha^k}{v}}{\eTForall{\alpha^k}{\sigma}}}
 
-  \inferrule[APP]
+  \inferrule[Type-E-If]
+    { \eTypesC{\eGamma}{e_1}{bool}{\epsilon} \\
+      \eTypesC{\eGamma}{e_2}{\sigma}{\epsilon} \\
+      \eTypesC{\eGamma}{e_3}{\sigma}{\epsilon} }
+    { \eTypesC{\eGamma}{\eIf{e_1}{e_2}{e_3}}{\sigma}{\epsilon} }
+
+  \inferrule[Type-E-App]
     {\eTypesC{\eGamma}{e_1}{\eTArr{\sigma_1}{\sigma}}{\epsilon} \\
      \eTypesC{\eGamma}{e_2}{\sigma_1}{\epsilon}}
     {\eTypesC{\eGamma}{e_1 \, e_2}{\sigma}{\epsilon}}
 
-  \inferrule[TAPP]
+  \inferrule[Type-E-TypeApp]
     {\eTypesC{\eGamma}{e}{\eTForall{\alpha^k}{\sigma_1}}{\epsilon} \\
      \eWf{\sigma}{k}}
     {\eTypesC{\eGamma}{e[\sigma]}{\sigma_1[\alpha := \sigma]}{\epsilon}}
 
-  \inferrule[PERFORM]
+  \inferrule[Type-E-Perform]
     {\attrE{op : \forall \overline{\alpha} . \sigma_1 \to \sigma_2} \in \attrE{\Sigma}(\attrE{l}) \\
      \attrE{\overline{\alpha}} \notin \text{ftv}(\eGamma)}
     {\eTypesV{\eGamma}{\ePerform{op}{\overline{\sigma}}}{\eTArr{\sigma_1[\overline{\alpha} := \overline{\sigma}]}{\eEff{l}{\epsilon} \, \sigma_2[\overline{\alpha} := \overline{\sigma}]}}}
 
-  \inferrule[OPS]
+  \inferrule[Type-E-Ops]
     {\attrE{op_i : \forall \overline{\alpha} . \sigma_1 \to \sigma_2} \in \attrE{\Sigma}(\attrE{l}) \\
      \attrE{\overline{\alpha}} \notin \text{ftv}(\attrE{\epsilon \, \sigma}) \\
      \eTypesV{\eGamma}{f_i}{\eTForall{\overline{\alpha}}{\eTArr{\sigma_1}{\eTArr{(\eTArr{\sigma_2}{\epsilon\sigma})}{\epsilon\sigma}}}}}
     {\eTypesOps{\eGamma}{\{ op_1 \to f_1, \dots, op_n \to f_n \}}{\sigma}{l}{\epsilon}}
 
-  \inferrule[HANDLER]
+  \inferrule[Type-E-Handler]
     {\eTypesOps{\eGamma}{h}{\sigma}{l}{\epsilon}}
     {\eTypesV{\eGamma}{\eHandler{h}}{\eTArr{(\eTArr{()}{\eEff{l}{\epsilon} \, \sigma})}{\sigma}}}
 
-  \inferrule[HANDLE]
+  \inferrule[Type-E-Handle]
     {\eTypesOps{\eGamma}{h}{\sigma}{l}{\epsilon} \\
      \eTypesC{\eGamma}{e}{\sigma}{\eEff{l}{\epsilon}}}
     {\eTypesC{\eGamma}{\eHandle{h}{e}}{\sigma}{\epsilon}}
@@ -130,27 +136,41 @@ This thesis introduces two languages. To effectively distinguish the languages u
 \begin{figure}[htbp]
   \centering
   \begin{mathpar}
-  \inferrule[App]
+  \inferrule[Step-E-App]
     {\strut}
     {(\eLam{x:\sigma}{e}) \ \attrE{v} \eStep \attrE{e[x := v]}}
 
-  \inferrule[TApp]
+  \inferrule[Step-E-TApp]
     {\strut}
     {(\eTAbs{\alpha^k}{v}) \attrE{[\sigma]} \eStep \attrE{v[\alpha := \sigma]}}
 
-  \inferrule[Handler]
+  \inferrule[Step-E-Handler]
     {\strut}
     {(\eHandler{h}) \ \attrE{v} \eStep \eKw{handle} \ \attrE{h} \eDot \attrE{v \ ()}}
 
-  \inferrule[Return]
+  \inferrule[Step-E-Return]
     {\strut}
     {\eKw{handle} \ \attrE{h} \eDot \attrE{v} \eStep \attrE{v}}
 
-  \inferrule[Perform]
+  \inferrule[Step-E-Perform]
     {\attrE{op} \notin \mathrm{bop}(\attrE{E}) \wedge (\attrE{op \to f}) \in \attrE{h} \\
      \attrE{op : \forall \overline{\alpha} . \sigma_1 \to \sigma_2} \in \attrE{\Sigma}(\attrE{l}) \\
      \attrE{k} = \eLam{x : \sigma_2[\overline{\alpha} := \overline{\sigma}]}{\eKw{handle} \ \attrE{h} \eDot \attrE{E} \eDot \attrE{x}}}
     {\eKw{handle} \ \attrE{h} \eDot \attrE{E} \eDot \ePerform{op}{\overline{\sigma}} \ \attrE{v} \eStep \attrE{f[\overline{\sigma}] \ v \ k}}
+
+  \inferrule[Step-E-Context]
+    { \attrE{e_1} \eStep \attrE{e_2} }
+    { \attrE{E[e_1]} \eStep \attrE{E[e_2]} }
+
+  \inferrule[Step-E-Blame]
+    { \attrE{E} \neq \eHole }
+    { \attrE{E[blame \ k]} \eStep \attrE{blame \ k} }
+
+  \inferrule[Step-E-Multi]
+    { \attrE{e} \eStep \attrE{e_1} \\
+      \attrE{e_1} \eStepMany \attrE{e_2} }
+    { \attrE{e} \eStepMany \attrE{e_2} }
+
   \end{mathpar}
   \caption{Reduction Rules for System $\lange$}
   \label{fig:lange-reduction}
