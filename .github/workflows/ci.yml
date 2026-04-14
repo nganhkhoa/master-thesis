@@ -24,8 +24,9 @@ jobs:
           ./setup.sh
 
       - name: Install Tectonic
-        uses: wtfjoke/setup-tectonic@v3
+        uses: wtfjoke/setup-tectonic@v4
         with:
+          tectonic-version: 0.16.8
           # Uses the latest stable GitHub release of Tectonic
           github-token: ${{ secrets.GITHUB_TOKEN }}
 
