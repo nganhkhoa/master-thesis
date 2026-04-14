@@ -9,6 +9,41 @@ In another spectrum, Effect Handlers are modeled by a combination of row types o
 
 \section{Examples}
 
+In this section, we introduce some examples to breakdown the semantics of Effect Handlers. First we introduce how exceptions can be encoded using effect handlers, then we show how state management can also be encoded using effect handlers. First we define the exception effect:
+
+$\attrE{\Sigma}(exn) = \{ throw : \eTForall{\alpha}{string\to\alpha} \}$
+
+$throw-on-zero = \eLam{x:num}{\eIf{zero?(x)}{\ePerform{throw}{num}\ \text{``must not be zero''}}{x}}$
+
+$h = \{throw \to \attrE{\Lambda \alpha^k.\eLam{msg:string}{\eLam{k}{42}}} \}$
+
+$main = (\eHandle{h}{throw-on-zero\ 0} + 1) + 8$
+
+The program evaluates to $50$ because the argument provided $0$ trigger the $throw$ handler. This handler will \textbf{ignore the current computation}, and return a default value $42$.
+
+Readers familiar with try/catch (Java, Javascript) or try/except (Python) can try to think the handler as beginning a try scope; with $throw$ defined in $h$ as the catch/except scope. When a throw is called, the rest of the current computation is ignored. Using effect handlers, that is equivalent to ignore parameter $k$ in $throw$ and return a default value. Then the code continues outside the handle with the default value and adds $8$. The equivalent code in Python would be in Listing \ref{code:effect-python}.
+
+\begin{listing}
+\begin{minted}{python}
+def throw_on_zero(x):
+  if x == 0:
+    raise Throw("must not be zero")
+  return x
+
+def handle_throw_on_zero():
+  try:
+    return throw_on_zero(0) + 1
+  except Throw(msg):
+    return 42
+
+def main():
+    handle_throw_on_zero() + 8
+\end{minted}
+\caption{Python equivalent example of effect handlers}
+\label{code:effects1}
+\end{listing}
+
+
 \section{Language \lange}
 
 In this section, we introduce \lange, a formal model of the Algebraic Effect Handlers as a model language for our target language for the compiler. Previously mentioned, we have two main choices for the formal language, (i) in the flavour of fine-grain call-by-value or (ii) in the flavour of \systemfe. We have chosen to adapt the (ii) flavour into the formal language due to its evaluation context semantics, which is helpful for our proofs.
@@ -166,7 +201,11 @@ This thesis introduces two languages. To effectively distinguish the languages u
     { \attrE{E} \neq \eHole }
     { \attrE{E[blame \ k]} \eStep \attrE{blame \ k} }
 
-  \inferrule[Step-E-Multi]
+  \inferrule[Step-E-Refl]
+    { \strut }
+    { \attrE{e} \eStepMany \attrE{e} }
+
+  \inferrule[Step-E-Trans]
     { \attrE{e} \eStep \attrE{e_1} \\
       \attrE{e_1} \eStepMany \attrE{e_2} }
     { \attrE{e} \eStepMany \attrE{e_2} }
@@ -176,3 +215,45 @@ This thesis introduces two languages. To effectively distinguish the languages u
   \label{fig:lange-reduction}
 \end{figure}
 \end{singlespace}
+
+\section{Soundness and Correctness}
+
+Our algebraic effects handler system has type soundness by progress () and preservation ().
+
+
+\begin{theorem}[Progress for \lange]
+  \label{theorem:lange-progress}
+  If $\eTypesC{\emptyset}{e_1}{\sigma}{\langle \rangle}$, then either $\attrE{e_1}$ is a value, or there exists an $\attrE{e_2}$ such that $\attrE{e_1} \eStep \attrE{e_2}$.
+\end{theorem}
+
+\begin{theorem}[Preservation for \lange]
+  \label{theorem:lange-preservation}
+  If $\eTypesC{\emptyset}{e_1}{\sigma}{\langle \rangle}$ and $\attrE{e_1} \eStep \attrE{e_2}$, then $\eTypesC{\emptyset}{e_2}{\sigma}{\langle \rangle}$.
+\end{theorem}
+
+Our effect system is also safe, or all effects are handled or specified in the judgement. To express safety of effects, we first define (in Figure \ref{fig:lange-metafunc}), $\lceil \attrE{E} \rceil^l$ extracts all labels in the context; and $\text{bop}(\attrE{E})$ extracts all $\attrE{op}$ in the context.
+
+\begin{figure}
+\[
+  \lceil \attrE{E} \rceil^l = \lceil F_0 \cdot \text{handle } h_1 \cdot F_1 \cdot \dots \cdot \text{handle } h_n \cdot F_n \rceil^l = \langle l_n, \dots, l_1 \rangle \text{ iff } h_i : \Sigma(l_i)
+\]
+
+\begin{align*}
+  \text{bop}(\square) &= \emptyset \\
+  \text{bop}(E \ e) &= \text{bop}(E) \\
+  \text{bop}(v \ E) &= \text{bop}(E) \\
+  \text{bop}(\text{handle} \ h \ E) &= \text{bop}(E) \cup \{ op \mid (op \to f) \in h \}
+\end{align*}
+\caption{Metafunction for context in \lange.}
+\label{fig:lange-metafunc}
+\end{figure}
+
+\begin{lemma}[Well-typed operations are handled]
+  \label{lemma:lange-op-handled}
+If $\eTypesC{\emptyset}{E[\ePerform{op}{\overline{\sigma}} \ v]}{\sigma}{\langle \rangle}$, then $E$ has the form $E_1 \cdot \eHandler{h} \cdot E_2$ with $\attrE{op} \notin \text{bop}(E_2)$ and $\attrE{op \to f} \in \attrE{h}$.
+\end{lemma}
+
+\begin{lemma}[Effects types are meaningful]
+  \label{lemma:lange-types-meaningful}
+If $\eTypesC{\emptyset}{E[\ePerform{op}{\overline{\sigma}} \ v]}{\sigma}{\epsilon}$ with $\attrE{op} \notin \text{bop}(E)$, then $\attrE{op} \in \attrE{\Sigma}(l)$ and $l \in \attrE{\epsilon}$.
+\end{lemma}

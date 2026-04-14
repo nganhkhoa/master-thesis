@@ -146,7 +146,8 @@ In Figure \ref{fig:compilation}, we provide some interesting compilation rules, 
   \end{mathpar}
   \caption{Type-Directed Compilation from \langc\ to \lange.\\
   Original types in \langc\ is converted into their equivalent types in \lange\ when referenced.\\
-  \small{Rule Compile-MonDep doesn't work because we can't have a $e_y$ in \lange\ in \langc\ context. How to resolve?. Maybe add a rule to compile contract when needed?}}
+  \small{Rule Compile-MonDep doesn't work because we can't have a $e_y$ in \lange\ in \langc\ context. How to resolve?. Maybe add a rule to compile contract when needed?}\\
+  \small{Also, we don't make new labels to contract, which we should. But how?}}
   \label{fig:compilation}
 \end{figure}
 

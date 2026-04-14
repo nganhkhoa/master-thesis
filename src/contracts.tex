@@ -147,7 +147,11 @@ This thesis introduces two languages. To effectively distinguish the languages u
     { \attrC{E} \neq \cHole }
     {\attrC{E[\cErr{l}{p}]} \cStep \cErr{l}{p}}
 
-  \inferrule[Step-C-Multi]
+  \inferrule[Step-C-Refl]
+    { \strut }
+    {\attrC{e \cStepMany e} }
+
+  \inferrule[Step-C-Trans]
     { \attrC{e \cStep e_1} \\
       \attrC{e_1 \cStepMany e_2} }
     {\attrC{e \cStepMany e_2} }
