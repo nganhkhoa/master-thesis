@@ -103,7 +103,7 @@ In Figure \ref{fig:compilation}, we provide some interesting compilation rules, 
 
 \begin{theorem}[Type Preservation]
   If $\cCompile{\cGamma}{e}{\tau}{\Sigma}{e'}$ then $\eTypesC{\eGamma}{e'}{τ^*}{\langle\rangle}$
-  where $\symtt{T}(\cGamma) ∈ \eGamma$
+  where $\symtt{T}(\cGamma) \subseteq \eGamma$
 \end{theorem}
 
 \begin{theorem}[Observable Equivalance]
