@@ -81,8 +81,8 @@ In Figure \ref{fig:compilation}, we provide some interesting compilation rules, 
   \centering
   \textbf{Environment Translation}
   \begin{align*}
-    \symtt{T}(\emptyset) \ &\triangleq \ \emptyset \\
-    \symtt{T}(\Gamma, \attrC{x : \tau}) \ &\triangleq \ \symtt{T}(\Gamma), \attrE{x : \tau^*}
+    \symtt{T}(\attrC{\cdot}) \ &\triangleq \ \attrE{\cdot} \\
+    \symtt{T}(\cGamma, \attrC{x : \tau}) \ &\triangleq \ \symtt{T}(\cGamma), \attrE{x : \tau^*}
   \end{align*}
 
   \vspace{1em}
@@ -91,21 +91,27 @@ In Figure \ref{fig:compilation}, we provide some interesting compilation rules, 
     \attrC{b}^* \ &\triangleq \ \attrE{b} \qquad \text{(where } \attrC{b} \text{ is a basic type like } \attrC{num} \text{)} \\
     (\attrC{\tau_1 \to \tau_2})^* \ &\triangleq \ \attrE{\tau_1^* \to \langle\rangle\tau_2^*}
   \end{align*}
-  \caption{Type and Environment Translation from \langc\ to \lange.\\
-  Basic types are converted into basic types in kind system. Function types are computation without any effects. Contract type has no equivalent type in \lange. Context type translation $\symtt{T}$ converts all variables in \langc\ into their equivalent types in \lange.}
+
+  \caption[Type and Environment Translation from \langc\ to \lange]
+  {Type and Environment Translation from \langc\ to \lange\\ \small Basic types
+  are converted into basic types in kind system. Function types are
+  computation without any effects. Contract type has no equivalent type in
+  \lange. Context type translation $\symtt{T}$ converts all variables in \langc\
+  into their equivalent types in \lange.}
   \label{fig:env-translation}
 \end{figure}
 
 \begin{theorem}[Type Preservation]
-    If $\cCompile{\cGamma}{e}{\tau}{e'}$ then $\eTypesC{\eGamma}{e'}{τ^*}{\langle\rangle}$ where $\eGamma = \symtt{T}(\cGamma)$
+  If $\cCompile{\cGamma}{e}{\tau}{\Sigma}{e'}$ then $\eTypesC{\eGamma}{e'}{τ^*}{\langle\rangle}$ where $\eGamma = \symtt{T}(\cGamma)$
 \end{theorem}
 
 \begin{theorem}[Observable Equivalance]
-    If $\attrC{e} \cStepMany v$ and $\cCompile{\cdot}{e}{\tau}{e'}$ then $\attrE{e'}\eStepMany v$
+  If $\attrC{e} \cStepMany \attrC{v}$ and $\cCompile{\cdot}{e}{\tau}{\Sigma}{e'}$ then there
+  exists a $\attrE{v'}$ such that $\attrE{e'}\eStepMany \attrE{v'}$
 \end{theorem}
 
 \begin{theorem}[Blame Preservation]
-    If $\attrC{e} \cStepMany \cErr{l}{p}$ and $\cCompile{\cdot}{e}{\tau}{e'}$ then $\attrE{e'}\eStepMany \eBlame{p}$
+  If $\attrC{e} \cStepMany \cErr{l}{p}$ and $\cCompile{\cdot}{e}{\tau}{\Sigma}{e'}$ then $\attrE{e'}\eStepMany \eBlame{p}$
 \end{theorem}
 
 
@@ -115,36 +121,52 @@ In Figure \ref{fig:compilation}, we provide some interesting compilation rules, 
   \begin{mathpar}
   \inferrule[Compile-Var]
     {\attrC{x} : \attrC{\tau} \in \cGamma}
-    {\cCompile{\cGamma}{x}{\tau}{x}}
+    {\cCompile{\cGamma}{x}{\tau}{\{\}}{x}}
 
   \inferrule[Compile-Lambda]
-    {\cCompile{\cGamma, \attrC{x} : \attrC{\tau_1}}{e}{\tau_2}{e'}}
-    {\cCompile{\cGamma}{\cLam{x:\tau_1}{e}}{\tau_1 \to \tau_2}{\eLam{x:\tau_1}{e'}}}
+    {\cCompile{\cGamma, \attrC{x} : \attrC{\tau_1}}{e}{\tau_2}{\Sigma}{e'}}
+    {\cCompile{\cGamma}{\cLam{x:\tau_1}{e}}{\tau_1 \to \tau_2}{\Sigma}{\eLam{x:\tau_1}{e'}}}
 
   \inferrule[Compile-App]
-    {\cCompile{\cGamma}{e_1}{\tau_1 \to \tau}{e_1'} \\
-     \cCompile{\cGamma}{e_2}{\tau_1}{e_2'}}
-    {\cCompile{\cGamma}{e_1 \ e_2}{\tau}{e_1' \ e_2'}}
+    {\cCompile{\cGamma}{e_1}{\tau_1 \to \tau}{\Sigma_1}{e_1'} \\
+     \cCompile{\cGamma}{e_2}{\tau_1}{\Sigma_2}{e_2'}}
+    {\cCompile{\cGamma}{e_1 \ e_2}{\tau}{\Sigma_1 \cup \Sigma_2}{e_1' \ e_2'}}
 
   \inferrule[Compile-MonFlat]
-    { \cCompile{\cGamma}{e}{\tau}{e'} \\
+    { \cCompile{\cGamma}{e}{\tau}{\Sigma}{e'} \\
       \attrE{h_\kappa} \triangleq \attrE{\{} \attrE{check_{\kappa} \to f} \attrE{\}} \\
-      \attrE{f} \triangleq \eTAbs{\alpha}{ \eLam{x : \alpha}{ \eLam{kont : \alpha \attrE{\to \langle\rangle} \alpha}{ \eIf{\kappa \ x} {\attrE{kont \ x}} {\eBlame{k}} } } } }
-      { \cCompile{\cGamma}{\cMon{k}{l}{j}{\cFlat{\kappa}}{e}}{\tau}{\eHandle{h_\kappa}{(\ePerform{check_{\kappa}}{\tau}\ e')}} }
+      \attrE{f} \triangleq \eTAbs{\alpha}{ \eLam{x : \alpha}{ \eLam{kont :
+      \alpha \attrE{\to \langle\rangle} \alpha}{ \eIf{\kappa \ x} {\attrE{kont \
+      x}} {\eBlame{k}} } } } \\
+      \attrE{l} \triangleq \{\attrE{check_{\kappa}} : \eTAbs{\alpha}{α \to (α
+      \to \langle \rangle \alpha)\to \langle\rangle α} \}}
+      {
+        \cCompile{\cGamma}{\cMon{k}{l}{j}{\cFlat{\kappa}}{e}}{\tau}{\Sigma
+        \cup \{l\}}{\eHandle{h_\kappa}{(\ePerform{check_{\kappa}}{\tau}\ e')}} }
 
   \inferrule[Compile-MonFunc]
-    { \text{fresh } \attrC{x} \\
-      \cCompile{\cGamma, \attrC{x} : \attrC{\tau_1}}{\cMon{k}{l}{j}{\kappa_2}{e \ (\cMon{l}{k}{j}{\kappa_1}{x})}}{\tau_2}{e'} }
-    { \cCompile{\cGamma}{\cMon{k}{l}{j}{\kappa_1 \to \kappa_2}{e}}{\tau_1 \to \tau_2}{\eLam{x:\tau_1}{e'}} }
+    { \attrC{x} ∉ \cGamma \\
+      \cCompile{\cGamma, \attrC{x} : \attrC{\tau_1}}{\cMon{k}{l}{j}{\kappa_2}{e
+      \ (\cMon{l}{k}{j}{\kappa_1}{x})}}{\tau_2}{\Sigma}{e'} }
+    { \cCompile{\cGamma}{\cMon{k}{l}{j}{\kappa_1 \to \kappa_2}{e}}{\tau_1 \to
+    \tau_2}{\Sigma}{\eLam{x:\tau_1}{e'}} }
 
   \inferrule[Compile-MonDep]
-    { \text{fresh } \attrC{y} \\
-      \cCompile{\cGamma, \attrC{y} : \attrC{\tau_1}}{\cMon{l}{j}{j}{\kappa_1}{y}}{\tau_1}{e_y} \\
-      \cCompile{\cGamma, \attrC{y} : \attrC{\tau_1}}{\cMon{k}{l}{j}{\{\attrE{e_y}/ x\}\kappa_2}{e \ (\cMon{l}{k}{j}{\kappa_1}{y})}}{\tau_2}{e'} }
-      { \cCompile{\cGamma}{\cMon{k}{l}{j}{\cKDep{\kappa_1}{x}{\kappa_2}}{e}}{\tau_1 \to \tau_2}{\eLam{y:\tau_1}{e'}} }
+    { \attrC{y},\attrC{\delta_y} ∉ \cGamma \\
+      \cCompile{\cGamma, \attrC{y} :
+      \attrC{\tau_1}}{\cMon{l}{j}{j}{\kappa_1}{y}}{\tau_1}{\Sigma_1}{e_y} \\
+      \cCompile{\cGamma, \attrC{y} :
+      \attrC{\tau_1}}{\cMon{k}{l}{j}{\{\delta_y/ x\}\kappa_2}{e \
+      (\cMon{l}{k}{j}{\kappa_1}{y})}}{\tau_2}{\Sigma_2}{e'} \\
+      \attrE{e''} = Replace(\attrE{e'}, \delta_y, \attrE{e_y})}
+      {
+        \cCompile{\cGamma}{\cMon{k}{l}{j}{\cKDep{\kappa_1}{x}{\kappa_2}}{e}}{\tau_1
+        \to \tau_2}{\Sigma_1 \cup \Sigma_2}{\eLam{y:\tau_1}{e''}} }
 
   \end{mathpar}
-  \caption{Type-Directed Compilation from \langc\ to \lange.\\
+  \caption[Type-Directed Compilation from \langc\ to \lange]
+  {Type-Directed Compilation from \langc\ to \lange\\
+  \small
   Original types in \langc\ is converted into their equivalent types in \lange\ when referenced.\\
   \small{Rule Compile-MonDep doesn't work because we can't have a $e_y$ in \lange\ in \langc\ context. How to resolve?. Maybe add a rule to compile contract when needed?}\\
   \small{Also, we don't make new labels to contract, which we should. But how?}}

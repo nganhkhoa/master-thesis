@@ -1,18 +1,95 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>LaTeX Live: Anchor-Locked</title>
+    <title>LaTeX Live: Persistent State</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf_viewer.min.css">
+
     <style>
-        body { margin: 0; background: #2b2b2b; display: flex; justify-content: center; font-family: sans-serif; }
-        #viewer-container { width: 100%; height: 100vh; overflow-y: auto; scroll-behavior: auto; }
-        .page-wrapper { margin: 20px auto; box-shadow: 0 0 15px rgba(0,0,0,0.3); background: white; display: block; position: relative; }
-        canvas { display: block; max-width: 100%; height: auto; }
-        .page-label { position: absolute; top: -25px; left: 0; color: #ccc; font-size: 12px; }
+        body {
+            margin: 0;
+            background: #2b2b2b;
+            display: flex;
+            justify-content: center;
+            font-family: sans-serif;
+        }
+        #viewer-container {
+            width: 100%;
+            height: 100vh;
+            overflow-y: auto;
+            scroll-behavior: auto;
+            padding-bottom: 70px;
+        }
+        .page-wrapper {
+            margin: 20px auto;
+            box-shadow: 0 0 15px rgba(0,0,0,0.3);
+            background: white;
+            display: block;
+            position: relative;
+        }
+        canvas {
+            display: block;
+            max-width: 100%;
+            height: auto;
+        }
+        .textLayer {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            overflow: hidden;
+            line-height: 1.0;
+        }
+
+        /* Controls Styling */
+        #controls {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(30, 30, 30, 0.85);
+            padding: 10px 20px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.5);
+            z-index: 1000;
+        }
+        .control-group { display: flex; align-items: center; gap: 10px; }
+        .control-group.divider { border-left: 1px solid #555; padding-left: 20px; }
+        #controls button {
+            background: #4a4a4a; color: white; border: none; padding: 6px 12px;
+            border-radius: 4px; cursor: pointer; font-size: 16px; font-weight: bold;
+            transition: background 0.2s;
+        }
+        #controls button:hover { background: #666; }
+        #controls span, #controls input { color: white; font-family: monospace; font-size: 16px; }
+        #page-input {
+            width: 40px; text-align: center; background: #1e1e1e; border: 1px solid #555;
+            border-radius: 4px; padding: 4px;
+        }
+        #page-input::-webkit-outer-spin-button,
+        #page-input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+        #page-input[type=number] { -moz-appearance: textfield; }
     </style>
 </head>
 <body>
     <div id="viewer-container"></div>
+
+    <div id="controls">
+        <div class="control-group">
+            <button onclick="zoomOut()">-</button>
+            <span id="zoom-level">100%</span>
+            <button onclick="zoomIn()">+</button>
+        </div>
+        <div class="control-group divider">
+            <span>Page</span>
+            <input type="number" id="page-input" value="1" min="1" onchange="jumpToPage()">
+            <span>/ <span id="total-pages">?</span></span>
+        </div>
+    </div>
 
     <script>
         const url = 'build/default/default.pdf';
@@ -20,54 +97,135 @@
         pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
 
         const container = document.getElementById('viewer-container');
-        let currentPage = 1;
+        const zoomLabel = document.getElementById('zoom-level');
+        const pageInput = document.getElementById('page-input');
+        const totalPagesLabel = document.getElementById('total-pages');
 
-        // Track which page is currently in view
+        let currentPage = 1;
+        let totalPages = 1;
+        let currentScale = parseFloat(localStorage.getItem('pdf_zoom_scale')) || 2.5;
+
+        // --- State Persistence: Scroll Position ---
+        let scrollThrottle;
+        container.addEventListener('scroll', () => {
+            if (!scrollThrottle) {
+                scrollThrottle = setTimeout(() => {
+                    localStorage.setItem('pdf_scroll_pos', container.scrollTop);
+                    scrollThrottle = null;
+                }, 150); // Throttled at 150ms to prevent heavy I/O
+            }
+        });
+
+        // Track page strictly for UI updating, no URL hashing
         const observer = new IntersectionObserver((entries) => {
             entries.forEach(entry => {
                 if (entry.isIntersecting && entry.intersectionRatio > 0.5) {
                     currentPage = parseInt(entry.target.dataset.pagenum);
-                    window.location.hash = `page=${currentPage}`;
+                    pageInput.value = currentPage;
                 }
             });
         }, { threshold: 0.5 });
 
+        // --- Navigation ---
+        function jumpToPage() {
+            let p = parseInt(pageInput.value);
+            if (isNaN(p) || p < 1) p = 1;
+            if (p > totalPages) p = totalPages;
+
+            const targetEl = document.getElementById(`p${p}`);
+            if (targetEl) {
+                targetEl.scrollIntoView({ behavior: 'smooth' });
+                // Immediate state sync after jumping
+                setTimeout(() => {
+                    localStorage.setItem('pdf_scroll_pos', container.scrollTop);
+                }, 500);
+            } else {
+                pageInput.value = currentPage;
+            }
+        }
+
+        pageInput.addEventListener('keypress', function (e) {
+            if (e.key === 'Enter') {
+                jumpToPage();
+                pageInput.blur();
+            }
+        });
+
+        // --- Zooming ---
+        function zoomIn() {
+            currentScale += 0.25;
+            saveZoomAndRender();
+        }
+
+        function zoomOut() {
+            if (currentScale <= 0.5) return;
+            currentScale -= 0.25;
+            saveZoomAndRender();
+        }
+
+        function saveZoomAndRender() {
+            localStorage.setItem('pdf_zoom_scale', currentScale);
+            // Optional: You could mathematically scale 'pdf_scroll_pos' here
+            // to keep the exact same visual center, but standard behavior is fine.
+            renderPDF();
+        }
+
+        // --- Rendering ---
         async function renderPDF() {
-            // Read page from Hash if available
-            const targetPage = parseInt(window.location.hash.replace('#page=', '')) || currentPage;
+            zoomLabel.innerText = Math.round(currentScale * 100) + '%';
 
             const loadingTask = pdfjsLib.getDocument(`${url}?t=${Date.now()}`);
             const pdfDoc = await loadingTask.promise;
 
+            totalPages = pdfDoc.numPages;
+            totalPagesLabel.innerText = totalPages;
             container.innerHTML = '';
 
             for (let i = 1; i <= pdfDoc.numPages; i++) {
                 const page = await pdfDoc.getPage(i);
-                const viewport = page.getViewport({scale: 2.5});
+                const viewport = page.getViewport({scale: currentScale});
 
                 const wrapper = document.createElement('div');
                 wrapper.className = 'page-wrapper';
                 wrapper.dataset.pagenum = i;
                 wrapper.id = `p${i}`;
+
+                // Deterministic height allows correct scroll offset calculation before render completes
                 wrapper.style.width = viewport.width + 'px';
                 wrapper.style.height = viewport.height + 'px';
 
                 const canvas = document.createElement('canvas');
                 canvas.height = viewport.height;
                 canvas.width = viewport.width;
+                const context = canvas.getContext('2d');
+
+                const textLayerDiv = document.createElement('div');
+                textLayerDiv.className = 'textLayer';
+                textLayerDiv.style.setProperty('--scale-factor', viewport.scale);
 
                 wrapper.appendChild(canvas);
+                wrapper.appendChild(textLayerDiv);
                 container.appendChild(wrapper);
                 observer.observe(wrapper);
 
-                // Use non-blocking render
-                page.render({canvasContext: canvas.getContext('2d'), viewport: viewport});
+                const renderContext = { canvasContext: context, viewport: viewport };
+                const renderTask = page.render(renderContext);
+
+                renderTask.promise.then(async () => {
+                    const textContent = await page.getTextContent();
+                    pdfjsLib.renderTextLayer({
+                        textContentSource: textContent,
+                        container: textLayerDiv,
+                        viewport: viewport,
+                        textDivs: []
+                    });
+                });
             }
 
-            // After DOM is built, jump to the saved page
-            const targetEl = document.getElementById(`p${targetPage}`);
-            if (targetEl) {
-                targetEl.scrollIntoView();
+            // Restore exact scroll state after layout is constructed
+            const savedScroll = localStorage.getItem('pdf_scroll_pos');
+            if (savedScroll) {
+                container.scrollTop = parseFloat(savedScroll);
             }
         }
 

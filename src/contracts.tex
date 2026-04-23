@@ -1,50 +1,41 @@
 \chapter{Software Contracts}
 \label{chap:contracts}
 
-Software Contracts places checks, dubbed contracts, into the program. When the value is used, it is checked against the contracts and issue an error. The first proposal of this feature is the Effiel language \cite{meyer1992eiffel}, with the support for first-order function. Higher-order function and dependent function support \cite{findler2002contracts}, Trace contracts \cite{MOY_FELLEISEN_2023}, are useful functional addition on top of the base contracts. The contracts system must be correct, across the line of research the following theorems have been used to ensure correctness.
+Software Contracts place contracts, dynamic runtime assertions, into the program.
 
-\begin{itemize}
-  \item Contract Erasure
-
-Erasing the contracts should not modify the semantics.
-
-  \item Blame Correctness (under complete monitoring \cite{completemonitors})
-
-If an error is issued, the correct party is blamed.
-
-\end{itemize}
+When the value is used, it is validated against the contracts and issue an error. The first proposal of this feature is the Effiel language \cite{meyer1992eiffel}, with the support for first-order function. Higher-order function and dependent function support \cite{findler2002contracts}, trace contracts \cite{MOY_FELLEISEN_2023}, are useful functional addition on top of the base contracts.
 
 \section{Examples}
 
 \section{Language \langc}
 
-In this section, we reintroduce CPCF \cite{cpcf,completemonitors} as \langc. This language has been proven with the following theorems:
+In this section, we reintroduce CPCF \cite{cpcf,completemonitors} as \langc.
 
-\begin{itemize}
-  \item Contract Erasure
+% \begin{itemize}
+%   \item Contract Erasure
 
-    Given a contract erasure function $\mathscr{E}$ recursively remove the contract from the monitor $\cKw{mon}$ expression, then
+%     Given a contract erasure function $\mathscr{E}$ recursively remove the contract from the monitor $\cKw{mon}$ expression, then
 
-    If $e \cStepMany v$ then $\mathscr{E}(e) \cStepMany v$, for value $v$
+%     If $e \cStepMany v$ then $\mathscr{E}(e) \cStepMany v$, for value $v$
 
-  \item Complete Monitors
+%   \item Complete Monitors
 
-    A contract semantics $m$ specifies a complete monitor if for all well typed terms $e_0$ such that $\varnothing; l_0 \Vdash e_0$,
+%     A contract semantics $m$ specifies a complete monitor if for all well typed terms $e_0$ such that $\varnothing; l_0 \Vdash e_0$,
 
-    \begin{itemize}
-        \item $e_0 \xrightarrow{m}_* v$ or,
-        \item for all $e_1$ such that $e_0 \xrightarrow{m}_* e_1$ there exists $e_2$ such that $e_1 \xrightarrow{m} e_2$ or,
-        \item $e_0 \xrightarrow{m}^* e_1 \xrightarrow{m}_* \mathsf{error}_j^k$ and there is at least an $e_1$ of the form $E^l[\mathsf{mon}_j^{k,l}(\lfloor \mathsf{flat}(e) \rfloor^{\bar{l}}, v)]$ and for all such terms $e_1$, $v = |v_1|^k$ and $k \in \bar{l}$.
-    \end{itemize}
+%     \begin{itemize}
+%         \item $e_0 \xrightarrow{m}_* v$ or,
+%         \item for all $e_1$ such that $e_0 \xrightarrow{m}_* e_1$ there exists $e_2$ such that $e_1 \xrightarrow{m} e_2$ or,
+%         \item $e_0 \xrightarrow{m}^* e_1 \xrightarrow{m}_* \mathsf{error}_j^k$ and there is at least an $e_1$ of the form $E^l[\mathsf{mon}_j^{k,l}(\lfloor \mathsf{flat}(e) \rfloor^{\bar{l}}, v)]$ and for all such terms $e_1$, $v = |v_1|^k$ and $k \in \bar{l}$.
+%     \end{itemize}
 
-    Where $\Gamma; l \Vdash e$ is a well-formedness judgement; $|e|^k$ denotes ownership as specified in \cite{completemonitors}.
-\end{itemize}
+%     Where $\Gamma; l \Vdash e$ is a well-formedness judgement; $|e|^k$ denotes ownership as specified in \cite{completemonitors}.
+% \end{itemize}
 
-Figure \ref{fig:langc} describes the language of \langc, with its type rules defined in \ref{fig:langc-type} excluding common type rules in \textit{PCF}. Values are basic number, booleans, and functions. Expressions are the usual forms of CPCF, with an extra expression $\cMon{k}{l}{j}{\kappa}{e}$ that guards the expression $e$ with a contract $\kappa$. A contract can be a flat contract $\cFlat{c}$, which can only be applied to a value, and verify the value against function $c$; a function contract $\cKFunc{\kappa_1}{\kappa_2}$, which guards the input arguments with a domain contract $\kappa_1$ and guards the output/return value with a range contract $\kappa_2$. Dependent contract $\cKDep{\kappa_1}{x: τ} {\kappa_2}$ behaves similarly to a function contract but the range contract can use the input value.
+Figure \ref{fig:langc-syntax} describes the language of \langc, with its type rules defined in \ref{fig:langc-typing} excluding common type rules in \textit{PCF}. Values are basic number, booleans, and functions. Expressions are the usual forms of CPCF, with an extra expression $\cMon{k}{l}{j}{\kappa}{e}$ that guards the expression $\attrC{e}$ with a contract $\attrC{\kappa}$. A contract can be a flat contract $\cFlat{c}$, which can only be applied to a value, and verify the value against function $\attrC{c}$; a function contract $\cKFunc{\kappa_1}{\kappa_2}$, which guards the input arguments with a domain contract $\attrC{\kappa_1}$ and guards the output/return value with a range contract $\attrC{\kappa_2}$. Dependent contract $\cKDep{\kappa_1}{x: τ} {\kappa_2}$ behaves similarly to a function contract but the range contract can use the input value. $\cErr{l}{p}$ signals the location of the contract $\attrC{l}$ and the party to blame $\attrC{p}$. Error is not a surface syntax of \langc, it only happens during evaluation.
 
 Reduction rules for \langc\ is provided in Figure \ref{fig:langc-reduction}. A flat contract monitor expression reduces into an if expression checking if the value meets the contract predicate. Else, the entire program reduces to an error. A function contract monitor expression reduces into a function where its argument are wrapped with the domain contract, and the application result is wrapped with the range contract. Argument contract labels are changed for blame correctness. Dependent contract is similarly reduces like a function contract, but the range contract has the input value wrapped up with the domain contract with different labels set. The labels set used in dependent contract is by the indy semantics, which has been proven about its correctness \cite{completemonitors}.
 
-This thesis introduces two languages. To effectively distinguish the languages used, we have chosen different typeset styling for both languages. \langc\ will be typeset in \attrC{blue\ san-serif}. The reduction arrow of \langc\ is $\cStep$.
+This thesis introduces two languages. To effectively distinguish the languages used, we have chosen different typeset styling for both languages. \langc\ will be typeset in \attrC{blue\ san-serif} with $\cStep$ is the reduction arrow, $\cGamma$ is the typing context.
 
 \begin{singlespace}
 % ==========================================

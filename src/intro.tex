@@ -1,21 +1,97 @@
 \chapter{Introduction}
 
-\section{Software Contracts}
+Software contracts, or \textit{behavioral contracts}, allow programmers to
+attach assertions to values, and functions. These assertions are runtime
+guarantees, on violation, an error is thrown, blaming the violating party.
+Contracts are most useful when placed on a function, enforcing the function's
+input and output values. While first-order functional contracts are useful,
+they are too simple. Higher-order functional contracts allows programmers to
+enforce contracts on higher-order functions. These types of contracts are
+established in the literature for at least two decades. Recently, the focus
+shifts to contracts for side effects, with the proposal for effectful
+contracts \cite{10.1145/3632930}.
 
-\section{Algebraic Effect Handlers}
 
-\section{Contracts Checking as Effects}
+Effectful contracts use effect handlers, a uniform solution to declare and
+handle side-effects (exceptions, state management). Effectful contracts have
+been proven to cover a wide range of effects discussed in the literature.
+
+\section{Contracts checking}
+
+Software contracts, despite its usefulness, is not natively support in many
+programming languages. Racket and D-lang are two languages that have native
+support for contracts. C++, or its 2026 version, has some basic support for
+contracts. Python has a proposal (PEP
+316\footnote{\href{https://peps.python.org/pep-0316/}{https://peps.python.org/pep-0316/}}),
+but it was deferred since 2003.
+
+Racket implements contracts by code rewriting with macros. Moreover, protected
+values and functions are wrapped inside a native proxy object (chaperone).
+Native support allows Racket to implement higher-order contracts.
+
+Without native support, the community have come up with strategies for implementing
+software contracts. Java's libraries (C4J\footnote{\href{https://c4j-team.github.io/C4J/index.html}{https://c4j-team.github.io/C4J/index.html}}
+and
+Cofoja\footnote{\href{https://github.com/nhatminhle/cofoja}{https://github.com/nhatminhle/cofoja}}),
+define contracts using Java's annotations and rewrite the bytecode during
+compilation to add contract checking code. Similar strategies are used by Rust
+(contracts\footnote{\href{https://crates.io/crates/contracts}{https://crates.io/crates/contracts}})
+and Golang (gocontracts\footnote{\href{https://github.com/Parquery/gocontracts}{https://github.com/Parquery/gocontracts}})
+libraries, where the code is rewritten to add pre and post condition code
+checking to a function.
+
+Python has support for first-class functions, and \textit{decorators}.
+Decorators syntactically wraps a function using another function while
+the original function name can still be referenced. This feature is used in many
+Python libraries
+(icontract\footnote{\href{https://github.com/Parquery/icontract}{https://github.com/Parquery/icontract}},
+deal\footnote{\href{https://github.com/life4/deal}{https://github.com/life4/deal}},
+etc.) to implement functional contracts.
+
+Without native contract support, functional and dependent contracts are
+feasible. While higher-order contracts remains a challenge to implement.
+
+\section{Contracts checking as effects}
+
+The use of effect handlers in conjunction with software contracts is a novel
+direction. During our experiments we have identify that effect handlers can also
+be used for contract checking. This observation led to the basis for this
+thesis, algebraic effect handlers are sufficient to implement a basic contract
+system on top of the language.
+
+Our proposal lifts contract checking code into an effect handler, and wraps
+value usages into an effect invocation. This conversion realizes the idea of
+``contract checking as effects'', where effects are used to handle contracts
+instead of basic code wrapping.
+
+\section{Contributions}
 
 % Algebraic Effects are sufficient to implement a basic Contract system on top of language.
 
-% - Implenetation in Ocaml
+% - Implementation in Ocaml
 % - A use case of the contract system
 % - A model as a blueprint to explain sdesign
 % - Basic properties of that model
 % - Comparision with Racket contract system
 
-\section{Contributions}
+This thesis explores the ``contract checking as effects'' approach to implementing
+software contracts. Through experiments, we show that this approach accomodates
+functional contracts, dependent contracts, and the challenging higher-order
+contracts. This serves as the basis to implement contract checking code for
+effectful contracts.
 
-Our work demonstrates that effect handlers can be used to implement software contracts, proven by proving a theoretical compiler, and an accompanying proof of concept in OCaml. Our OCaml implementation is available on Github\footnote{\href{https://github.com/nganhkhoa/conteff}{https://github.com/nganhkhoa/conteff}}.
+Our claim is proven through a formal model, and an implementation in
+OCaml\footnote{\href{https://github.com/nganhkhoa/conteff}{https://github.com/nganhkhoa/conteff}}.
+The formal model is a compilation from CPCF, a language with contracts, to (slightly
+modified) System $F^\epsilon$, a language with effect handlers. We proved that
+our compilation remains the semantic behavior from CPCF to System $F^\epsilon$.
 
-The rest of the thesis is organized as follows. In Chapter \ref{chap:contracts} and Chapter \ref{chap:effects} we introduced the formal languages of Contracts as the source language and Effects as the target language after compilation. In Chapter \ref{chap:compiler}, we discuss a theoretical compiler on the formal languages. The OCaml language is introduced in Chapter \ref{chap:ocaml} and an implementation of the compiler is detailed in Chapter \ref{chap:implementation}. We compare our design and implementation by comparison with the Racket contract system in Chapter \ref{chap:compare}. Finally, we conclude our remarks in Chapter \ref{chap:final}.
+The rest of the thesis is organized as follows: Chapter \ref{chap:contracts}
+and Chapter \ref{chap:effects} introduces the two formal languages \langc\,
+and \lange; Chapter \ref{chap:compiler} discusses a theoretical compiler from
+\langc\ to \lange\ as a demonstration to ``contract checking as effects''; Chapter
+\ref{chap:ocaml} introduces the OCaml language and its native support for effect
+handlers; Chapter \ref{chap:implementation} provides the implementation of the
+theoretical compiler in OCaml using PPX rewritter; Chapter \ref{chap:compare}
+compares our implementation in OCaml to the Racket's contract system; Chapter
+\ref{chap:final} concludes our remarks.

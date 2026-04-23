@@ -9,40 +9,6 @@ In another spectrum, Effect Handlers are modeled by a combination of row types o
 
 \section{Examples}
 
-In this section, we introduce some examples to breakdown the semantics of Effect Handlers. First we introduce how exceptions can be encoded using effect handlers, then we show how state management can also be encoded using effect handlers. First we define the exception effect:
-
-$\attrE{\Sigma}(exn) = \{ throw : \eTForall{\alpha}{string\to\alpha} \}$
-
-$throw-on-zero = \eLam{x:num}{\eIf{zero?(x)}{\ePerform{throw}{num}\ \text{``must not be zero''}}{x}}$
-
-$h = \{throw \to \attrE{\Lambda \alpha^k.\eLam{msg:string}{\eLam{k}{42}}} \}$
-
-$main = (\eHandle{h}{throw-on-zero\ 0} + 1) + 8$
-
-The program evaluates to $50$ because the argument provided $0$ trigger the $throw$ handler. This handler will \textbf{ignore the current computation}, and return a default value $42$.
-
-Readers familiar with try/catch (Java, Javascript) or try/except (Python) can try to think the handler as beginning a try scope; with $throw$ defined in $h$ as the catch/except scope. When a throw is called, the rest of the current computation is ignored. Using effect handlers, that is equivalent to ignore parameter $k$ in $throw$ and return a default value. Then the code continues outside the handle with the default value and adds $8$. The equivalent code in Python would be in Listing \ref{code:effect-python}.
-
-\begin{listing}
-\begin{minted}{python}
-def throw_on_zero(x):
-  if x == 0:
-    raise Throw("must not be zero")
-  return x
-
-def handle_throw_on_zero():
-  try:
-    return throw_on_zero(0) + 1
-  except Throw(msg):
-    return 42
-
-def main():
-    handle_throw_on_zero() + 8
-\end{minted}
-\caption{Python equivalent example of effect handlers}
-\label{code:effects1}
-\end{listing}
-
 
 \section{Language \lange}
 
@@ -50,7 +16,11 @@ In this section, we introduce \lange, a formal model of the Algebraic Effect Han
 
 We adopt and extend the language of \systemfe\ such that it can support all expressions available to \langc, including number type, binary operations, and if expression. We also introduce a new expression \eBlame{p} blaming the party \attrE{p}.
 
-The language is polymorphic, with higher-kinded type system where effect is treated as a different kind from basic type, where in traditional effect type system, they are expressed in computational type. Effects are represented using row types, each row is indexed by a label. The environment of effect labels $\attrE{\Sigma}$ maps each labels to operations.
+The language is polymorphic, with higher-kinded type system where effect is
+treated as a different kind from basic type, where in traditional effect type
+system, they are expressed as computational type. Effects are represented using
+row types, each row is indexed by a label. The environment of effect labels
+$\attrE{\Sigma}$ maps each labels to operations.
 
 Programmers can define operations to be handled by rows of \attrE{h}, consisting of operation names, and their behaviors. A handler is also a value, and can be applied with a function ($\eHandler{h} \ \attrE{f}$) which a shorthand to a handle expression with $\attrE{f}$ applied to unit. In general, $\eHandle{h}{e}$ is used to run $\attrE{e}$ with effect handler $\attrE{h}$. During evaluation of $\attrE{e}$, an operation can be invoked by applying $\ePerform{op}{\sigma}$ to a value. If $\attrE{op}$ is declared in any handler of the current context, then the operation is handled using the closest handler. Because we define \lange\ well-typedness as no unhandled effects, there is no such case that an operation is undeclared once the program is well-typed.
 
@@ -60,7 +30,10 @@ Type judgement $\eTypesC{\eGamma}{e}{\sigma}{\epsilon}$ keeps a list of effects 
 
 Following \cite{xie2020effect}, we adopt the \textit{dot notation} to decompose and compose evaluation contexts, as defined in Figure \ref{fig:lange-dot}. We would write $v \cdot \text{handle } h \cdot E \cdot e$ as a shorthand for $v \, (\text{handle } h \, (E[e]))$.
 
-This thesis introduces two languages. To effectively distinguish the languages used, we have chosen different typeset styling for both languages. \lange\ will be typeset in \attrE{red\ serif}. The reduction arrow of \lange\ is $\eStep$.
+This thesis introduces two languages. To effectively distinguish the languages
+used, we have chosen different typeset styling for both languages. \lange\ will
+be typeset in \attrE{red\ serif} with  $\eStep$ is the reduction arrow, and
+$\eGamma$ is the typing context.
 
 \begin{singlespace}
 
@@ -85,7 +58,7 @@ This thesis introduces two languages. To effectively distinguish the languages u
 \begin{figure}[h]
   \centering
   \begin{tabular}{llll}
-    Types       & $\attrE{\sigma}$ & $::=$ & $\attrE{\alpha^k} \mid \attrE{c^k \ \sigma \dots \sigma} \mid \attrE{\sigma \to \epsilon\sigma} \mid \attrE{\forall \alpha^k. \sigma}$ \\
+    Types       & $\attrE{\sigma}$ & $::=$ & $\attrE{num} \mid \attrE{bool} \mid \attrE{\alpha^k} \mid \attrE{c^k \ \sigma \dots \sigma} \mid \attrE{\sigma \to \epsilon\sigma} \mid \attrE{\forall \alpha^k. \sigma}$ \\
     Kinds       & $\attrE{k}$      & $::=$ & $\attrE{*} \mid \attrE{k \to k} \mid \eKw{eff} \mid \eKw{lab}$ \\
     \\
     Expressions & $\attrE{e}$      & $::=$ & $\attrE{v} \mid \attrE{e_1 \ e_2} \mid \attrE{e[\sigma]} \mid \eHandle{h}{e}$ \\
@@ -131,6 +104,20 @@ This thesis introduces two languages. To effectively distinguish the languages u
       \eTypesC{\eGamma}{e_3}{\sigma}{\epsilon} }
     { \eTypesC{\eGamma}{\eIf{e_1}{e_2}{e_3}}{\sigma}{\epsilon} }
 
+  \inferrule[Type-E-BinOp-Nat]
+    { \eTypesC{\eGamma}{e_1}{nat}{\epsilon} \\
+      \eTypesC{\eGamma}{e_2}{nat}{\epsilon} }
+    { \eTypesC{\eGamma}{e_1 \ \attrE{\oplus_{nat}} \ e_2}{nat}{\epsilon} }
+
+  \inferrule[Type-E-BinOp-Bool]
+    { \eTypesC{\eGamma}{e_1}{bool}{\epsilon} \\
+      \eTypesC{\eGamma}{e_2}{bool}{\epsilon} }
+    { \eTypesC{\eGamma}{e_1 \ \attrE{\oplus_{bool}} \ e_2}{bool}{\epsilon} }
+
+  \inferrule[Type-E-Zero]
+    { \eTypesC{\eGamma}{e}{nat}{\epsilon} }
+    { \eTypesC{\eGamma}{\attrE{zero?} \ e}{bool}{\epsilon} }
+
   \inferrule[Type-E-App]
     {\eTypesC{\eGamma}{e_1}{\eTArr{\sigma_1}{\sigma}}{\epsilon} \\
      \eTypesC{\eGamma}{e_2}{\sigma_1}{\epsilon}}
@@ -139,12 +126,12 @@ This thesis introduces two languages. To effectively distinguish the languages u
   \inferrule[Type-E-TypeApp]
     {\eTypesC{\eGamma}{e}{\eTForall{\alpha^k}{\sigma_1}}{\epsilon} \\
      \eWf{\sigma}{k}}
-    {\eTypesC{\eGamma}{e[\sigma]}{\sigma_1[\alpha := \sigma]}{\epsilon}}
+    {\eTypesC{\eGamma}{e[\sigma]}{\sigma_1[\alpha \coloneqq \sigma]}{\epsilon}}
 
   \inferrule[Type-E-Perform]
     {\attrE{op : \forall \overline{\alpha} . \sigma_1 \to \sigma_2} \in \attrE{\Sigma}(\attrE{l}) \\
      \attrE{\overline{\alpha}} \notin \text{ftv}(\eGamma)}
-    {\eTypesV{\eGamma}{\ePerform{op}{\overline{\sigma}}}{\eTArr{\sigma_1[\overline{\alpha} := \overline{\sigma}]}{\eEff{l}{\epsilon} \, \sigma_2[\overline{\alpha} := \overline{\sigma}]}}}
+    {\eTypesV{\eGamma}{\ePerform{op}{\overline{\sigma}}}{\eTArr{\sigma_1[\overline{\alpha} \coloneqq \overline{\sigma}]}{\eEff{l}{\epsilon} \, \sigma_2[\overline{\alpha} \coloneqq \overline{\sigma}]}}}
 
   \inferrule[Type-E-Ops]
     {\attrE{op_i : \forall \overline{\alpha} . \sigma_1 \to \sigma_2} \in \attrE{\Sigma}(\attrE{l}) \\
@@ -160,6 +147,11 @@ This thesis introduces two languages. To effectively distinguish the languages u
     {\eTypesOps{\eGamma}{h}{\sigma}{l}{\epsilon} \\
      \eTypesC{\eGamma}{e}{\sigma}{\eEff{l}{\epsilon}}}
     {\eTypesC{\eGamma}{\eHandle{h}{e}}{\sigma}{\epsilon}}
+
+  \inferrule[Type-E-Blame]
+    { \strut }
+    { \eTypesC{\eGamma}{\attrE{blame} \ p}{\sigma}{\epsilon} }
+
   \end{mathpar}
   \caption{Type Rules for System $\lange$}
   \label{fig:lange-typing}
@@ -171,13 +163,22 @@ This thesis introduces two languages. To effectively distinguish the languages u
 \begin{figure}[htbp]
   \centering
   \begin{mathpar}
+
+  \inferrule[Step-E-If-True]
+    { \strut }
+    { \eIf{tt}{e_1}{e_2} \eStep \attrE{e_1} }
+
+  \inferrule[Step-E-If-False]
+    { \strut }
+    { \eIf{ff}{e_1}{e_2} \eStep \attrE{e_2} }
+
   \inferrule[Step-E-App]
     {\strut}
-    {(\eLam{x:\sigma}{e}) \ \attrE{v} \eStep \attrE{e[x := v]}}
+    {(\eLam{x:\sigma}{e}) \ \attrE{v} \eStep \attrE{e[x \coloneqq v]}}
 
   \inferrule[Step-E-TApp]
     {\strut}
-    {(\eTAbs{\alpha^k}{v}) \attrE{[\sigma]} \eStep \attrE{v[\alpha := \sigma]}}
+    {(\eTAbs{\alpha^k}{v}) \attrE{[\sigma]} \eStep \attrE{v[\alpha \coloneqq \sigma]}}
 
   \inferrule[Step-E-Handler]
     {\strut}
@@ -190,7 +191,7 @@ This thesis introduces two languages. To effectively distinguish the languages u
   \inferrule[Step-E-Perform]
     {\attrE{op} \notin \mathrm{bop}(\attrE{E}) \wedge (\attrE{op \to f}) \in \attrE{h} \\
      \attrE{op : \forall \overline{\alpha} . \sigma_1 \to \sigma_2} \in \attrE{\Sigma}(\attrE{l}) \\
-     \attrE{k} = \eLam{x : \sigma_2[\overline{\alpha} := \overline{\sigma}]}{\eKw{handle} \ \attrE{h} \eDot \attrE{E} \eDot \attrE{x}}}
+     \attrE{k} = \eLam{x : \sigma_2[\overline{\alpha} \coloneqq \overline{\sigma}]}{\eKw{handle} \ \attrE{h} \eDot \attrE{E} \eDot \attrE{x}}}
     {\eKw{handle} \ \attrE{h} \eDot \attrE{E} \eDot \ePerform{op}{\overline{\sigma}} \ \attrE{v} \eStep \attrE{f[\overline{\sigma}] \ v \ k}}
 
   \inferrule[Step-E-Context]
@@ -216,33 +217,43 @@ This thesis introduces two languages. To effectively distinguish the languages u
 \end{figure}
 \end{singlespace}
 
+
+\pagebreak
 \section{Soundness and Correctness}
 
-Our algebraic effects handler system has type soundness by progress () and preservation ().
+Our algebraic effects handler system has type soundness by progress
+(Theorem \ref{theorem:lange-progress}) and preservation (Theorem
+\ref{theorem:lange-preservation}). Our effect system is also safe, i.e., all
+effects are handled or specified in the judgement. To express safety of effects,
+we first define (in Figure \ref{fig:lange-metafunc}), $\lceil \attrE{E}
+\rceil^l$ extracts all labels in the context; and $\text{bop}(\attrE{E})$
+extracts all $\attrE{op}$ in the context. Lemma \ref{lemma:lange-op-handled} and
+Lemma \ref{lemma:lange-types-meaningful} express effect safety.
 
 
-\begin{theorem}[Progress for \lange]
+\begin{theorem}[\lange\ Progress]
   \label{theorem:lange-progress}
-  If $\eTypesC{\emptyset}{e_1}{\sigma}{\langle \rangle}$, then either $\attrE{e_1}$ is a value, or there exists an $\attrE{e_2}$ such that $\attrE{e_1} \eStep \attrE{e_2}$.
+
+  If $\eTypesC{\cdot}{e_1}{\sigma}{\langle \rangle}$, then either $\attrE{e_1}$ is a value, or there exists an $\attrE{e_2}$ such that $\attrE{e_1} \eStep \attrE{e_2}$.
 \end{theorem}
 
-\begin{theorem}[Preservation for \lange]
+\begin{theorem}[\lange\ Preservation]
   \label{theorem:lange-preservation}
-  If $\eTypesC{\emptyset}{e_1}{\sigma}{\langle \rangle}$ and $\attrE{e_1} \eStep \attrE{e_2}$, then $\eTypesC{\emptyset}{e_2}{\sigma}{\langle \rangle}$.
-\end{theorem}
 
-Our effect system is also safe, or all effects are handled or specified in the judgement. To express safety of effects, we first define (in Figure \ref{fig:lange-metafunc}), $\lceil \attrE{E} \rceil^l$ extracts all labels in the context; and $\text{bop}(\attrE{E})$ extracts all $\attrE{op}$ in the context.
+  If $\eTypesC{\cdot}{e_1}{\sigma}{\langle \rangle}$ and $\attrE{e_1} \eStep
+  \attrE{e_2}$, then $\eTypesC{\cdot}{e_2}{\sigma}{\langle \rangle}$.
+\end{theorem}
 
 \begin{figure}
 \[
-  \lceil \attrE{E} \rceil^l = \lceil F_0 \cdot \text{handle } h_1 \cdot F_1 \cdot \dots \cdot \text{handle } h_n \cdot F_n \rceil^l = \langle l_n, \dots, l_1 \rangle \text{ iff } h_i : \Sigma(l_i)
+  \lceil \attrE{E} \rceil^l = \lceil \attrE{F_0} \cdot \attrE{\text{handle} \ h_1} \cdot \attrE{F_1} \cdot \dots \cdot \attrE{\text{handle} \ h_n} \cdot \attrE{F_n} \rceil^l = \langle l_n, \dots, l_1 \rangle \text{ iff } \attrE{h_i} : \attrE{\Sigma}(l_i)
 \]
 
 \begin{align*}
-  \text{bop}(\square) &= \emptyset \\
-  \text{bop}(E \ e) &= \text{bop}(E) \\
-  \text{bop}(v \ E) &= \text{bop}(E) \\
-  \text{bop}(\text{handle} \ h \ E) &= \text{bop}(E) \cup \{ op \mid (op \to f) \in h \}
+  \text{bop}(\attrE{\square}) &= \emptyset \\
+  \text{bop}(\attrE{E \ e}) &= \text{bop}(\attrE{E}) \\
+  \text{bop}(\attrE{v \ E}) &= \text{bop}(\attrE{E}) \\
+  \text{bop}(\attrE{\text{handle} \ h \ E}) &= \text{bop}(\attrE{E}) \cup \{ \attrE{op} \mid (\attrE{op \to f}) \in \attrE{h} \}
 \end{align*}
 \caption{Metafunction for context in \lange.}
 \label{fig:lange-metafunc}
@@ -250,10 +261,12 @@ Our effect system is also safe, or all effects are handled or specified in the j
 
 \begin{lemma}[Well-typed operations are handled]
   \label{lemma:lange-op-handled}
-If $\eTypesC{\emptyset}{E[\ePerform{op}{\overline{\sigma}} \ v]}{\sigma}{\langle \rangle}$, then $E$ has the form $E_1 \cdot \eHandler{h} \cdot E_2$ with $\attrE{op} \notin \text{bop}(E_2)$ and $\attrE{op \to f} \in \attrE{h}$.
+
+  If $\eTypesC{\cdot}{\attrE{E}[\ePerform{op}{\overline{\sigma}} \ \attrE{v}]}{\sigma}{\langle \rangle}$, then $\attrE{E}$ has the form $\attrE{E_1} \cdot \eHandler{h} \cdot \attrE{E_2}$ with $\attrE{op} \notin \text{bop}(\attrE{E_2})$ and $\attrE{op \to f} \in \attrE{h}$.
 \end{lemma}
 
 \begin{lemma}[Effects types are meaningful]
   \label{lemma:lange-types-meaningful}
-If $\eTypesC{\emptyset}{E[\ePerform{op}{\overline{\sigma}} \ v]}{\sigma}{\epsilon}$ with $\attrE{op} \notin \text{bop}(E)$, then $\attrE{op} \in \attrE{\Sigma}(l)$ and $l \in \attrE{\epsilon}$.
+
+  If $\eTypesC{\cdot}{\attrE{E}[\ePerform{op}{\overline{\sigma}} \ \attrE{v}]}{\sigma}{\epsilon}$ with $\attrE{op} \notin \text{bop}(\attrE{E})$, then $\attrE{op} \in \attrE{\Sigma}(l)$ and $l \in \attrE{\epsilon}$.
 \end{lemma}

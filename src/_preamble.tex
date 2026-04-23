@@ -14,6 +14,7 @@
 \graduationyear{2026}
 
 
+\usepackage{caption}
 \usepackage{stmaryrd}
 \usepackage{mathpartir}
 \usepackage{mathtools}
@@ -32,6 +33,13 @@
 % \floatstyle{boxed}
 % \restylefloat{table}
 
+
+\hypersetup{
+    colorlinks,
+    linkcolor={red!50!black},
+    citecolor={blue!50!black},
+    urlcolor={blue!80!black}
+}
 
 \usepackage[capitalize]{cleveref}
 
@@ -118,7 +126,8 @@
 
 \newcommand{\cSubst}[3]{\attrC{\{} #1 \attrC{/} \attrC{#2} \attrC{\}} #3}
 
-\newcommand{\cCompile}[4]{#1 \vdash \attrC{#2} : \attrC{#3} \twoheadrightarrow \attrE{#4}}
+\newcommand{\cCompile}[5]{#1 \vdash \attrC{#2} : \attrC{#3} \twoheadrightarrow
+\attrE{#4},\attrE{#5}}
 
 \newcommand{\eKw}[1]{\attrE{#1}}
 \newcommand{\eBlame}[1]{\eKw{blame} \ \attrE{#1}}
