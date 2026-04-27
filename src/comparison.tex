@@ -15,6 +15,18 @@ Chaperone is also lazy. A chaperone action on a vector or structure only runs wh
 
 OCaml preprocessor and Racket macros are both used for the sole purpose of rewriting the AST to add contract checking functionalities to the sourcecode, eventhough OCaml provides a more generic system (preprocessor can modify any part of the AST). In both implementations, the guarded value must be wrapped. Racket's chaperone has support for function wrappers, lifting heavy and complex logic into a single function invocation (by \texttt{chaperone-procedure} and its family). OCaml does not have such functionalities, nor can it be implemented on top of the language (judging by Racket's choice of implementation\footnote{Chaperone is implemented as part of the language of Racket}). Therefore, functions are modified to wrapped each arguments and the body (return value).
 
-Our current implementation limits to values (as a whole) and functions. In Racket's contract system, contracts for vectors and structures is also implemented using chaperone to guard an element access (vector), or member access (structure). A chaperone enforces contract lazily, only when an element is accessed or on member access. At the moment, if we use a contract on an array (the OCaml equivalent of Racket's vector), all array values are checked.
+Through our observation, we identify two main aspects that our implementation is greatly different from Racket's contract system: (i) Contract checking, and (ii) Blame assignment.
 
-Racket's chaperone is multi-shot contract checking, compared to our implementation of one-shot. A chaperone of vector guards its element across mutation. Our current system limits to one time contract checking, an undesired behavior for vectorized contract. We argue that having multi-shot contract checking is hard to achieve in OCaml due to the missing an invisible wrapper.
+\subsection{Contract checking}
+
+Our current implementation limits to values (as a whole) and functions. In Racket's contract system, contracts for vectors and structures is also implemented using chaperone to guard an element access (vector), or member access (structure). A chaperone enforces contract lazily, only when an element is accessed or on member access. Our implementation, however, perform contract checking for arrays and structs as an entity bringing in more runtime overhead.
+
+Racket's chaperone can perform multi-shot contract checking, compared to our implementation where contract is checked only one time. For instance, a chaperone of vector guards its element across mutation; our contract system limits to one time contract checking. Vector, tuple and structure contracts in our implementation lacks this fine-grain control. This limitation is because OCaml's lack of chaperone-like mechanism.
+
+One exception. Structures in OCaml, records, can be made into their functional versions using the preprocessor \textit{ppx\_fields\_conv}.\footnote{\href{https://github.com/janestreet/ppx\_fields\_conv}{https://github.com/janestreet/ppx\_fields\_conv}} Using the functions generated, we can implement our contract system to append contracts to these functions and provide contracts for structures. However, the original record dot notation is still unprotected.
+
+\subsection{Blame assignment}
+
+Blame assignment in Racket is handled by chaperone. By storing blame labels inside the ``proxy'' object, the protected values can be used without changing their invocation.
+
+In our implementation, all protected values is converted into a function accepting three additional arguments for labels. Therefore, we need to search for all usages, and provide the correct blame labels. It becomes a hurdle when function signatures must also be modified.

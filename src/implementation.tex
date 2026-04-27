@@ -76,6 +76,10 @@ Dependent contract has a predicate that receives the argument value. Therefore, 
 \label{code:rewrite-dep}
 \end{listing}
 
+\subsection{Recursive functions}
+
+Unsupported at the moment.
+
 \subsection{Blame labels assignment}
 
 All uses of the variable must now be appended with the three parameters \texttt{pos}, \texttt{neg}, and \texttt{cloc}. It is by practice to use the module name hosting the variable as the positive label, the module name of usesite as the negative label, and the variable name itself as the contract label. However, during the limitation of preprocessor having limited scoping functionality, we hereby define a simpler strategy for blame assingment. There are three cases that we have to resolve for blame assignment.
@@ -83,14 +87,20 @@ All uses of the variable must now be appended with the three parameters \texttt{
 \begin{itemize}
 \item Function's argument
 
-This blame assignment follows the semantics of \langc, where positive and negative labels are "swapped" with each other on function input.
+This blame assignment follows the semantics of \langc, where positive and negative labels are "swapped" with each other on function input. Because function arguments are bounded inside a function, the generated code applies the labels of the parent function in the correct order. This process happens for dependent contract as well, where the dependent argument is applied with the correct labels from its parent function.
 
 \item Global variable
 
-Global variables are defined in the global scope and used in some function. Assuming that the flow analysis correctly handles global variables and local variables with the same name. For global variables, we need to define the positive, negative and contract labels.
+Once a protected functions/values are used in the user code, they must be applied with the correct labels, else the blame report confuses the programmer. There are 2 main cases here, (i) the function is defined used in the same module, (ii) the function is defined and used in two different modules. We examine the two cases and demonstrate how should the blame labels be assigned.
+
+In the same module scenario, the positive label is the module and the function. The negative label is the code usage, which is the same module. Because our implementation does not transform recursive functions, the only place in the same module that can use a protected function/value is other function, or in annonymous scope. If the protected function is used inside another function, the negative label is the name of the module and the hosting function. If it is being used in an annonymous scope, the negative label is the name of the module.
+
+In different modules scenario, the positive label remains the module and the function. The negative label is the code usage. Similarly, we can use the module name with the function name if unannoymous.
+
+In both of these scenarios, the contract location label is the same as the positive label.
 
 \item Local variable
 
-?
+Because a contract can be annotated in any let expression, it is possible to annotate a local variable with contract. In this scenario, the positive label is the module, and the hosting function. The negative label is where the variable is being used, which is highly likely the function itself. Therefore all three labels are the same.
 
 \end{itemize}
