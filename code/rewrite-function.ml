@@ -19,7 +19,7 @@ let f1 pos neg cloc (x : x_type) (y : y_type) (z : z_type) : f_type =
 
 let f2 pos neg cloc (g : g_intype -> g_outtype) : f_type =
   let [@contract : g_inpred -> g_outpred]
-    g (g_p1 : g_intype) : g_outtype = g in
+    g (g_p1 : g_intype) : g_outtype = g g_p1 in
   let g = g neg pos cloc in
   let [@contract : outpred] ret : f_type = body in
   ret pos neg cloc

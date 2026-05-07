@@ -1,19 +1,57 @@
-\chapter{Compiler}
+\chapter{Theoretical Compiler}
 \label{chap:compiler}
 
+In this chapter, we describe a theoretical compiler from \langc\ to \lange. The
+idea to the compilation is simple, with special handling for dependent contract.
+A monitor of flat contract will be converted into performing an effect. A
+monitor of function contract will be recursively expanded similarly to the
+reduction until only flat contracts exist. Monitor of dependent contract is
+compiled similarly to the flat contract, with a slight difference for dependent
+argument.
+
+The compilation described above only add in effect performing, without their
+handler component. Without a suitable handler and using handle expression, the
+program cannot run. First, we define that each contract can be converted into a
+handler. The handler accepts a non-function value, and check it against the
+contract predicate. If the value passes the predicate, the program continues
+(using the handler continuation) with the value. Else the program steps to a
+error, which stops the program with the party responsible for the blame.
+
+With a handler defined, we need to use it with a handle expression to ensure
+effects performed are handled. The easiest approach is to apply the handle right
+where the effect is performed with its corresponding handler. This does not give
+any advantage to basic if-else compilation. Handlers can stay inside the same
+context if they are used together. We suggest grouping them together, this
+allows contracts to access the same context information.
+
+Grouping them together is easy, and we can place a handle at the whole program.
+However, this approach fails for dependent contract checking. Dependent contract
+$\kappa_d$ checking happens while executing another contract $\kappa_c$. If
+$\kappa_c$ is running inside a handler, which is true in our described
+compilation, then the handler is moved into the continuation, leaving $\kappa_c$
+running without a handle context. To resolve this, we have to handle $\kappa_d$
+using a handler of all possible effects that might arise during execution of
+$\kappa_d$. This loses the general context shared across all other contracts,
+but guarantees all effects are handled.
+
+The next section illustrates many examples aim to give an intuition to the
+reader before the later formal section, where a compilation model between
+\langc\ to \lange\ is presented.
 
 \section{Examples}
 
-In this section, we show that contract checking can be lifted into an effect. Assume that a global handler handles every contract checking effects, we can convert a contract program into an effect program. Figure \ref{fig:example-compile} demonstrates a simple compilation for a flat contract. An effect \attrE{check} is added performing the contract checking, and continue with the resumption or blame when the contract is not satisfied. The program, was a number 9, is now wrapped with a handler, and performing the effect check with the original value. The operation must not incur any other effects therefore we can type the resumption \attrE{kont} with an empty effect row. On blame, the positive label \attrC{k} is used.
-
-A function contract is then straightforward from recursive compilation. Its argument is wrapped into a monitor \attrC{mon}, as well as the result of the function. Recursively, we can compile the argument and the function's result into \lange. This introduces (at least) two operations. Higher-order contracts is also a function contract, which we recursively go inside each function and compile. Figure \ref{fig:example-compile-function} demonstrates the unrolling of function contract into single flat contracts and compiling them into their coresponsding operation invocation with their handler.
-
-Dependent contract is compiled using the same logic to function contract. This time, the dependent argument is also compiled into their handle expression, and provided into the contract of the function result.
+We first examine the flat contract case in Figure
+\ref{fig:example-compile-flat}. A flat contract compiles into performing effect
+operation $\attrE{check}$, a unique effect name generated for this contract.
+The handler $\attrE{h}$ defined with only the operation $\attrE{check}$, and
+not applied immediately to the compiled expression. Handler $\attrE{h}$ will be
+kept going forward the compilation process.
 
 \begin{figure}
-\begin{align*}
-  \cMon{k}{l}{j}{\cFlat{\cLam{x : \cTnum}{\attrC{zero?}(x \attrC{-} 10)}}}{\attrC{9}}
-\end{align*}
+  \begin{align*}
+    \cMon{k}{l}{j}{\cFlat{\cLam{x : \cTnum}{\attrC{zero?}(x \attrC{-}
+  10)}}}{\attrC{9}}
+  \end{align*}
 
 $\Downarrow$
 
@@ -29,12 +67,32 @@ $\Downarrow$
     }
   }
   \attrE{\}} \\[2ex]
-    &(\eHandle{h}{(\ePerform{check}{\attrE{num}} \ \attrE{9})})
+    &\ePerform{check}{\attrE{num}} \ \attrE{9}
 \end{align*}
 
-  \caption{Example compilation of flat contract}
-  \label{fig:example-compile}
+  \caption[Example compilation of flat contract]
+  {Example compilation of flat contract\\
+  \small
+  }
+\label{fig:example-compile-flat}
 \end{figure}
+
+
+A function contract is then straightforward by recursively compile the argument
+and the application result into \lange. Figure
+\ref{fig:example-compile-function} demonstrates the unrolling of function
+contract into single flat contracts and compiling them into their corresponding
+operation invocation. Similarly to flat contract, the group of handlers are not
+used immediately.
+
+A dependent contract compiles similarly to a function contract. However,
+because the handler scope during checking the post contract is pushed into the
+continuation, the dependent contract must be wrapped in its own handler scope.
+Figure \ref{fig:example-compile-dependent} describe the procedure for a
+\textit{basic type} argument. Because the argument is a basic type, there is
+only one operation in the handler $h_3$. If the argument is a function, then
+$h_3$ should capture all possible effects, collectable after compiling
+recursively with known contract.
 
 
 \begin{figure}
@@ -57,21 +115,67 @@ $\Downarrow$
   \attrE{h_2} \ &\triangleq \ \attrE{\{} \attrE{check_{k_2} \to} \dots \eBlame{l} \attrE{\}} \\
   \attrE{h_3} \ &\triangleq \ \attrE{\{} \attrE{check_{k_3} \to} \dots \eBlame{k} \attrE{\}} \\[2ex]
   % 2. Build the nested evaluations bottom-up
-  \attrE{e_1} \ &\triangleq \ (\eHandler{h_1}) \ (\eLam{\_}{\ePerform{check_{k_1}}{\tau_1} \ \attrE{x}}) \\
-  \attrE{e_2} \ &\triangleq \ (\eHandler{h_2}) \ (\eLam{\_}{\ePerform{check_{k_2}}{\tau_2} \ (\attrE{g} \ \attrE{e_1})}) \\
-  \attrE{e_3} \ &\triangleq \ (\eHandler{h_3}) \ (\eLam{\_}{\ePerform{check_{k_3}}{\tau_3} \ (\attrE{f} \ (\eLam{x}{\attrE{e_2}}))}) \\[2ex]
+  \attrE{e_1} \ &\triangleq \ {\ePerform{check_{k_1}}{\tau_1} \ \attrE{x}} \\
+  \attrE{e_2} \ &\triangleq \ {\ePerform{check_{k_2}}{\tau_2} \ (\attrE{g} \ \attrE{e_1})} \\
+  \attrE{e_3} \ &\triangleq \ {\ePerform{check_{k_3}}{\tau_3} \ (\attrE{f} \ (\eLam{x}{\attrE{e_2}}))} \\[2ex]
   % 3. The final compiled expression
   &\eLam{g}{\attrE{e_3}}
 \end{align*}
 
-  \caption{Example compilation of higher-order contract}
-  \label{fig:example-compile-function}
+\caption{Example compilation of higher-order contract}
+\label{fig:example-compile-function}
+\end{figure}
+
+\begin{figure}
+\begin{align*}
+  \cMon{k}{l}{j}{\cKDep{\cFlat{k_1}}{x}{\cFlat{k_2}}}{g}
+\end{align*}
+
+$\Downarrow$
+
+\begin{align*}
+  \cLam{x}{\cMon{k}{l}{j}{\cSubst{\cMon{l}{j}{j}{\cFlat{k_1}}{x}}{x}{\cFlat{k_2}}}{g \ (\cMon{l}{k}{j}{\cFlat{k_1}}{x})}}
+\end{align*}
+
+$\Downarrow$
+
+\begin{align*}
+  % 1. Define the handlers with their correct blame polarities
+  \attrE{h_1} \ &\triangleq \ \attrE{\{} \attrE{check_{k_1} \to} \dots \eBlame{l} \attrE{\}} \\
+  \attrE{h_2} \ &\triangleq \ \attrE{\{} \attrE{check_{k_2} \to} \\
+  &\qquad \eTAbs{\alpha}{
+    \eLam{y : \alpha}{
+      \eLam{kont : \alpha \attrE{\to \langle\rangle} \alpha}{
+        \eIf{k_2[x:=x_{dep}]}
+            {\attrE{kont \ y}}
+            {\eBlame{k}}
+      }
+    }
+  } \\
+  \attrE{h_3} \ &\triangleq \ \attrE{\{} \attrE{check'_{k_1} \to} \dots \eBlame{l} \attrE{\}} \\[2ex]
+  % 2. Build the nested evaluations bottom-up
+  \attrE{x_{arg}} \ &\triangleq \ {\ePerform{check_{k_1}}{\tau_1} \ \attrE{x}}\\
+  \attrE{x_{dep}} \ &\triangleq \ {\eHandle{h_3}{\ePerform{check'_{k_1}}{\tau_1} \ \attrE{x}}}\\
+  \attrE{e_1}     \ &\triangleq \ {\ePerform{check_{k_2}}{\tau_2} \ {(\attrE{g} \ \attrE{x_{arg}})}} \\[2ex]
+  % 3. The final compiled expression
+  &\eLam{x}{\attrE{e_1}}
+\end{align*}
+
+\caption{Example compilation of dependent contract}
+\label{fig:example-compile-dependent}
 \end{figure}
 
 
 \section{Type-Directed Compilation}
 
-The compilation relies heavily on the type of argument. Therefore, we provide a type-directed compilation from \langc\ to \lange. The compilation is recursive, types are used to form well-typed \lange\ expressions. We define the following theorems for our compiler: Type Preservation, Observable Equivalance, and Blame Preservation. Type Preservation Theorem states that a well-typed program in \langc\ compiles into a well-typed program in \lange\ typed using the same basic type and has no unhandled effects. Observable Equivalance Theorem states that if the \langc\ program reduces to a value, then the compiled \lange\ program reduces to a value also. Blame Preservation Theorem states that if \langc\ program blames a party, then the compiled \lange\ program also blame the same party.
+The compilation relies heavily on the type of argument. Therefore, we provide a
+type-directed compilation from \langc\ to \lange. Compilation relation
+$\cCompile{\cGamma}{e}{\tau}{h}{e}$ takes an expression $\attrC{e}$ of type
+$\attrC{τ}$ with context $\cGamma$ and compiles into $\attrE{e}$ with a handler
+$\attrE{h}$.
+
+
+The compilation is recursive, types are used to form well-typed \lange\ expressions. We define the following theorems for our compiler: Type Preservation, Observable Equivalance, and Blame Preservation. Type Preservation Theorem states that a well-typed program in \langc\ compiles into a well-typed program in \lange\ typed using the same basic type and has no unhandled effects. Observable Equivalance Theorem states that if the \langc\ program reduces to a value, then the compiled \lange\ program reduces to a value also. Blame Preservation Theorem states that if \langc\ program blames a party, then the compiled \lange\ program also blame the same party.
 
 Because \lange\ has different types from \langc, we define $\symtt{T}$ as the type conversion from \cGamma\ to \eGamma. The conversion is simple because \langc\ only has basic type, so we map to the basic type of \lange.
 
@@ -129,62 +233,70 @@ In Figure \ref{fig:compilation}, we provide some interesting compilation rules, 
     {\cCompile{\cGamma}{v}{\tau}{\{\}}{v}}
 
   \inferrule[Compile-Lambda]
-    {\cCompile{\cGamma, \attrC{x} : \attrC{\tau_1}}{e}{\tau_2}{\Sigma}{e'}}
-    {\cCompile{\cGamma}{\cLam{x:\tau_1}{e}}{\tau_1 \to \tau_2}{\Sigma}{\eLam{x:\tau_1^*}{e'}}}
+    {\cCompile{\cGamma, \attrC{x} : \attrC{\tau_1}}{e}{\tau_2}{h}{e'}}
+    {\cCompile{\cGamma}{\cLam{x:\tau_1}{e}}{\tau_1 \to \tau_2}{h}{\eLam{x:\tau_1^*}{e'}}}
 
   \inferrule[Compile-If]
-    { \cCompile{\cGamma}{e_1}{bool}{\Sigma_1}{e_1'} \\
-      \cCompile{\cGamma}{e_2}{\tau}{\Sigma_2}{e_2'} \\
-      \cCompile{\cGamma}{e_3}{\tau}{\Sigma_3}{e_3'} }
-    { \cCompile{\cGamma}{\cIf{e_1}{e_2}{e_3}}{\tau}{\Sigma_1 \cup \Sigma_2 \cup \Sigma_3}{\eIf{e_1'}{e_2'}{e_3'}} }
+    { \cCompile{\cGamma}{e_1}{bool}{h_1}{e_1'} \\
+      \cCompile{\cGamma}{e_2}{\tau}{h_2}{e_2'} \\
+      \cCompile{\cGamma}{e_3}{\tau}{h_3}{e_3'} }
+    { \cCompile{\cGamma}{\cIf{e_1}{e_2}{e_3}}{\tau}{h_1 \cup h_2 \cup h_3}{\eIf{e_1'}{e_2'}{e_3'}} }
 
   \inferrule[Compile-BinOp-Nat]
-    { \cCompile{\cGamma}{e_1}{nat}{\Sigma_1}{e_1'} \\
-      \cCompile{\cGamma}{e_2}{nat}{\Sigma_2}{e_2'} }
-    { \cCompile{\cGamma}{e_1 \ \attrC{\oplus_{nat}} \ e_2}{nat}{\Sigma_1 \cup \Sigma_2}{e_1' \ \attrE{\oplus_{nat}} \ e_2'} }
+    { \cCompile{\cGamma}{e_1}{nat}{h_1}{e_1'} \\
+      \cCompile{\cGamma}{e_2}{nat}{h_2}{e_2'} }
+    { \cCompile{\cGamma}{e_1 \ \attrC{\oplus_{nat}} \ e_2}{nat}{h_1 \cup h_2}{e_1' \ \attrE{\oplus_{nat}} \ e_2'} }
 
   \inferrule[Compile-BinOp-Bool]
-    { \cCompile{\cGamma}{e_1}{bool}{\Sigma_1}{e_1'} \\
-      \cCompile{\cGamma}{e_2}{bool}{\Sigma_2}{e_2'} }
-    { \cCompile{\cGamma}{e_1 \ \attrC{\oplus_{bool}} \ e_2}{bool}{\Sigma_1 \cup \Sigma_2}{e_1' \ \attrE{\oplus_{bool}} \ e_2'} }
+    { \cCompile{\cGamma}{e_1}{bool}{h_1}{e_1'} \\
+      \cCompile{\cGamma}{e_2}{bool}{h_2}{e_2'} }
+    { \cCompile{\cGamma}{e_1 \ \attrC{\oplus_{bool}} \ e_2}{bool}{h_1 \cup h_2}{e_1' \ \attrE{\oplus_{bool}} \ e_2'} }
 
   \inferrule[Compile-App]
-    {\cCompile{\cGamma}{e_1}{\tau_1 \to \tau}{\Sigma_1}{e_1'} \\
-     \cCompile{\cGamma}{e_2}{\tau_1}{\Sigma_2}{e_2'}}
-    {\cCompile{\cGamma}{e_1 \ e_2}{\tau}{\Sigma_1 \cup \Sigma_2}{e_1' \ e_2'}}
+    {\cCompile{\cGamma}{e_1}{\tau_1 \to \tau}{h_1}{e_1'} \\
+     \cCompile{\cGamma}{e_2}{\tau_1}{h_2}{e_2'}}
+    {\cCompile{\cGamma}{e_1 \ e_2}{\tau}{h_1 \cup h_2}{e_1' \ e_2'}}
 
   \inferrule[Compile-MonFlat]
-    { \cCompile{\cGamma}{e}{\tau}{\Sigma}{e'} \\
+    { \cCompile{\cGamma}{e}{\tau}{h}{e'} \\
+      \attrE{check_{\kappa} ∉  h} \\
       \attrE{h_\kappa} \triangleq \attrE{\{} \attrE{check_{\kappa} \to f} \attrE{\}} \\
-      \attrE{f} \triangleq \eTAbs{\alpha}{ \eLam{x : \alpha}{ \eLam{kont :
-      \alpha \attrE{\to \langle\rangle} \alpha}{ \eIf{\kappa \ x} {\attrE{kont \
-      x}} {\eBlame{k}} } } } \\
-      \attrE{l} \triangleq \{\attrE{check_{\kappa}} : \eTAbs{\alpha}{α \to (α
-      \to \langle \rangle \alpha)\to \langle\rangle α} \}}
+      \attrE{f} \triangleq
+        \eTAbs{\alpha}{ \eLam{x : \alpha}{ \eLam{kont :
+          \alpha \attrE{\to \langle\rangle} \alpha}{ \eIf{\kappa \ x} {\attrE{kont \ x}}
+          {\eBlame{k}} } } } }
       {
-        \cCompile{\cGamma}{\cMon{k}{l}{j}{\cFlat{\kappa}}{e}}{\tau}{\Sigma
-        \cup \{l\}}{\eHandle{h_\kappa}{(\ePerform{check_{\kappa}}{\tau^*}\ e')}} }
+        \cCompile{\cGamma}{\cMon{k}{l}{j}{\cFlat{\kappa}}{e}}{\tau}{h
+        \cup h_\kappa}{\ePerform{check_{\kappa}}{\tau^*}\ e'} }
 
   \inferrule[Compile-MonFunc]
     { \attrC{x} ∉ \cGamma \\
       \cCompile{\cGamma, \attrC{x} : \attrC{\tau_1}}{\cMon{k}{l}{j}{\kappa_2}{e
-      \ (\cMon{l}{k}{j}{\kappa_1}{x})}}{\tau_2}{\Sigma}{e'} }
+      \ (\cMon{l}{k}{j}{\kappa_1}{x})}}{\tau_2}{h}{e'} }
     { \cCompile{\cGamma}{\cMon{k}{l}{j}{\kappa_1 \to \kappa_2}{e}}{\tau_1 \to
-    \tau_2}{\Sigma}{\eLam{x:\tau_1^*}{e'}} }
+    \tau_2}{h}{\eLam{x:\tau_1^*}{e'}} }
 
   \inferrule[Compile-MonDep]
     { \attrC{y},\delta_y ∉ \cGamma \\
       \cCompile{\cGamma, \attrC{y} :
-      \attrC{\tau_1}}{\cMon{l}{j}{j}{\kappa_1}{y}}{\tau_1}{\Sigma_1}{e_y} \\
+      \attrC{\tau_1}}{\cMon{l}{j}{j}{\kappa_1}{y}}{\tau_1}{h_1}{e_y} \\
       \cCompile{\cGamma, \attrC{y} :
       \attrC{\tau_1}}{\cMon{k}{l}{j}{\{{\color{black}\delta_y}/ x\}\kappa_2}{e \
-      (\cMon{l}{k}{j}{\kappa_1}{y})}}{\tau_2}{\Sigma_2}{e'} \\
-      \attrE{e''} = \attrE{e'}[\delta_y\coloneqq\attrE{e_y}]}
+      (\cMon{l}{k}{j}{\kappa_1}{y})}}{\tau_2}{h_2}{e'} \\
+      \attrE{h'_2} = \attrE{h_2}[\delta_y\coloneqq{\symtt{wrap}(\attrE{h_1},\attrE{e_y})}]}
       {
         \cCompile{\cGamma}{\cMon{k}{l}{j}{\cKDep{\kappa_1}{x}{\kappa_2}}{e}}{\tau_1
-        \to \tau_2}{\Sigma_1 \cup \Sigma_2}{\eLam{y:\tau_1^*}{e''}} }
-
+        \to \tau_2}{h_1 \cup h'_2}{\eLam{y:\tau_1^*}{e'}} }
   \end{mathpar}
+
+  \textbf{Helper function}
+  \begin{align*}
+    \symtt{wrap}(\attrE{h},\attrE{v}) \ &\triangleq \ \eHandle{h}{v} \\
+    \symtt{wrap}(\attrE{h},\eLam{x}{e}) \ &\triangleq \ \eLam{x}{\eHandle{h}{e}}
+  \end{align*}
+
+
+
   \caption[Type-Directed Compilation from \langc\ to \lange]
   {Type-Directed Compilation from \langc\ to \lange\\
   \small
