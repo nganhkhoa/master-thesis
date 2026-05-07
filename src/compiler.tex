@@ -291,8 +291,8 @@ In Figure \ref{fig:compilation}, we provide some interesting compilation rules, 
 
   \textbf{Helper function}
   \begin{align*}
-    \symtt{wrap}(\attrE{h},\attrE{e}) \ &\triangleq \ \eHandle{h}{e}, \attrE{e} \neq \eLam{x}{e} \\
-    \symtt{wrap}(\attrE{h},\eLam{x}{e}) \ &\triangleq \ \eLam{x}{\eHandle{h}{e}}
+    \symtt{wrap}(\attrE{h},\attrE{e}) \ &\triangleq \ \eHandle{h}{e} \quad (\attrE{e} \neq \eLam{x}{e'}) \\
+    \symtt{wrap}(\attrE{h},\eLam{x}{e}) \ &\triangleq \ \eLam{x}{\symtt{wrap}(h,e)}
   \end{align*}
 
 
