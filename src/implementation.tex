@@ -20,21 +20,46 @@ In the example, \texttt{x} is constrained to bigger than $10$. If the provided v
 
 \section{Annotations}
 
-OCaml attributes have a certain structure\footnote{Attributes must follow the attribute-payload structure as defined in \href{https://ocaml.org/manual/5.4/attributes.html}{https://ocaml.org/manual/5.4/attributes.html}}. We chose to implement the annotations as a type expression in OCaml of the form $\tau \rightarrow \tau$. This choice limits what we can put in as the predicates. Therefore, we only allow predicates pre-defined as a function or available/imported at the variable annotated.
+OCaml attributes have a certain structure\footnote{Attributes must follow the
+attribute-payload structure as defined in
+\href{https://ocaml.org/manual/5.4/attributes.html}{https://ocaml.org/manual/5.4/attributes.html}}.
+We chose to implement the annotations as a type expression in OCaml of the form
+$\tau \rightarrow \tau$. This choice limits what we can put in as the
+predicates. Therefore, we only allow predicates pre-defined as a function or
+available/imported at the variable annotated.
 
-We define the following annotations that are similar to different types of contract: flat, function, dependent.
+We define the following annotations that are similar to different types of
+contract: flat, function, dependent.
 
-A flat contract is applied for a single value $\rho$, annotated using a single name. This name is the function used to check the value.
+A flat contract is applied for a single value $\rho$, annotated using a single
+name. This name is the function used to check the value.
 
-A function is composabled by many flat contracts in the form $\rho \rightarrow ... \rightarrow \rho$. In OCaml a function can receive many arguments. These arguments can be values or functions. Part of the OCaml type signature, which we utilized for contract annotation, parenthesis can be used to separate between the main function contract, and contracts for arguments that are functions.
+A function is composabled by many flat contracts in the form $\rho \rightarrow
+... \rightarrow \rho$. In OCaml a function can receive many arguments. These
+arguments can be values or functions. Part of the OCaml type signature, which
+we utilized for contract annotation, parenthesis can be used to separate
+between the main function contract, and contracts for arguments that are
+functions.
 
-A dependent contract is strictly a function receiving a single argument $\rho \rightarrow \rho\ dep$. This choice is made to keep the semantics similar to \langc. Alternatively, we can choose to implement the dependent contract as checking with all arguments, $\rho \rightarrow .. \rightarrow \rho\ dep$. For this thesis, we keep the contract system simple and allow only for single argument.
+A dependent contract is strictly a function receiving a single argument $\rho
+\rightarrow \rho\ dep$. This choice is made to keep the semantics similar to
+\langc. Alternatively, we can choose to implement the dependent contract as
+checking with all arguments, $\rho \rightarrow .. \rightarrow \rho\ dep$. For
+this thesis, we keep the contract system simple and allow only for single
+argument.
 
 \section{Preprocessor Rewriting}
 
-We implemented a rewritter as a preprocessor using \texttt{ppxlib}\footnote{\href{https://ocaml-ppx.github.io/ppxlib/ppxlib/index.html}{https://ocaml-ppx.github.io/ppxlib/ppxlib/index.html}}. The rewriter walks the AST of OCaml, finds and modifies valid \texttt{@contract} annotated \texttt{let} expression.
+We implemented a rewritter as a preprocessor using
+\texttt{ppxlib}\footnote{\href{https://ocaml-ppx.github.io/ppxlib/ppxlib/index.html}{https://ocaml-ppx.github.io/ppxlib/ppxlib/index.html}}.
+The rewriter walks the AST of OCaml, finds and modifies valid
+\texttt{@contract} annotated \texttt{let} expression.
 
-The rewritter also updates the variable into a function receiving three extra arguments \texttt{pos,neg,cloc} for blame labels. \texttt{pos} is the positive label, which is the blamed party for a flat contract. \texttt{neg} is the negative label. \texttt{cloc} is the contract location used for dependent contract blame assignment. Blame is designed as an exception.
+The rewritter also updates the variable into a function receiving three extra
+arguments \texttt{pos,neg,cloc} for blame labels. \texttt{pos} is the positive
+label, which is the blamed party for a flat contract. \texttt{neg} is the
+negative label. \texttt{cloc} is the contract location used for dependent
+contract blame assignment. Blame is designed as an exception.
 
 \begin{listing}
 \begin{minted}{ocaml}
@@ -44,9 +69,45 @@ exception Blame of string
 \label{code:blame_exception}
 \end{listing}
 
+In the theoretical compiler, a list of handlers is accumulated. A careful
+reader may notice that most handlers have the same structure, with two
+differences, the predicate, and the blame label. Therefore, as an optimization,
+we design a single effect type accepting a \textit{tuple of three values}: the
+blame label, the predicate function, and the value to check. We also define
+unify handler for this effect which has the contract checking logic. These are
+illustrated in Listing \ref{code:contract_effect}.
+
+This is an optimization when contracts do not need shared state. We can augment
+this with a state provided to the \texttt{contract\_checking} and apply
+predicate with the state. At the moment, the lack the semantics about sharing
+states between contracts, so the current implementation works only as a
+demonstration.
+
+\begin{listing}
+\begin{minted}{ocaml}
+type _ Effect.t +=
+  | Flat : (string * ('a -> bool) * 'a) -> 'a Effect.t
+
+let rec contract_checking : type a b.
+  a Effect.t
+  -> ((a, b) Effect.Deep.continuation -> b) option
+  = fun eff ->
+  let open Effect.Deep in
+  match eff with
+  | Flat (label, check, arg) ->
+      Some (fun k ->
+        if check arg
+        then continue k arg
+        else discontinue k (Blame label))
+  | _ -> None
+\end{minted}
+\caption{Contract Effect}
+\label{code:contract_effect}
+\end{listing}
+
 \subsection{Flat contract rewriting}
 
-According to the compiler, we wrap the value into a handler and run the effect on the value. Effects in OCaml must be predefined inside a module. Therefore, we create a local module defining the effect (name and type). Then it is straightforward to define the handler which includes a single effect, and run an expression calling/performing the effect with the original value with the defined handler. The handler must handle the locally defined effect, where the predicate is invoked with the value, and continue/resume if the check passes, else an exception is thrown. Listing \ref{code:rewrite-flat} illustrates the rewrite process for a flat contract.
+Flat contracts rewrite, in Listing \ref{code:rewrite-flat}, by converting the value to performing the contract effect \texttt{Flat} with the appropriate arguments. Blame labels are provided as argument to the orginal function such that when used, correct blame label is applied.
 
 \begin{listing}
 \inputminted{ocaml}{code/rewrite-flat.ml}
@@ -54,21 +115,37 @@ According to the compiler, we wrap the value into a handler and run the effect o
 \label{code:rewrite-flat}
 \end{listing}
 
-\subsection{Function contract rewriting}
+\subsection{Functional contract rewriting}
 
-With flat contracts defined, a function contract rewrite can be broken down into contracts for its arguments and its return value. Illustrated in Listing \ref{code:rewrite-function}. Therefore a function receiving 3 arguments, will be rewritten into 4 sub-contracts, 3 for its arguments, and 1 for its return value. An exception for this rule is when the function has a function in one or more of its arguments. Then the rewrite must effectively rewrite the argument contract into a function to rewrite recursively. When rewriting into a function, argument names are generated. Blame labels for arguments are "flipped" according to the \langc semantics.
+With flat contracts defined, a functional contract rewrite can be broken down
+into contracts for its arguments and its return value, as illustrated in
+Listing \ref{code:rewrite-function}. Therefore a function receiving 3
+arguments, will be rewritten into 4 sub-contracts, 3 for its arguments, and 1
+for its return value. An exception for this rule is when the function has a
+function in one or more of its arguments. Then the rewrite must effectively
+rewrite the argument contract into a function to rewrite recursively. When
+rewriting into a function, argument names are generated. Blame labels for
+arguments are ``flipped'' according to the \langc\ semantics.
 
 \begin{listing}
 \inputminted{ocaml}{code/rewrite-function.ml}
-\caption{Function contract rewrite}
+\caption{Functional contract rewrite}
 \label{code:rewrite-function}
 \end{listing}
 
-
 \subsection{Dependent contract rewriting}
 
-Dependent contract has a predicate that receives the argument value. Therefore, we build up the correct contract predicate for the output contract. The value must be passed in with a different labels set from the value used, which we only need to create a new random variable. An example rewrite is provided in Listing \ref{code:rewrite-dep}.
-
+Dependent contract has a predicate that receives the argument value. Therefore,
+we build up the correct contract predicate for the output contract. The value
+must be passed in with a different labels set from the value used, which we
+only need to create a new random variable. Not only that, because the dependent
+argument runs inside a handler context, it lacks a handler because the contract
+effect handler is pushed into the continuation. Therefore, we must wrap it into
+a handler, as in the theoretical compiler model. Then we provide this to the
+post-condition predicate as argument. The process is recursive, if the
+dependent argument also has a dependent contract the dependent argument is also
+wrapped inside a handler. An example rewrite is provided in Listing
+\ref{code:rewrite-dep}.
 
 \begin{listing}
 \inputminted{ocaml}{code/rewrite-dep.ml}
@@ -76,31 +153,65 @@ Dependent contract has a predicate that receives the argument value. Therefore, 
 \label{code:rewrite-dep}
 \end{listing}
 
-\subsection{Recursive functions}
+\subsection{Handling Contract Effects}
 
-Unsupported at the moment.
+Using the defined \texttt{contract\_checking} user can wrap all possible code
+path to handle all contract effects. User should be aware of functions with
+contract effects called outside the handler. Therefore, we suggest wrapping the
+whole program under \texttt{contract\_checking}. This is equivalent to Effect
+Safety Compiler Theorem.
 
 \subsection{Blame labels assignment}
 
-All uses of the variable must now be appended with the three parameters \texttt{pos}, \texttt{neg}, and \texttt{cloc}. It is by practice to use the module name hosting the variable as the positive label, the module name of usesite as the negative label, and the variable name itself as the contract label. However, during the limitation of preprocessor having limited scoping functionality, we hereby define a simpler strategy for blame assingment. There are three cases that we have to resolve for blame assignment.
+All uses of the variable must now be appended with the three parameters
+\texttt{pos}, \texttt{neg}, and \texttt{cloc}. It is by practice to use the
+module name hosting the variable as the positive label, the module name of
+usesite as the negative label, and the variable name itself as the contract
+label. However, during the limitation of preprocessor having limited scoping
+functionality, we hereby define a simpler strategy for blame assingment. There
+are three cases that we have to resolve for blame assignment.
 
 \begin{itemize}
 \item Function's argument
 
-This blame assignment follows the semantics of \langc, where positive and negative labels are "swapped" with each other on function input. Because function arguments are bounded inside a function, the generated code applies the labels of the parent function in the correct order. This process happens for dependent contract as well, where the dependent argument is applied with the correct labels from its parent function.
+This blame assignment follows the semantics of \langc, where positive and
+negative labels are "swapped" with each other on function input. Because
+function arguments are bounded inside a function, the generated code
+applies the labels of the parent function in the correct order. This
+process happens for dependent contract as well, where the dependent
+argument is applied with the correct labels from its parent function.
 
 \item Global variable
 
-Once a protected functions/values are used in the user code, they must be applied with the correct labels, else the blame report confuses the programmer. There are 2 main cases here, (i) the function is defined used in the same module, (ii) the function is defined and used in two different modules. We examine the two cases and demonstrate how should the blame labels be assigned.
+Once a protected functions/values are used in the user code, they must be
+applied with the correct labels, else the blame report confuses the
+programmer. There are 2 main cases here, (i) the function is defined used
+in the same module, (ii) the function is defined and used in two different
+modules. We examine the two cases and demonstrate how should the blame
+labels be assigned.
 
-In the same module scenario, the positive label is the module and the function. The negative label is the code usage, which is the same module. Because our implementation does not transform recursive functions, the only place in the same module that can use a protected function/value is other function, or in annonymous scope. If the protected function is used inside another function, the negative label is the name of the module and the hosting function. If it is being used in an annonymous scope, the negative label is the name of the module.
+In the same module scenario, the positive label is the module and the function.
+The negative label is the code usage, which is the same module. Because our
+implementation does not transform recursive functions, the only place in
+the same module that can use a protected function/value is other function,
+or in annonymous scope. If the protected function is used inside another
+function, the negative label is the name of the module and the hosting
+function. If it is being used in an annonymous scope, the negative label is
+the name of the module.
 
-In different modules scenario, the positive label remains the module and the function. The negative label is the code usage. Similarly, we can use the module name with the function name if unannoymous.
+In different modules scenario, the positive label remains the module and the
+function. The negative label is the code usage. Similarly, we can use the
+module name with the function name if unannoymous.
 
-In both of these scenarios, the contract location label is the same as the positive label.
+In both of these scenarios, the contract location label is the same as the
+positive label.
 
 \item Local variable
 
-Because a contract can be annotated in any let expression, it is possible to annotate a local variable with contract. In this scenario, the positive label is the module, and the hosting function. The negative label is where the variable is being used, which is highly likely the function itself. Therefore all three labels are the same.
+Because a contract can be annotated in any let expression, it is possible to
+annotate a local variable with contract. In this scenario, the positive
+label is the module, and the hosting function. The negative label is where
+the variable is being used, which is highly likely the function itself.
+Therefore all three labels are the same.
 
 \end{itemize}

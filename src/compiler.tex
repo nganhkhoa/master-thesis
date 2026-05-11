@@ -34,7 +34,7 @@ using a handler of all possible effects that might arise during execution of
 $\kappa_d$. This loses the general context shared across all other contracts,
 but guarantees all effects are handled.
 
-The next section illustrates many examples aim to give an intuition to the
+The next section illustrates many examples aiming to give an intuition to the
 reader before the later formal section, where a compilation model between
 \langc\ to \lange\ is presented.
 
@@ -90,34 +90,34 @@ because the handler scope during checking the post contract is pushed into the
 continuation, the dependent contract must be wrapped in its own handler scope.
 Figure \ref{fig:example-compile-dependent} describe the procedure for a
 \textit{basic type} argument. Because the argument is a basic type, there is
-only one operation in the handler $h_3$. If the argument is a function, then
-$h_3$ should capture all possible effects, collectable after compiling
+only one operation in the handler $\attrE{h_3}$. If the argument is a function, then
+$\attrE{h_3}$ should capture all possible effects, collectable after compiling
 recursively with known contract.
 
 
 \begin{figure}
 \begin{align*}
-  \cMon{k}{l}{j}{\cKFunc{(\cKFunc{\cFlat{k_1}}{\cFlat{k_2}})}{\cFlat{k_3}}}{f}
+  \cMon{k}{l}{j}{\cKFunc{(\cKFunc{\cFlat{\kappa_1}}{\cFlat{\kappa_2}})}{\cFlat{\kappa_3}}}{f}
 \end{align*}
 $\Downarrow$
 \begin{align*}
-  \cLam{g}{\cMon{k}{l}{j}{\cFlat{k_3}}{f \ (\cMon{l}{k}{j}{\cKFunc{\cFlat{k_1}}{\cFlat{k_2}}}{g})}}
+  \cLam{g}{\cMon{k}{l}{j}{\cFlat{\kappa_3}}{f \ (\cMon{l}{k}{j}{\cKFunc{\cFlat{\kappa_1}}{\cFlat{\kappa_2}}}{g})}}
 \end{align*}
 $\Downarrow$
 \begin{align*}
-  \cLam{g}{\cMon{k}{l}{j}{\cFlat{k_3}}{f \ (\cLam{x}{\cMon{l}{k}{j}{\cFlat{k_2}}{g \ (\cMon{k}{l}{j}{\cFlat{k_1}}{x})}})}}
+  \cLam{g}{\cMon{k}{l}{j}{\cFlat{k_3}}{f \ (\cLam{x}{\cMon{l}{k}{j}{\cFlat{\kappa_2}}{g \ (\cMon{k}{l}{j}{\cFlat{\kappa_1}}{x})}})}}
 \end{align*}
 $\Downarrow$
 
 \begin{align*}
   % 1. Define the handlers with their correct blame polarities
-  \attrE{h_1} \ &\triangleq \ \attrE{\{} \attrE{check_{k_1} \to} \dots \eBlame{k} \attrE{\}} \\
-  \attrE{h_2} \ &\triangleq \ \attrE{\{} \attrE{check_{k_2} \to} \dots \eBlame{l} \attrE{\}} \\
-  \attrE{h_3} \ &\triangleq \ \attrE{\{} \attrE{check_{k_3} \to} \dots \eBlame{k} \attrE{\}} \\[2ex]
+  \attrE{h_1} \ &\triangleq \ \attrE{\{} \attrE{check_{\kappa_1} \to} \dots \eBlame{k} \attrE{\}} \\
+  \attrE{h_2} \ &\triangleq \ \attrE{\{} \attrE{check_{\kappa_2} \to} \dots \eBlame{l} \attrE{\}} \\
+  \attrE{h_3} \ &\triangleq \ \attrE{\{} \attrE{check_{\kappa_3} \to} \dots \eBlame{k} \attrE{\}} \\[2ex]
   % 2. Build the nested evaluations bottom-up
-  \attrE{e_1} \ &\triangleq \ {\ePerform{check_{k_1}}{\tau_1} \ \attrE{x}} \\
-  \attrE{e_2} \ &\triangleq \ {\ePerform{check_{k_2}}{\tau_2} \ (\attrE{g} \ \attrE{e_1})} \\
-  \attrE{e_3} \ &\triangleq \ {\ePerform{check_{k_3}}{\tau_3} \ (\attrE{f} \ (\eLam{x}{\attrE{e_2}}))} \\[2ex]
+  \attrE{e_1} \ &\triangleq \ {\ePerform{check_{\kappa_1}}{\tau_1} \ \attrE{x}} \\
+  \attrE{e_2} \ &\triangleq \ {\ePerform{check_{\kappa_2}}{\tau_2} \ (\attrE{g} \ \attrE{e_1})} \\
+  \attrE{e_3} \ &\triangleq \ {\ePerform{check_{\kappa_3}}{\tau_3} \ (\attrE{f} \ (\eLam{x}{\attrE{e_2}}))} \\[2ex]
   % 3. The final compiled expression
   &\eLam{g}{\attrE{e_3}}
 \end{align*}
@@ -128,35 +128,35 @@ $\Downarrow$
 
 \begin{figure}
 \begin{align*}
-  \cMon{k}{l}{j}{\cKDep{\cFlat{k_1}}{x}{\cFlat{k_2}}}{g}
+  \cMon{k}{l}{j}{\cKDep{\cFlat{\kappa_1}}{x}{\cFlat{k_2}}}{g}
 \end{align*}
 
 $\Downarrow$
 
 \begin{align*}
-  \cLam{x}{\cMon{k}{l}{j}{\cSubst{\cMon{l}{j}{j}{\cFlat{k_1}}{x}}{x}{\cFlat{k_2}}}{g \ (\cMon{l}{k}{j}{\cFlat{k_1}}{x})}}
+  \cLam{x}{\cMon{k}{l}{j}{\cSubst{\cMon{l}{j}{j}{\cFlat{\kappa_1}}{x}}{x}{\cFlat{\kappa_2}}}{g \ (\cMon{l}{k}{j}{\cFlat{\kappa_1}}{x})}}
 \end{align*}
 
 $\Downarrow$
 
 \begin{align*}
   % 1. Define the handlers with their correct blame polarities
-  \attrE{h_1} \ &\triangleq \ \attrE{\{} \attrE{check_{k_1} \to} \dots \eBlame{l} \attrE{\}} \\
-  \attrE{h_2} \ &\triangleq \ \attrE{\{} \attrE{check_{k_2} \to} \\
+  \attrE{h_1} \ &\triangleq \ \attrE{\{} \attrE{check_{\kappa_1} \to} \dots \eBlame{l} \attrE{\}} \\
+  \attrE{h_2} \ &\triangleq \ \attrE{\{} \attrE{check_{\kappa_2} \to} \\
   &\qquad \eTAbs{\alpha}{
     \eLam{y : \alpha}{
       \eLam{kont : \alpha \attrE{\to \langle\rangle} \alpha}{
-        \eIf{k_2[x:=x_{dep}]}
+        \eIf{\kappa_2[x:=x_{dep}]}
             {\attrE{kont \ y}}
             {\eBlame{k}}
       }
     }
   } \\
-  \attrE{h_3} \ &\triangleq \ \attrE{\{} \attrE{check'_{k_1} \to} \dots \eBlame{l} \attrE{\}} \\[2ex]
+  \attrE{h_3} \ &\triangleq \ \attrE{\{} \attrE{check'_{\kappa_1} \to} \dots \eBlame{l} \attrE{\}} \\[2ex]
   % 2. Build the nested evaluations bottom-up
-  \attrE{x_{arg}} \ &\triangleq \ {\ePerform{check_{k_1}}{\tau_1} \ \attrE{x}}\\
-  \attrE{x_{dep}} \ &\triangleq \ {\eHandle{h_3}{\ePerform{check'_{k_1}}{\tau_1} \ \attrE{x}}}\\
-  \attrE{e_1}     \ &\triangleq \ {\ePerform{check_{k_2}}{\tau_2} \ {(\attrE{g} \ \attrE{x_{arg}})}} \\[2ex]
+  \attrE{x_{arg}} \ &\triangleq \ {\ePerform{check_{\kappa_1}}{\tau_1} \ \attrE{x}}\\
+  \attrE{x_{dep}} \ &\triangleq \ {\eHandle{h_3}{(\ePerform{check'_{\kappa_1}}{\tau_1} \ \attrE{x})}}\\
+  \attrE{e_1}     \ &\triangleq \ {\ePerform{check_{\kappa_2}}{\tau_2} \ {(\attrE{g} \ \attrE{x_{arg}})}} \\[2ex]
   % 3. The final compiled expression
   &\eLam{x}{\attrE{e_1}}
 \end{align*}
@@ -170,16 +170,29 @@ $\Downarrow$
 
 The compilation relies heavily on the type of argument. Therefore, we provide a
 type-directed compilation from \langc\ to \lange. Compilation relation
-$\cCompile{\cGamma}{e}{\tau}{h}{e}$ takes an expression $\attrC{e}$ of type
-$\attrC{τ}$ with context $\cGamma$ and compiles into $\attrE{e}$ with a handler
+$\cCompile{\cGamma}{e}{\tau}{h}{e'}$ takes an expression $\attrC{e}$ of type
+$\attrC{τ}$ with context $\cGamma$ and compiles into $\attrE{e'}$ with a handler
 $\attrE{h}$.
 
 
-The compilation is recursive, types are used to form well-typed \lange\ expressions. We define the following theorems for our compiler: Type Preservation, Observable Equivalance, and Blame Preservation. Type Preservation Theorem states that a well-typed program in \langc\ compiles into a well-typed program in \lange\ typed using the same basic type and has no unhandled effects. Observable Equivalance Theorem states that if the \langc\ program reduces to a value, then the compiled \lange\ program reduces to a value also. Blame Preservation Theorem states that if \langc\ program blames a party, then the compiled \lange\ program also blame the same party.
+The compilation is recursive, types are used to form well-typed \lange\
+expressions. We define the following theorems for our compiler: Type
+Preservation, Effect Safe Compiler, Observable Equivalance, and Blame
+Preservation. Type Preservation Theorem states that a well-typed program in
+\langc\ compiles into a well-typed program in \lange\ typed using the same
+basic type and has some effects. Effect Safe Compiler Theorem makes sure that
+all (contract) effects are handled-able using the compiler outputed handler.
+Observable Equivalance Theorem and Blame Preservation Theorem both ensure the
+same semantic behavior is preserved whether the program executed correctly or a
+blame occured.
 
-Because \lange\ has different types from \langc, we define $\symtt{T}$ as the type conversion from \cGamma\ to \eGamma. The conversion is simple because \langc\ only has basic type, so we map to the basic type of \lange.
+Because \lange\ has different types from \langc, we define $\symtt{T}$ as the
+type conversion from \cGamma\ to \eGamma. The conversion is simple because
+\langc\ only has basic type, so we map to the basic type of \lange.
 
-In Figure \ref{fig:compilation}, we provide some interesting compilation rules, other expressions left out should be trivial. Types used in \lange\ that copied from \langc context are assumed to be converted.
+In Figure \ref{fig:compilation}, we provide some interesting compilation rules,
+other expressions left out should be trivial. Types used in \lange\ that copied
+from \langc context are assumed to be converted.
 
 \begin{figure}[htbp]
   \centering
@@ -205,18 +218,26 @@ In Figure \ref{fig:compilation}, we provide some interesting compilation rules, 
   \label{fig:env-translation}
 \end{figure}
 
+
 \begin{theorem}[Type Preservation]
-  If $\cCompile{\cGamma}{e}{\tau}{\Sigma}{e'}$ then $\eTypesC{\eGamma}{e'}{τ^*}{\langle\rangle}$
-  where $\symtt{T}(\cGamma) \subseteq \eGamma$
+  If $\cCompile{\cGamma}{e}{\tau}{h}{e'}$
+  then $\eTypesC{\eGamma}{e'}{\tau^*}{\epsilon}$
+  for some $\attrE{\epsilon}$ and $\symtt{T}(\cGamma) \subseteq \eGamma$
+\end{theorem}
+
+\begin{theorem}[Effect Safe Compiler]
+  If $\cCompile{\cGamma}{e}{\tau}{h}{e'}$ and $\symtt{T}(\cGamma) \subseteq \eGamma$
+  then $\eTypesC{\eGamma}{\eHandle{h}{e'}}{\tau^*}{\langle\rangle}$
 \end{theorem}
 
 \begin{theorem}[Observable Equivalance]
-  If $\attrC{e} \cStepMany \attrC{v}$ and $\cCompile{\cdot}{e}{\tau}{\Sigma}{e'}$ then there
-  exists a $\attrE{v'}$ such that $\attrE{e'}\eStepMany \attrE{v'}$
+  If $\attrC{e} \cStepMany \attrC{v}$ and $\cCompile{\cdot}{e}{\tau}{h}{e'}$ then there
+  exists a $\attrE{v'}$ such that $\eHandle{h}{e'}\eStepMany \attrE{v'}$
 \end{theorem}
 
 \begin{theorem}[Blame Preservation]
-  If $\attrC{e} \cStepMany \cErr{l}{p}$ and $\cCompile{\cdot}{e}{\tau}{\Sigma}{e'}$ then $\attrE{e'}\eStepMany \eBlame{p}$
+  If $\attrC{e} \cStepMany \cErr{l}{p}$ and $\cCompile{\cdot}{e}{\tau}{h}{e'}$\\
+  then $\eHandle{h}{e'}\eStepMany \eBlame{p}$
 \end{theorem}
 
 
@@ -259,7 +280,7 @@ In Figure \ref{fig:compilation}, we provide some interesting compilation rules, 
 
   \inferrule[Compile-MonFlat]
     { \cCompile{\cGamma}{e}{\tau}{h}{e'} \\
-      \attrE{check_{\kappa} ∉  h} \\
+      \attrE{check_{\kappa}} ∉  \attrE{h} \\
       \attrE{h_\kappa} \triangleq \attrE{\{} \attrE{check_{\kappa} \to f} \attrE{\}} \\
       \attrE{f} \triangleq
         \eTAbs{\alpha}{ \eLam{x : \alpha}{ \eLam{kont :
@@ -292,7 +313,7 @@ In Figure \ref{fig:compilation}, we provide some interesting compilation rules, 
   \textbf{Helper function}
   \begin{align*}
     \symtt{wrap}(\attrE{h},\attrE{e}) \ &\triangleq \ \eHandle{h}{e} \quad (\attrE{e} \neq \eLam{x}{e'}) \\
-    \symtt{wrap}(\attrE{h},\eLam{x}{e}) \ &\triangleq \ \eLam{x}{\symtt{wrap}(h,e)}
+    \symtt{wrap}(\attrE{h},\eLam{x}{e}) \ &\triangleq \ \eLam{x}{\textcolor{black}{\symtt{wrap}(}h,e\textcolor{black}{)}}
   \end{align*}
 
 
