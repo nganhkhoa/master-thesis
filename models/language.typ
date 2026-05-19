@@ -1,0 +1,64 @@
+#let contract-color = rgb("#0071BC")
+#let effect-color = rgb("#F26035")
+
+#let ckw(it) = text(fill: contract-color, weight: "regular", math.sans(it))
+#let ekw(it) = text(fill: effect-color, weight: "bold", math.mono(it))
+#let ctxt(it) = text(weight: "regular", math.sans(it))
+#let etxt(it) = text(weight: "bold", math.mono(it))
+#let kw(it) = text(fill: rgb("#333333"), weight: "regular", math.sans(it))
+
+#let apply(a, b) = $#a med #b$
+
+#let tuple(a,b) = $chevron.l #a,#b chevron.r$
+#let injl(e) = $kw("inj.l")(#e)$
+#let injr(e) = $kw("inj.r")(#e)$
+
+#let ref(tau) = $kw("ref")(#tau)$
+#let refc(tau) = $ckw("ref/c")(#tau)$
+#let iszero(e) = $kw("zero?")(#e)$
+#let newcell(e) = $kw("new")(#e)$
+#let getcell(e) = $kw("get")(#e)$
+#let setcell(e1,e2) = $kw("set")(#e1,#e2)$
+
+// [Contract Constructs] -> Blue, Regular Sans
+#let con(tau) = $ckw("con")(#tau)$
+#let mon(k, l, j, kappa, e) = $ckw("mon")_#j^(#k,#l) (#kappa, #e)$
+#let blame(l, p) = $attach(ckw("blame"), tr: #l, br: #p)$
+#let flat(e) = $ckw("flat")(#e)$
+#let cabs(x,e) = $ckw(lambda) #x . #e$ // freely add types or no types
+#let ife(c,t,f) = $"if" #c "then" #t "else" #f$
+#let guard(v, c, k, l, j) = $attach(ckw("guard"), tr: #k\,#l, br: #j)(#c, #v)$
+
+
+// -> Neutral
+#let eif(c, t, f) = $#base-kw("if") #c #base-kw("then") #t #base-kw("else") #f$
+
+#let mteff = $chevron.l chevron.r$
+#let eff = ekw("eff")
+#let lab = ekw("lab")
+#let eblame(p) = $attach(ekw("blame"), br: #p)$
+#let handler(h) = $ekw("handler") h$
+
+#let handle(h, e) = $ekw("handle") #h space #e$
+#let perform(op, tau) = $ekw("perform") #op #tau$
+
+#let teff(tau_1,epsilon,tau_2) = $#tau_1 attach(->,tr:#epsilon) #tau_2$
+
+#let bop(E) = $ekw("bop")(#E)$
+
+#let cstep = $-->$
+#let estep = $-->$
+
+#let langc = $ckw("Contracts")$
+#let lange = $ekw("Effects")$
+
+
+#let typeeff(ctx,e,t,eff,type: none) = {
+  if type == "val" {
+    $#ctx attach(tack.r.short, br: type) #e : #t$
+  } else if type == "ops" {
+    $#ctx attach(tack.r.short, br: type) #e : #t | #eff$
+  } else {
+    $#ctx tack.r.short #e : #t | #eff$
+  }
+}
