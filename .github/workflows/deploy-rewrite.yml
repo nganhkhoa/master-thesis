@@ -1,0 +1,58 @@
+name: Deploy Typst to GitHub Pages
+
+on:
+  push:
+    branches: ["rewrite"]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: "pages"
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Typst
+        uses: typst-community/setup-typst@v3
+
+      - name: Compile main.typ
+        run: |
+          mkdir -p build/
+          typst compile main.typ build/main.pdf
+
+      - name: Determine Release Parameters
+        id: vars
+        run: |
+          if [[ $GITHUB_REF == refs/tags/* ]]; then
+            # We are on a tag push (e.g., v1.0)
+            echo "tag_name=${GITHUB_REF#refs/tags/}" >> $GITHUB_OUTPUT
+            echo "release_name=Release ${GITHUB_REF#refs/tags/}" >> $GITHUB_OUTPUT
+          else
+            # We are on a branch push or workflow_dispatch
+            SHA_SHORT=$(git rev-parse --short HEAD)
+            # Synthesize a tag so GitHub Releases has an anchor
+            echo "tag_name=build-${SHA_SHORT}" >> $GITHUB_OUTPUT
+            echo "release_name=Draft Build ${SHA_SHORT}" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Create Release and Upload PDF
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ steps.vars.outputs.tag_name }}
+          name: ${{ steps.vars.outputs.release_name }}
+          files: build/main.pdf
+
+      - name: Deploy PDF to GitHub Pages
+        uses: peaceiris/actions-gh-pages@v4
+        # if: startsWith(github.ref, 'refs/tags/')
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./build/
+          keep_files: true
