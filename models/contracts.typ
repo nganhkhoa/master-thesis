@@ -17,7 +17,7 @@
         [#langc],
       )
       #h(6pt)
-      extends *Core*
+      extends #langb
     ],
     grid(
       columns: (auto, auto),
@@ -29,6 +29,7 @@
         Prod($e$, {
           Or[$...$][]
           Or[$mon(k,l, j, kappa, e)$][]
+          Or[$check(k, j, e, v)$][]
           Or[$blame(l,p)$][]
         }),
       ),
@@ -44,6 +45,7 @@
         Prod($E$, {
           Or[$...$][]
           Or[$mon(k, l, j, kappa, E)$][]
+          Or[$check(k, j, E, v)$][]
         }),
       ),
     ),

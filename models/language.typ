@@ -20,17 +20,15 @@
 #let getcell(e) = $kw("get")(#e)$
 #let setcell(e1,e2) = $kw("set")(#e1,#e2)$
 
-// [Contract Constructs] -> Blue, Regular Sans
 #let con(tau) = $ckw("con")(#tau)$
 #let mon(k, l, j, kappa, e) = $ckw("mon")_#j^(#k,#l) (#kappa, #e)$
 #let blame(l, p) = $attach(ckw("blame"), tr: #l, br: #p)$
+#let check(k, j, e, v) = $ckw("check")_#j^#k (#e, #v)$
 #let flat(e) = $ckw("flat")(#e)$
 #let cabs(x,e) = $ckw(lambda) #x . #e$ // freely add types or no types
 #let ife(c,t,f) = $"if" #c "then" #t "else" #f$
 #let guard(v, c, k, l, j) = $attach(ckw("guard"), tr: #k\,#l, br: #j)(#c, #v)$
 
-
-// -> Neutral
 #let eif(c, t, f) = $#base-kw("if") #c #base-kw("then") #t #base-kw("else") #f$
 
 #let mteff = $chevron.l chevron.r$
@@ -47,11 +45,14 @@
 #let bop(E) = $ekw("bop")(#E)$
 
 #let cstep = $-->$
-#let estep = $-->$
+#let estep = $arrow.r.double.long$
+#let compiles-into = $arrow.r.tail$
 
+#let langb = $kw("Base")$
 #let langc = $ckw("Contracts")$
 #let lange = $ekw("Effects")$
 
+#let typecon(ctx,e,t) = $#ctx tack.r.short #e : #t$
 
 #let typeeff(ctx,e,t,eff,type: none) = {
   if type == "val" {
@@ -62,3 +63,7 @@
     $#ctx tack.r.short #e : #t | #eff$
   }
 }
+
+#let effcheck = $#text(fill: rgb("#009E73"), weight: "regular", math.scr("C"))$
+#let compile(src,target) = $#src med #compiles-into med #target$
+#let typecompile(t) = $#t^*$

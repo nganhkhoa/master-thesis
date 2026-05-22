@@ -14,7 +14,7 @@
       #box(
         stroke: 1pt + black,
         outset: 5pt,
-        [*Core*],
+        [#langb],
       )
     ],
     grid(
@@ -28,7 +28,7 @@
         }),
         Prod($e$, {
           Or[$0 | -1 | 1 | ... | "tt" | "ff" | "x"$][]
-          Or[$lambda x : tau . e | mu x : tau . e$][]
+          Or[$lambda x : tau . e | mu x : tau . e | kw("loc")$][]
           Or[$e + e | e - e | e and e | e or e$][]
           Or[$apply(e, e) | ife(e, e, e)$][]
           Or[$iszero(e)$][]
@@ -57,5 +57,5 @@
     ),
     v(1em),
   ),
-  caption: [Core Language]
+  caption: [#langb Language]
 ) <core-syntax>

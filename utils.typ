@@ -1,3 +1,6 @@
+#import "@preview/great-theorems:0.1.1": *
+#show: great-theorems-init
+
 #let no-ref(it) = {
   // Catch all @label references
   show ref: r => context {
@@ -36,3 +39,4 @@
     }
   }
 }
+

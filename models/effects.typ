@@ -17,7 +17,7 @@
         [#lange],
       )
       #h(6pt)
-      extends *Core*
+      extends #langb
     ],
     grid(
       columns: (auto, auto),

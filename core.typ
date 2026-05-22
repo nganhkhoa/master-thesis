@@ -1,7 +1,9 @@
 #import "models/language.typ": *
 
-== Core Language
+== #langb Language
 
-We define *Core* language and its syntax in @core-syntax. The language extends the PCF language with tuples and mutable cells. This will be the base language for both #langc and #lange.
+We define #langb language and its syntax in @core-syntax. The language extends the PCF language with tuples and mutable cells. This will be the base language for both #langc and #lange.
 
+#v(1em)
 #include "models/core.typ"
+#v(1em)

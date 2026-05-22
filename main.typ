@@ -1,6 +1,7 @@
 #import "nuthesis.typ": nuthesis
 
 #import "models/language.typ": langc, lange
+#import "proofs/setup.typ": *
 #import "utils.typ": load-bib
 
 #show: nuthesis.with(
@@ -95,6 +96,8 @@ compares our implementation in OCaml to the Racket's contract system; Chapter
 #include "contracts.typ"
 #include "effects.typ"
 
+#include "compiler.typ"
+
 // ==========================================
 // REFERENCES & APPENDICES
 // ==========================================
@@ -114,3 +117,8 @@ compares our implementation in OCaml to the Racket's contract system; Chapter
 // #include "proofs/effects/context.typ"
 // #include "proofs/effects/progress.typ"
 // #include "proofs/effects/preservation.typ"
+
+
+= Compiler Soundness
+
+#include "proofs/compiler.typ"
