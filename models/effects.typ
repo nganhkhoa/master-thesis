@@ -31,6 +31,7 @@
           Or[$k -> k$][]
           Or[$#eff$][]
           Or[$#lab$][]
+          Or[$#blab$][Blame Label]
         }),
         Prod($e$, {
           Or[$...$][]

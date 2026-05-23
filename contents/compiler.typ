@@ -1,6 +1,6 @@
-#import "models/language.typ": *
-#import "proofs/setup.typ": *
-#import "utils.typ": load-bib, no-ref
+#import "/models/language.typ": *
+#import "/proofs/setup.typ": *
+#import "/utils.typ": load-bib, no-ref
 
 #show: no-ref
 
@@ -21,10 +21,22 @@ This handler performs the check for the value $v$, with the predicate/contract $
 
 TODO: add example here
 
+#v(1em)
+#include "/models/compiler.typ"
+#v(1em)
+
 To resolve this issue, we define a recursive function $kw("wrap")$ that will reinstall the handler at $apply(e,v)$ making sure all effects during contract checking is handled. All compilation rules are defined in @compiler-rules. With $kw("wrap")$ defined, we can make some theorems about the compiler.
 
-#place-theorem(<compiler-type-preservation>)
+#theorem[
+Compiler Type Preservation.
 
-#v(1em)
-#include "models/compiler.typ"
-#v(1em)
+If $compile(type(dot.op,e_1,tau),e_2)$ then $type(dot.op,e_2,tau, eff: chevron.l heffcheck chevron.r)$.
+
+]<compiler-type-preservation>
+
+#theorem[
+Compiler Effect Safety with $kw("wrap")$.
+
+If $compile(type(dot.op,e_1,tau),e_2)$ then $type(dot.op, apply(kw("wrap")[tau],e), tau, eff: mteff)$.
+]<compiler-handle-all>
+

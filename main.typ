@@ -1,7 +1,7 @@
 #import "nuthesis.typ": nuthesis
 
-#import "models/language.typ": langc, lange
 #import "proofs/setup.typ": *
+#import "models/language.typ": langc, lange
 #import "utils.typ": load-bib
 
 #show: nuthesis.with(
@@ -79,24 +79,26 @@ This disseration shows the above idea by providing a compiler model between
 CPCF @christos2011on and System $F^epsilon$ @ningning2020effect. We also provide
 an implementation in OCaml as a practical implementation.
 
-The rest of the thesis is organized as follows: Chapter \ref{chap:contracts}
-and Chapter \ref{chap:effects} introduces the two formal languages #langc
-based on CPCF, and #lange based on System $F^epsilon$; Chapter
-\ref{chap:compiler} discusses a theoretical compiler from #langc to #lange as
-a demonstration to ``contract checking as effects''; Chapter \ref{chap:ocaml}
-introduces the OCaml language and its native support for effect handlers;
-Chapter \ref{chap:implementation} provides the implementation of the
-theoretical compiler in OCaml using PPX rewritter; Chapter \ref{chap:compare}
-compares our implementation in OCaml to the Racket's contract system; Chapter
-\ref{chap:final} concludes our remarks.
+// The rest of the thesis is organized as follows: Chapter \ref{chap:contracts}
+// and Chapter \ref{chap:effects} introduces the two formal languages #langc
+// based on CPCF, and #lange based on System $F^epsilon$; Chapter
+// \ref{chap:compiler} discusses a theoretical compiler from #langc to #lange as
+// a demonstration to ``contract checking as effects''; Chapter \ref{chap:ocaml}
+// introduces the OCaml language and its native support for effect handlers;
+// Chapter \ref{chap:implementation} provides the implementation of the
+// theoretical compiler in OCaml using PPX rewritter; Chapter \ref{chap:compare}
+// compares our implementation in OCaml to the Racket's contract system; Chapter
+// \ref{chap:final} concludes our remarks.
 
 = Formal Language Models
 
-#include "core.typ"
-#include "contracts.typ"
-#include "effects.typ"
+#include "contents/core.typ"
+#include "contents/contracts.typ"
+#include "contents/effects.typ"
 
-#include "compiler.typ"
+#include "contents/compiler.typ"
+
+#include "contents/implementation.typ"
 
 // ==========================================
 // REFERENCES & APPENDICES

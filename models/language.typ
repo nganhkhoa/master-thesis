@@ -7,6 +7,11 @@
 #let etxt(it) = text(weight: "bold", math.mono(it))
 #let kw(it) = text(fill: rgb("#333333"), weight: "regular", math.sans(it))
 
+#let numt = $kw("num")$
+#let boolt = $kw("bool")$
+#let trueb = $kw("true")$
+#let falseb = $kw("false")$
+
 #let apply(a, b) = $#a med #b$
 
 #let tuple(a,b) = $chevron.l #a,#b chevron.r$
@@ -25,6 +30,7 @@
 #let blame(l, p) = $attach(ckw("blame"), tr: #l, br: #p)$
 #let check(k, j, e, v) = $ckw("check")_#j^#k (#e, #v)$
 #let flat(e) = $ckw("flat")(#e)$
+#let dep(kappa_1,kappa_2) = $#kappa_1 attach(->, br: i) #kappa_2$
 #let cabs(x,e) = $ckw(lambda) #x . #e$ // freely add types or no types
 #let ife(c,t,f) = $"if" #c "then" #t "else" #f$
 #let guard(v, c, k, l, j) = $attach(ckw("guard"), tr: #k\,#l, br: #j)(#c, #v)$
@@ -34,6 +40,7 @@
 #let mteff = $chevron.l chevron.r$
 #let eff = ekw("eff")
 #let lab = ekw("lab")
+#let blab = ekw("blab")
 #let eblame(p) = $attach(ekw("blame"), br: #p)$
 #let handler(h) = $ekw("handler") h$
 
@@ -44,18 +51,23 @@
 
 #let bop(E) = $ekw("bop")(#E)$
 
+#let step = $-->$
+#let step1 = $-->$
 #let cstep = $-->$
+#let cstep1 = $attach(-->, tr: *)$
 #let estep = $arrow.r.double.long$
+#let estep1 = $attach(arrow.r.double.long, tr: *)$
 #let compiles-into = $arrow.r.tail$
 
 #let langb = $kw("Base")$
 #let langc = $ckw("Contracts")$
 #let lange = $ekw("Effects")$
 
-#let typecon(ctx,e,t) = $#ctx tack.r.short #e : #t$
-
-#let typeeff(ctx,e,t,eff,type: none) = {
-  if type == "val" {
+#let type(ctx,e,t,eff: none,type: none) = {
+  if eff == none {
+    $#ctx tack.r.short #e : #t$
+  }
+  else if type == "val" {
     $#ctx attach(tack.r.short, br: type) #e : #t$
   } else if type == "ops" {
     $#ctx attach(tack.r.short, br: type) #e : #t | #eff$
@@ -64,6 +76,22 @@
   }
 }
 
+// #let typecon(ctx,e,t) = $#ctx tack.r.short #e : #t$
+
+// #let typeeff(ctx,e,t,eff,type: none) = {
+//   if type == "val" {
+//     $#ctx attach(tack.r.short, br: type) #e : #t$
+//   } else if type == "ops" {
+//     $#ctx attach(tack.r.short, br: type) #e : #t | #eff$
+//   } else {
+//     $#ctx tack.r.short #e : #t | #eff$
+//   }
+// }
+
 #let effcheck = $#text(fill: rgb("#009E73"), weight: "regular", math.scr("C"))$
+#let heffcheck = $ekw("h")_effcheck$
 #let compile(src,target) = $#src med #compiles-into med #target$
 #let typecompile(t) = $#t^*$
+
+
+#let underline(color, it) = box(stroke: (bottom: 1pt + color), outset: (bottom: 2pt, left: 0pt, right: 0pt), $it$)

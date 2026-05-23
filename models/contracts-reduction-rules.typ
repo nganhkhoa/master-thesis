@@ -15,18 +15,21 @@
       [$check(k, j, "tt", v)$], [$cstep$], [$v$], [Check-True],
       [$check(k, j, "ff", v)$], [$cstep$], [$blame(k,j)$], [Check-False],
 
-      [$guard(flat(e),v,k,l,j)$], [$cstep$], [$check(k, j, apply(e, v), v)$], [Mon-Flat],
+      [$mon(k,l,j,kappa,v)$],[$cstep$],[$guard(v,kappa,k,l,j)$],[Mon-Guard],
 
-      [$apply(guard(kappa_1 -> kappa_2,v_1,k,l,j),v_2)$], [$cstep$], [$mon(k,l,j,kappa_2,apply(v_1, mon(l,k,j,kappa_1,v_2)))$], [Guard-Func],
+      [$guard(flat(e),v,k,l,j)$], [$cstep$], [$check(k, j, apply(e, v), v)$], [Guard-Flat],
 
-      [$apply(guard(kappa_1 ->^d (lambda x. kappa_2),v_1,k,l,j),v_2)$], [$cstep$],
+      [$apply(guard(v_1,kappa_1 -> kappa_2,k,l,j),v_2)$], [$cstep$], [$mon(k,l,j,kappa_2,apply(v_1, mon(l,k,j,kappa_1,v_2)))$], [Guard-Func],
+
+      [$apply(guard(v_1,dep(kappa_1, lambda x. kappa_2),k,l,j),v_2)$], [$cstep$],
       [$mon(k,l,j, kappa'_2, apply(v_1, mon(k,l,j,kappa_1,v_2)))$],
-      [Mon-Dep],
-
+      [Guard-Dep],
       [],[],grid.cell(colspan: 2, align: right, [where $kappa'_2 = {mon(l,j,j,kappa_1,v_2)\/x}kappa_2$],),
 
-      [$mon(k,l,j,tuple(kappa_1,kappa_2),tuple(v_1,v_2))$], [$cstep$], [$tuple(mon(k,l,j,kappa_1,v_1), mon(k,l,j,kappa_2,v_2))$], [Mon-Tuple],
-      [$mon(k,l,j,refc(kappa),v)$], [$cstep$], [$guard(v, kappa, k,l,j)$], [Mon-Cell],
+
+      [$injl(guard(tuple(v_1,v_2),tuple(kappa_1,kappa_2),k,l,j))$],[$cstep$],[$guard(v_1,kappa_1,k,l,j)$],[Guard-Inj-Left],
+      [$injr(guard(tuple(v_1,v_2),tuple(kappa_1,kappa_2),k,l,j))$],[$cstep$],[$guard(v_2,kappa_2,k,l,j)$],[Guard-Inj-Right],
+
       [$getcell(guard(v,kappa,k,l,j))$], [$cstep$], [$mon(k,l,j,kappa,getcell(v))$], [Mon-Get],
       [$setcell(guard(v_1,kappa,k,l,j),v_2)$], [$cstep$], [$mon(k,l,j,refc(kappa), setcell(v_1, mon(l,k,j,kappa,v_2)))$], [Mon-Set],
     ),

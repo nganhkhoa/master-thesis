@@ -26,8 +26,12 @@
           Or[$tuple(tau,tau)$][]
           Or[$ref(tau)$][]
         }),
+        Prod($o$, {
+          Or[num][]
+          Or[bool][]
+        }),
         Prod($e$, {
-          Or[$0 | -1 | 1 | ... | "tt" | "ff" | "x"$][]
+          Or[$n | b | tuple(e,e) | "x"$][]
           Or[$lambda x : tau . e | mu x : tau . e | kw("loc")$][]
           Or[$e + e | e - e | e and e | e or e$][]
           Or[$apply(e, e) | ife(e, e, e)$][]
@@ -37,20 +41,21 @@
         }),
       ),
       bnf(
-        Prod($o$, {
-          Or[num][]
-          Or[bool][]
+        Prod($n$, {
+          Or[$0 | -1 | 1 | ... $][]
+        }),
+        Prod($b$, {
+          Or[$trueb | falseb$][]
         }),
         Prod($v$, {
-          Or[$0 | -1 | 1 | ... | "tt" | "ff" | "x"$][]
-          Or[$lambda x. e | kw("loc")$][]
+          Or[$n | b | tuple(v,v) | "x" | lambda x. e | kw("loc")$][]
         }),
         Prod($E$, {
           Or[$square.stroked$][]
           Or[$E + e | v + E | E - e | v - E$][]
           Or[$E and e | v and E | E or e | v or E$][]
           Or[$apply(E, e) | apply(v, E) | ife(E, e, e) | iszero(E)$][]
-          Or[$injl(E) | injr(E)$][]
+          Or[$tuple(E, e) | tuple(v, E) , injl(E) | injr(E)$][]
           Or[$newcell(E) | getcell(E) | setcell(E,e) | setcell(v,E)$][]
         }),
       ),

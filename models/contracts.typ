@@ -35,7 +35,7 @@
       ),
       bnf(
         Prod($kappa$, {
-          Or[$flat(e) | kappa -> kappa | kappa arrow.bar^d (lambda x : tau . kappa)$][]
+          Or[$flat(e) | kappa -> kappa | dep(kappa,lambda x: tau. kappa)$][]
           Or[$tuple(kappa,kappa) | refc(kappa)$][]
         }),
         Prod($v$, {
