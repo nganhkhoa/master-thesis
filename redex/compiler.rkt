@@ -85,19 +85,22 @@
   (define-term wrap
     (μ w num (Λ α (λ f α ((handler h-check) f)))))
 
-  (redex-match? Effects e (term (compile (λ x bool true))))
+  (test-match Effects h (term h-check))
+  (test-match Effects e (term wrap))
 
-  (redex-match? Effects e (term (t 1 (t (λ x«19» num true) x))))
-  (redex-match? CompilerLang E:e (term ((perform Check α) (t 1 (t (λ x«19» num true) x)))))
+  (test-match Effects e (term (compile (λ x bool true))))
 
-  (require redex/gui)
-  (reduction-steps-cutoff 100)
-  (traces ->effects* (term ((wrap num)
-                   (λ _ unit (compile
-                                ((mon k l j
-                                      ((flat (λ x num true)) -> (flat (λ x num false)))
-                                      (λ x num (+ x 1)))
-                                 10))))))
+  (test-match Effects e (term (t 1 (t (λ x«19» num true) x))))
+  (test-match CompilerLang E:e (term ((perform Check α) (t 1 (t (λ x«19» num true) x)))))
+
+  ;; (require redex/gui)
+  ;; (reduction-steps-cutoff 100)
+  ;; (traces ->effects* (term ((wrap num)
+  ;;                  (λ _ unit (compile
+  ;;                               ((mon k l j
+  ;;                                     ((flat (λ x num true)) -> (flat (λ x num false)))
+  ;;                                     (λ x num (+ x 1)))
+  ;;                                10))))))
 
   (test-->> ->effects*
             (term ((wrap num)
