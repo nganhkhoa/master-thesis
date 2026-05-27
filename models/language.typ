@@ -11,6 +11,7 @@
 #let boolt = $kw("bool")$
 #let trueb = $kw("true")$
 #let falseb = $kw("false")$
+#let unit = $kw("unit")$
 
 #let apply(a, b) = $#a med #b$
 
@@ -42,7 +43,7 @@
 #let lab = ekw("lab")
 #let blab = ekw("blab")
 #let eblame(p) = $attach(ekw("blame"), br: #p)$
-#let handler(h) = $ekw("handler") h$
+#let handler(h) = $ekw("handler") #h$
 
 #let handle(h, e) = $ekw("handle") #h space #e$
 #let perform(op, tau) = $ekw("perform") #op #tau$
@@ -75,18 +76,6 @@
     $#ctx tack.r.short #e : #t | #eff$
   }
 }
-
-// #let typecon(ctx,e,t) = $#ctx tack.r.short #e : #t$
-
-// #let typeeff(ctx,e,t,eff,type: none) = {
-//   if type == "val" {
-//     $#ctx attach(tack.r.short, br: type) #e : #t$
-//   } else if type == "ops" {
-//     $#ctx attach(tack.r.short, br: type) #e : #t | #eff$
-//   } else {
-//     $#ctx tack.r.short #e : #t | #eff$
-//   }
-// }
 
 #let effcheck = $#text(fill: rgb("#009E73"), weight: "regular", math.scr("C"))$
 #let heffcheck = $ekw("h")_effcheck$

@@ -7,3 +7,11 @@ We define #langb language and its syntax in @core-syntax. The language extends t
 #v(1em)
 #include "/models/core.typ"
 #v(1em)
+
+#v(1em)
+#include "/models/core-type-rules.typ"
+#v(1em)
+
+#v(1em)
+#include "/models/core-reduction-rules.typ"
+#v(1em)

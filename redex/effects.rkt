@@ -58,13 +58,9 @@
 (define-metafunction Effects
   find-op-in-handler : op h -> (τ f)
   [(find-op-in-handler
-     op_1
-     ((op_1 (Λ α (λ x τ_1 (λ k τ_2 e)))) (op_2 f_2) ... ))
-   (τ_2 (Λ α (λ x τ_1 (λ k τ_2 e))))]
-  [(find-op-in-handler
-     op_1
-     ((op_2 f_2) (op_3 f_3) ... ))
-   (find-op-in-handler op_1 ((op_3 f_3) ...))])
+     op
+     ((op_1 f_1) ... (op (Λ α (λ x τ_1 (λ k τ_2 e)))) (op_2 f_2) ...))
+   (τ_2 (Λ α (λ x τ_1 (λ k τ_2 e))))])
 
 (define-metafunction Effects
   append-ops : (op ...) (op ...) -> (op ...)

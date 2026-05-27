@@ -31,7 +31,9 @@
       [$injr(guard(tuple(v_1,v_2),tuple(kappa_1,kappa_2),k,l,j))$],[$cstep$],[$guard(v_2,kappa_2,k,l,j)$],[Guard-Inj-Right],
 
       [$getcell(guard(v,kappa,k,l,j))$], [$cstep$], [$mon(k,l,j,kappa,getcell(v))$], [Mon-Get],
-      [$setcell(guard(v_1,kappa,k,l,j),v_2)$], [$cstep$], [$mon(k,l,j,refc(kappa), setcell(v_1, mon(l,k,j,kappa,v_2)))$], [Mon-Set],
+      [$setcell(guard(v_1,kappa,k,l,j),v_2)$], [$cstep$], [$mon(k,l,j,refc(kappa), e)$], [Mon-Set],
+
+      [],[],grid.cell(colspan: 2, align: right, [where $e = setcell(v_1, mon(l,k,j,kappa,v_2))$]),
     ),
     v(2em),
     rule-set(

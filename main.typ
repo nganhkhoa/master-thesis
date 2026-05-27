@@ -64,31 +64,21 @@ effect, and reuse the capabilities of handlers.
 
 
 #pad(left: 3em)[
-  _Contracts checking can be encoded as side-effects and benefited from context sharing when handled using effect handlers._
+  _Contract checking can be encoded as effects, and delegate them to
+  handlers can unify all contracts in the same context, while separated from main code._
 ]
 
 == Contributions
 
-This thesis explores the ``contracts checking as effects'' approach to
-implementing software contracts. Through experiments, we show that this
-approach accomodates functional contracts, dependent contracts, and the
-challenging higher-order contracts. We also discovered that as effects, their
-contexts can be shared if they are under the same handler. Sharing contracts
-context opens new capabilities to optimizations and contract state sharing.
-This disseration shows the above idea by providing a compiler model between
-CPCF @christos2011on and System $F^epsilon$ @ningning2020effect. We also provide
-an implementation in OCaml as a practical implementation.
+This dissertation provides concrete evidence to the thesis claim. We model the two
+languages #langc representing software contracts, and #lange representing effect handlers.
+Then a formal model for a compiler between #langc and #lange is presented. This compiler
+is proven correct, and effect safe. Moreover, we provide an implementation of such compiler
+by providing a preprocessor to convert OCaml code annotated with contracts into run-able
+OCaml code based off this compiler model. Lastly, we provide a Redex PLT model to test our theorems.
 
-// The rest of the thesis is organized as follows: Chapter \ref{chap:contracts}
-// and Chapter \ref{chap:effects} introduces the two formal languages #langc
-// based on CPCF, and #lange based on System $F^epsilon$; Chapter
-// \ref{chap:compiler} discusses a theoretical compiler from #langc to #lange as
-// a demonstration to ``contract checking as effects''; Chapter \ref{chap:ocaml}
-// introduces the OCaml language and its native support for effect handlers;
-// Chapter \ref{chap:implementation} provides the implementation of the
-// theoretical compiler in OCaml using PPX rewritter; Chapter \ref{chap:compare}
-// compares our implementation in OCaml to the Racket's contract system; Chapter
-// \ref{chap:final} concludes our remarks.
+
+Structure ...
 
 = Formal Language Models
 

@@ -25,7 +25,7 @@ jobs:
       - name: Compile main.typ
         run: |
           mkdir -p build/
-          typst compile main.typ build/main.pdf
+          typst compile main.typ build/default.pdf
 
       - name: Determine Release Parameters
         id: vars
@@ -47,7 +47,7 @@ jobs:
         with:
           tag_name: ${{ steps.vars.outputs.tag_name }}
           name: ${{ steps.vars.outputs.release_name }}
-          files: build/main.pdf
+          files: build/default.pdf
 
       - name: Deploy PDF to GitHub Pages
         uses: peaceiris/actions-gh-pages@v4

@@ -11,6 +11,7 @@
 #let theorem = mathblock(
   blocktitle: "Theorem",
   counter: mathcounter,
+  // align: left,
 )
 
 #let lemma = mathblock(

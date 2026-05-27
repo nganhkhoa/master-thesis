@@ -31,7 +31,7 @@
           Or[$k -> k$][]
           Or[$#eff$][]
           Or[$#lab$][]
-          Or[$#blab$][Blame Label]
+          Or[$#blab$][]
         }),
         Prod($e$, {
           Or[$...$][]
@@ -40,7 +40,7 @@
           Or[$eblame(p)$][]
         }),
         Prod($h$, {
-          Or[${op_1 -> f_1, ..., op_n -> f_n}$][]
+          Or[${ekw("return") -> lambda x. e, op -> f, ..., }$][]
         }),
       ),
       bnf(
@@ -57,7 +57,8 @@
         }),
         Prod($F$, {
           Or[$square.stroked$][]
-          Or[$F + e | v + F | F and e | v and F | F or e | v or F$][]
+          Or[$F + e | v + F | F - e | v - F $][]
+          Or[$F and e | v and F | F or e | v or F$][]
           Or[$apply(F, e) | apply(v, F)$][]
           Or[$ife(F, e, e)$][]
           Or[$F[tau]$][]

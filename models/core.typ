@@ -25,6 +25,7 @@
           Or[$tau -> tau$][]
           Or[$tuple(tau,tau)$][]
           Or[$ref(tau)$][]
+          Or[$kw("unit")$][]
         }),
         Prod($o$, {
           Or[num][]
@@ -48,6 +49,7 @@
           Or[$trueb | falseb$][]
         }),
         Prod($v$, {
+          Or[$kw("unit")$][]
           Or[$n | b | tuple(v,v) | "x" | lambda x. e | kw("loc")$][]
         }),
         Prod($E$, {
