@@ -1,6 +1,6 @@
 #lang racket
 
-(provide (all-defined-out))
+(provide compile)
 
 (require redex/reduction-semantics)
 
@@ -142,13 +142,16 @@
             (C:τ_1 -> C:τ_2)
             (λ C:x C:τ_1 E:e_5))]
 
-  [(compile C:Γ (mon C:k C:l C:j C:κ_1 C:v_1) C:τ E:e_3)
-   (compile C:Γ (mon C:k C:l C:j C:κ_2 C:v_2) C:τ E:e_4)
+  [(where C:x ,(variable-not-in (term (C:Γ C:e)) 'x))
+   (compile C:Γ C:e (t C:τ_1 C:τ_2) E:e_3)
+   (where C:Γ_0 (extend C:Γ C:x (t C:τ_1 C:τ_2)))
+   (compile C:Γ_0 (mon C:k C:l C:j C:κ_1 (injl C:x)) C:τ E:e_1)
+   (compile C:Γ_0 (mon C:k C:l C:j C:κ_2 (injr C:x)) C:τ E:e_2)
    ------------------------------------------------------------------ "C-Mon-Tuple"
    (compile C:Γ
-            (mon C:k C:l C:j (tuple C:κ_1 C:κ_2) (tuple C:v_1 C:v_2))
-            C:τ
-            (tuple E:e_3 E:e_4))]
+            (mon C:k C:l C:j (t C:κ_1 C:κ_2) C:e)
+            (t C:τ_1 C:τ_2)
+            ((λ C:x (t C:τ_1 C:τ_2) (t E:e_1 E:e_2)) E:e_3))]
 )
 
 (define-metafunction CompilerLang
@@ -173,6 +176,29 @@
 
 
 (define-term effcheck 𝒞)
+
+(define-term h-check
+  ((effcheck
+     (Λ α (λ x α (λ k α
+       (if ((w bool) (λ _ unit ((injl x) (injr x))))
+           (k (injr x))
+           (blame 99991))))))))
+
+(define-term wrap
+  (μ w unit (Λ α (λ f unit ((handler h-check) f)))))
+
+(define (compile-and-run p #:trace-enabled [trace-enabled false])
+  (define pp (term (((wrap unit) (λ _ unit (run-compiler ,p))) ())))
+
+  (if trace-enabled
+
+      (let [(traces (dynamic-require 'redex/gui 'traces))
+            (reduction-steps-cutoff (dynamic-require 'redex/gui 'reduction-steps-cutoff))]
+        (reduction-steps-cutoff 100)
+        (traces ->effects pp))
+       null)
+
+  (apply-reduction-relation* ->effects pp))
 
 (module+ test
   (compile-expect 1 1)
@@ -216,4 +242,15 @@
                    ((λ x num (add x 1))
                     ((perform effcheck num)
                      (t (λ x num true) arg)))))))
+
+  (compile-expect
+    (mon k l j (t (flat (λ x num true)) (flat (λ x num true))) (t 1 2))
+    ((λ x (t num num)
+       (t ((perform 𝒞 num) (t (λ x num true) (injl x)))
+          ((perform 𝒞 num) (t (λ x num true) (injr x)))))
+     (t 1 2)))
+
+  (compile-and-run
+    (term (mon k l j (t (flat (λ x num true)) (flat (λ x num true))) (t 1 2)))
+    #:trace-enabled false)
 )

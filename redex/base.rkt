@@ -244,4 +244,14 @@
   (test-equal (judgment-holds (⊢ () (add 1 2) τ) τ)
               '(num))
 
+  (test-match Base τ (term (t num num)))
+  (test-match Base e (term (t (injr x) (injl x))))
+  (test-match Base (λ x τ e) (term (λ x (t num num) (t (injr x) (injl x)))))
+  (test-match Base ((λ x τ e) v)
+              (term ((λ x (t num num) (t (injr x) (injl x))) (t 1 2))))
+
+  (test-->> ->base
+          (term (((λ x (t num num) (t (injr x) (injl x))) (t 1 2)) ()))
+          (term ((t 2 1) ())))
+
   (test-results))
