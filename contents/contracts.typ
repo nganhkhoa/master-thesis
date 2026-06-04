@@ -76,4 +76,17 @@ The language supports contracts for tuples. Their contracts will be applied indi
 
 When a contract violation occurs, a blame is thrown with the party, caller or callee. The semantics for correct blaming has been studied under @christos2011on and @christos2012complete. Following previous works, We use _indy_ semantics for dependent contracts. We use $guard(v,kappa,k,l,j)$ as the run-time proxy to value $v$ procted under a contract $kappa$. Guard is a value, the semantics adapt to usage of guards, and expand further, sometimes back to monitor to evaluate inner expressions. A guard on a basic value will trigger a $check(k,j,apply(e,v),v)$ and returns the value $v$ if it passes the predicate $e$, or returns a $blame(k,j)$ to party $k$ with contract location $j$. The evaluation rules for #langc is presented in @contracts-reduction-rules.
 
+#v(1em)
 #include "/models/contracts-reduction-rules.typ"
+#v(1em)
+
+
+=== Contracts with States
+
+Contracts contexts are local. A function's domain contract cannot remain its state across function calls, nor can it access other contracts context. Sharing contexts between contracts brings many benefits. Temporal contracts @disney2011temporal enforces protocol correctness by placing contract on traces between module interaction. Yapping...
+
+We define here a language that allows contracts to share a single global context. This is managed rather by the run-time contract state $sigma^scr("S")$. Contract state can be obtained, and modified through two new expressions available only in flat contracts. The semantics for the run-time is simple and is left out. The type of state is unknown, to use this state, consider a metafunction $delta^scr("S")$, that takes the state and outputs desired information.
+
+#v(1em)
+#include "/models/contracts-state.typ"
+#v(1em)

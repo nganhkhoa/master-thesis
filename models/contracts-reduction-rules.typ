@@ -15,16 +15,16 @@
       [$check(k, j, "tt", v)$], [$cstep$], [$v$], [Check-True],
       [$check(k, j, "ff", v)$], [$cstep$], [$blame(k,j)$], [Check-False],
 
+      [$mon(k,l,j,flat(e),v)$],[$cstep$],[$check(k, j, apply(e, v), v)$],[Mon-Flat],
       [$mon(k,l,j,kappa,v)$],[$cstep$],[$guard(v,kappa,k,l,j)$],[Mon-Guard],
-
-      [$guard(flat(e),v,k,l,j)$], [$cstep$], [$check(k, j, apply(e, v), v)$], [Guard-Flat],
+      [],[],grid.cell(colspan: 2, align: right, [where $kappa != flat(e)$],),
 
       [$apply(guard(v_1,kappa_1 -> kappa_2,k,l,j),v_2)$], [$cstep$], [$mon(k,l,j,kappa_2,apply(v_1, mon(l,k,j,kappa_1,v_2)))$], [Guard-Func],
 
       [$apply(guard(v_1,dep(kappa_1, lambda x. kappa_2),k,l,j),v_2)$], [$cstep$],
-      [$mon(k,l,j, kappa'_2, apply(v_1, mon(k,l,j,kappa_1,v_2)))$],
+      [$mon(k,l,j, kappa_3, apply(v_1, mon(k,l,j,kappa_1,v_2)))$],
       [Guard-Dep],
-      [],[],grid.cell(colspan: 2, align: right, [where $kappa'_2 = {mon(l,j,j,kappa_1,v_2)\/x}kappa_2$],),
+      [],[],grid.cell(colspan: 2, align: right, [where $kappa_3 = {mon(l,j,j,kappa_1,v_2)\/x}kappa_2$],),
 
 
       [$injl(guard(tuple(v_1,v_2),tuple(kappa_1,kappa_2),k,l,j))$],[$cstep$],[$guard(v_1,kappa_1,k,l,j)$],[Guard-Inj-Left],

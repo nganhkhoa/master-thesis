@@ -26,6 +26,13 @@
 #let getcell(e) = $kw("get")(#e)$
 #let setcell(e1,e2) = $kw("set")(#e1,#e2)$
 
+#let newcell1(e) = $apply(kw("newcell"),#e)$
+#let getcell1(e) = $apply(kw("getcell"), #e)$
+#let setcell1(e1,e2) = $apply(apply(kw("setcell"),#e1),#e2)$
+
+#let getstate() = $ckw("get")^scr("S")()$
+#let modifystate(op,e) = $ckw("modify")^scr("S")(#op,#e)$
+
 #let con(tau) = $ckw("con")(#tau)$
 #let mon(k, l, j, kappa, e) = $ckw("mon")_#j^(#k,#l) (#kappa, #e)$
 #let blame(l, p) = $attach(ckw("blame"), tr: #l, br: #p)$
@@ -62,6 +69,7 @@
 
 #let langb = $kw("Base")$
 #let langc = $ckw("Contracts")$
+#let langcs = $ckw("Contracts")^scr("S")$
 #let lange = $ekw("Effects")$
 
 #let type(ctx,e,t,eff: none,type: none) = {
@@ -78,7 +86,11 @@
 }
 
 #let effcheck = $#text(fill: rgb("#009E73"), weight: "regular", math.scr("C"))$
+#let effstate = $#text(fill: rgb("#009E73"), weight: "regular", math.scr("S"))$
+#let effstateget = $#text(fill: rgb("#009E73"), weight: "regular", math.scr("G"))$
+#let effstateset = $#text(fill: rgb("#009E73"), weight: "regular", math.scr("M"))$
 #let heffcheck = $ekw("h")_effcheck$
+#let heffstate = $ekw("h")_effstate$
 #let compile(src,target) = $#src med #compiles-into med #target$
 #let typecompile(t) = $#t^*$
 

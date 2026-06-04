@@ -60,14 +60,20 @@ In @handler-example-1, we lay out a simple example. A program wants to compute $
 
 Handlers can encode states. This is a nice feature to provide a common state across the code. We illustrate the example in @handler-example-2, where a simple state can be managed by two effects _get_ #effget, and _set_ #effset. As can be seen, the continuation now returns a function expecting a state. During handler execution, this state is applied automatically if the handler is installed with initial state. The continuation resumes the program with the new state, made possible because handler is installed with new state.
 
-In the example, the execution enter a stuck state if we just remove the handler. There are many ways to resolve this problem. The first approach requires the program awareness of the state and return a function taking the state, ignore the state, and return the result. The second approach is to use _parameterized handlers_ @leijen2017type, which puts the state into the handler expression. The third approach is to augment the handler with a special effect $ekw("return")$, which modifies the value before removing the handler.
+Without careful setup, the program might enter the stuck state because the handler removes itself when the execution completes, making the result applies with the state. For example, this program $apply(handle(h,v) ,s) estep1 apply(v,s)$ stucks if $v$ is not callable. There are many ways to resolve this problem. The first approach requires the program awareness of the state. The programmer explicitly returns a function taking the result and the state but only returns the result.
+
+$
+apply(handle(h, (apply((lambda x. lambda s. x),e))), s) estep1 apply(handle(h, (apply((lambda x. lambda s. x),v))), s) estep1 apply((lambda s. v), s) estep v
+$
+
+The second approach is to use _parameterized handlers_ @leijen2017type, which puts the state into the handler expression. The third approach is to augment the handler with a special effect $ekw("return")$, which modifies the value before removing the handler. The example @handler-example-1 chooses the first approach, as it keeps the handler semantics simple, although a programmer needs to pay more attention when dealing with handlers receiving arguments.
 
 #figure(
   stack(
     grid(
       columns: (auto,auto,auto),
       gutter: 1.5em,
-      [$h$], [$=$], [${effget -> lambda v. lambda k. lambda s. apply(apply(k,s),s); effset -> lambda v. lambda k. lambda s. apply(apply(k,s),v); ekw("return") -> lambda x. lambda s. x}$],
+      [$h$], [$=$], [${effget -> lambda v. lambda k. lambda s. apply(apply(k,s),s); effset -> lambda v. lambda k. lambda s. apply(apply(k,s),v)}$],
     ),
     v(1em),
     grid(
@@ -76,32 +82,32 @@ In the example, the execution enter a stuck state if we just remove the handler.
       gutter: 0.5em,
 
       [],
-      [$apply((handle(h, ((apply(perform(effset,numt), 42)) + (apply(perform(effget, numt), unit))))), 0)$],
+      [$apply((handle(h, (apply((lambda x. lambda s. x),((apply(perform(effset,numt), 42)) + (apply(perform(effget, numt), unit)) + 100))))), 0)$],
       [],
 
       [$estep1$],
       [$apply(apply(apply((lambda#underline(rgb("2D8DDD"), $v$). lambda#underline(rgb("#7D8DDD"), $k$). lambda#underline(rgb("#987112"), $s$).
-        apply(apply(k,s),v)), #underline(rgb("2D8DDD"), 42)), #underline(rgb("#7D8DDD"), $lambda y. handle(h, (y + (apply(perform(effget, numt), unit))))$)), #underline(rgb("#987112"), 0))$],
+        apply(apply(k,s),v)), #underline(rgb("2D8DDD"), 42)), #underline(rgb("#7D8DDD"), $lambda y. handle(h, (apply((lambda x. lambda s. x),(y + (apply(perform(effget, numt), unit)) + 100))))$)), #underline(rgb("#987112"), 0))$],
       [],
 
       [$estep1$],
-      [$apply(apply((lambda y. handle(h, (y + (apply(perform(effget, numt), unit))))),0), 42)$],
+      [$apply(apply((lambda y. handle(h, (apply((lambda x. lambda s. x),(y + (apply(perform(effget, numt), unit)) + 100))))),0), 42)$],
       [],
 
       [$estep1$],
-      [$apply(handle(h, (0 + (apply(perform(effget, numt), unit)))), 42)$],
+      [$apply(handle(h, (apply((lambda x.lambda s. x), ((0 + (apply(perform(effget, numt), unit)) + 100))))), 42)$],
       [],
 
       [$estep1$],
-      [$apply(handle(h, 42), 42)$],
+      [$apply(handle(h, (apply((lambda x.lambda s. x), 142))), 42)$],
       [],
 
       [$estep1$],
-      [$apply(apply((lambda x. lambda s. x), 42), 42)$],
+      [$apply((lambda s. 142), 42)$],
       [],
 
       [$estep1$],
-      [$42$],
+      [$142$],
       [],
     ),
     v(1em),

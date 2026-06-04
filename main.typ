@@ -77,7 +77,6 @@ is proven correct, and effect safe. Moreover, we provide an implementation of su
 by providing a preprocessor to convert OCaml code annotated with contracts into run-able
 OCaml code based off this compiler model. Lastly, we provide a Redex PLT model to test our theorems.
 
-
 Structure ...
 
 = Formal Language Models

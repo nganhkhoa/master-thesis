@@ -32,7 +32,7 @@ This handler performs the check for the value $v$, with the predicate/contract $
     [], [$apply(mon(k,l,j,dep(flat(e_1), lambda y. flat(e_2)), f), 42)$],
     [], grid.cell(align: right, [where $e_1 = lambda x. trueb$, $e_2 = lambda x. x > y$, and $f = lambda x. x + x$]),
     [$#compiles-into$], [$apply((lambda x_1. apply(perform(effcheck, numt), tuple(k, tuple(e_3, apply(f, (apply(perform(effcheck, numt), tuple(l, tuple(e_1, x_1))))))))), 42)$],
-    [], grid.cell(align: right, [where $e_3 = {(apply(perform(effcheck, numt), tuple(l, tuple(e_1, x_1))))\/y}e_2$]),
+    [], grid.cell(align: right, [where $e_3 = e_2[y:=apply(perform(effcheck, numt), tuple(l, tuple(e_1, x_1)))]$]),
   ),
   v(1em),
   line(length: 100%),
@@ -47,7 +47,7 @@ This handler performs the check for the value $v$, with the predicate/contract $
 
     [$estep$], [$handle(h_"naive", (apply(lambda x_1. apply(perform(effcheck, numt), tuple(k, tuple(e_3, apply(f, (apply(perform(effcheck, numt), tuple(l, tuple(e_1, x_1)))))))), 42)))$],
     [$estep$], [$handle(h_"naive", apply(perform(effcheck, numt), tuple(k, tuple(e'_3, apply(f, (apply(perform(effcheck, numt), tuple(l, tuple(e_1, 42)))))))))$],
-    [], grid.cell(align: right, [where $e'_3 = {(apply(perform(effcheck, numt), tuple(l, tuple(e_1, 42))))\/y}e_2$]),
+    [], grid.cell(align: right, [where $e'_3 = e_2[y:=apply(perform(effcheck, numt), tuple(l, tuple(e_1, 42)))]$]),
     [$estep1$], [$handle(h_"naive", apply(perform(effcheck, numt), tuple(k, tuple(e'_3, apply(f, 42)))))$],
     [$estep1$], [$handle(h_"naive", apply(perform(effcheck, numt), tuple(k, tuple(e'_3, 84))))$],
     [$estep1$], [$ife(apply(e'_3,84),apply((lambda x. handle(h_"naive", x)),84),eblame(k))$],
@@ -56,11 +56,9 @@ This handler performs the check for the value $v$, with the predicate/contract $
   ),
 ))
 
-To resolve this issue, we define a recursive function $kw("wrap")$ that will reinstall the handler at $apply(e,v)$ making sure all effects during contract checking is handled. All compilation rules are defined in @compiler-rules. With $kw("wrap")$ defined, we can make some theorems about the compiler.
+To resolve this issue, we define a recursive function $kw("wrap")$ that will reinstall the handler at $apply(e,v)$ making sure all effects during contract checking is handled. Contracts related compilation rules are defined in @compiler-rules. With $kw("wrap")$ defined, we can make some theorems about the compiler.
 
 The compiler should produce same type expression. However, this is problematic when effects are introduced. Recall that the type system separates between pure function, and effectful functions. And type judgement separates between non-effectful computations and effectful computations. Depending on the source, compiled program may have the same type with no effects (no monitors), or same type with some effects (monitors during computation), or purely produce a function wrapped by monitors, or effectfully produce a function wrapped by monitors (monitors during computation).
-
-Regardless, wrapping the compiled program with $kw("wrap")$ should handle all possible effects.
 
 #theorem[
 Compiler Type Preservation.
@@ -83,10 +81,21 @@ Compiler Effect Safety with $kw("wrap")$.
 
 If $compile(type(dot.op,e_1,tau),e_2)$ then either
 
-- $type(dot.op, apply(kw("wrap")[tau],(lambda \_: kw("unit"). e)), tau, eff: mteff)$.
+- $type(dot.op, apply(kw("wrap")[tau],(lambda \_: kw("unit"). e)), tau, eff: mteff)$ or
 - $tau = tau_1 -> tau_2$ $type(dot.op, apply(kw("wrap")[tau],(lambda \_: kw("unit"). e)), teff(tau_1,effcheck,tau_2), eff: mteff)$.
 ]<compiler-handle-all>
 
+#theorem[
+Compiler Equivalance
+
+#set align(left)
+
+If $e_1 cstep v_1$ and $compile(type(dot.op,e_1,tau),e_2)$ then either
+
+- $v_1 != blame(l,j)$ and $apply(kw("wrap")[tau], (lambda \_ : unit. e_2)) estep v_2$ and $compile(type(dot.op,v_1,tau),v_2)$ or
+- $v_1 = blame(l,j)$ and $apply(kw("wrap")[tau], (lambda \_ : unit. e_2)) estep eblame(l)$.
+
+]<compiler-equivalence>
 
 #v(1em)
 #include "/models/compiler.typ"
@@ -104,29 +113,21 @@ $
 lambda c. getcell(c)
 $
 
-This function should work with both cells $newcell(v)$ and guards constructed from $mon(k,l,j,refc(e),l)$ (where $l$ a location). #lange does not have special reduction rules for mutable cells, therefore, we need a unified interface between cells and protected cells, and rewrite cell operations to use that unified interface.
+This function should work with both cells $newcell(v)$ and guards constructed from $mon(k,l,j,refc(e),r)$ (where $r$ a location). #lange does not have special reduction rules for mutable cells, therefore, we need a unified interface between cells and protected cells, and rewrite cell operations to use that unified interface.
 
 === Unified Interface
 
-Our compiler has supports for functions and tuples, this is useful for us to design such unified interface. A mutable cell must support get and set, we can encode this as a tuple of 2 functions. Contracts on a cell is now converted into contracts placed on these get and set functions. Cell's location is enclosed inside the closure, and should be accessible when invoked.
+Our compiler has supports for functions and tuples, this is useful for us to design such unified interface. A mutable cell must support get and set, we can encode this as a tuple of 2 functions. Contracts on a cell is now converted into contracts placed on these get and set functions. Cell's location is enclosed inside the closure, and should be accessible when invoked. The compiler should first convert all cell operations into this new wrapper. Then convert all $refc(kappa)$ into tuple contracts for get and set functions.
 
-#figure(
-  stack(
-    grid(
-      columns: (auto, auto, auto),
-      align: (left, center, left),
-      gutter: 1em,
+#v(1em)
+#include "/models/compiler-ref.typ"
+#v(1em)
 
-      [$newcell$], [$=$], [$lambda v. apply((lambda l. tuple(lambda \_. getcell(l),lambda \v. setcell(l, v))), newcell(v))$],
-      [$getcell$], [$=$], [$lambda b. apply(injl(b), unit)$],
-      [$setcell$], [$=$], [$lambda b. lambda v. (apply(lambda \_. b, (apply(injr(b),v))))$],
-    ),
-  ),
-  caption: [Mutable Cells Wrappers]
-)
+== Contract States
 
-The compiler should first convert all cell operations into this new wrapper. Then convert all $refc(kappa)$ into tuple contracts for get and set functions.
+Adapting the #langcs, we can move the states into a handler for contract states. With careful encoding, we can make it so that the main code cannot access this state, @compiler-state-rules. All contracts are unified in a single state, provided by the handler. By type rules, we can make sure that $kw("wrap")_s$ does not allow (contract) state effects in main code.
 
-$
-mon(k,l,j,refc(kappa),e) #compiles-into mon(k,l,j,tuple("any" -> kappa,"any" -> kappa -> "any"),e)
-$
+#v(1em)
+#include "/models/compiler-state.typ"
+#v(1em)
+

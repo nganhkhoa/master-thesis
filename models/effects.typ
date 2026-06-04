@@ -25,22 +25,25 @@
         Prod($tau$, {
           Or[$...$][]
           Or[$alpha^k | c^k tau ... | teff(tau,epsilon,tau) | forall alpha^k. tau$][]
+          Or[$#blab$][]
         }),
         Prod($k$, {
           Or[$*$][]
           Or[$k -> k$][]
           Or[$#eff$][]
           Or[$#lab$][]
-          Or[$#blab$][]
         }),
         Prod($e$, {
           Or[$...$][]
           Or[$e[tau]$][]
           Or[$handle(h, e)$][]
-          Or[$eblame(p)$][]
+          Or[$eblame(e)$][]
         }),
         Prod($h$, {
-          Or[${ekw("return") -> lambda x. e, op -> f, ..., }$][]
+          Or[${op -> f, ..., }$][]
+        }),
+        Prod($f$, {
+          Or[$Lambda alpha. lambda x : tau. lambda k : tau. e$][]
         }),
       ),
       bnf(
@@ -49,11 +52,16 @@
           Or[$Lambda alpha^k. v$][]
           Or[$handler(h)$][]
           Or[$perform(op,tau)$][]
+          Or[$eblame(p)$][]
+        }),
+        Prod($p$, {
+          Or[Blame Party][]
         }),
         Prod($E$, {
           Or[$...$][]
           Or[$E[tau]$][]
           Or[$handle(h, E)$][]
+          Or[$eblame(E)$][]
         }),
         Prod($F$, {
           Or[$square.stroked$][]

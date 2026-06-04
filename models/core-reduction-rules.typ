@@ -7,27 +7,27 @@
 
 #import "language.typ": *
 
+#let bstep = $arrow.r.dashed$
 
 #figure(
   stack(
     grid(
       columns: (auto,auto,auto, auto),
       gutter: 1.5em,
-      [$apply(lambda x. e, v)$], [$step$], [$e[x:=v]$], [S-App],
-      [$mu x. e$], [$step$], [$e[x:=mu x. e]$], [SFix],
-      [$ife(trueb, e_1,e_2)$], [$step$], [$e_1$], [S-If-True],
-      [$ife(falseb, e_1,e_2)$], [$step$], [$e_2$], [S-If-False],
-      [$injl(tuple(v_1,v_2))$], [$step$], [$v_1$], [S-Inj-Left],
-      [$injr(tuple(v_1,v_2))$], [$step$], [$v_2$], [S-Inj-Right],
+      [$apply(lambda x. e, v)$], [$bstep$], [$e[x:=v]$], [S-App],
+      [$mu x. e$], [$bstep$], [$e[x:=mu x. e]$], [SFix],
+      [$ife(trueb, e_1,e_2)$], [$bstep$], [$e_1$], [S-If-True],
+      [$ife(falseb, e_1,e_2)$], [$bstep$], [$e_2$], [S-If-False],
+      [$injl(tuple(v_1,v_2))$], [$bstep$], [$v_1$], [S-Inj-Left],
+      [$injr(tuple(v_1,v_2))$], [$bstep$], [$v_2$], [S-Inj-Right],
     ),
     v(2em),
     line(length: 100%),
-    [not really correct, maybe use different arrow],
     v(2em),
     rule-set(
       prooftree(rule(
         name: [Step],
-        $e_1 step e_2$,
+        $e_1 bstep e_2$,
         $E[e_1], sigma step E[e_2], sigma$
       )),
       prooftree(rule(
@@ -37,6 +37,7 @@
       )),
       prooftree(rule(
         name: [S-Get-Cell],
+        $v = sigma(kw("loc"))$,
         $E[getcell(kw("loc"))], sigma step E[v], sigma$
       )),
       prooftree(rule(
