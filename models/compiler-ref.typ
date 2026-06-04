@@ -30,7 +30,7 @@
       prooftree(rule(
         name: [Compile-Mon-Ref],
         $x in.not Gamma$,
-        $compile(type(Gamma\,x:tau,mon(k,l,j,tuple("any" -> kappa,kappa -> "any"), x), tuple(unit -> tau, tau -> kw("loc"))), e_1)$,
+        $compile(type(Gamma\,x:tuple(unit -> tau, tau -> kw("loc")),mon(k,l,j,tuple("any" -> kappa,kappa -> "any"), x), tuple(unit -> tau, tau -> kw("loc"))), e_1)$,
         $compile(type(Gamma,e,ref(tau)),e_2)$,
         $e_3 = e_1[x:=e_2]$,
         $compile(type(Gamma,mon(k,l,j,refc(kappa),e),ref(tau)), e_3)$,
