@@ -127,6 +127,30 @@
    ,(equal? (sort (term (effect_1 ...)) symbol<?)
             (sort (term (effect_2 ...)) symbol<?))])
 
+(define-metafunction Effects
+  types-equiv? : τ τ -> boolean
+
+  ;; Base types
+  [(types-equiv? num num) #true]
+  [(types-equiv? bool bool) #true]
+  [(types-equiv? unit unit) #true]
+  [(types-equiv? α α) #true]
+
+  ;; Arrow types (The important one!)
+  [(types-equiv? (τ_1 -> ε_1 τ_2) (τ_3 -> ε_2 τ_4))
+   ,(and (term (types-equiv? τ_1 τ_3))
+         (term (types-equiv? τ_2 τ_4))
+         (term (same-effects? ε_1 ε_2)))]
+
+  ;; Compound types
+  [(types-equiv? (t τ_1 τ_2) (t τ_3 τ_4))
+   ,(and (term (types-equiv? τ_1 τ_3))
+         (term (types-equiv? τ_2 τ_4)))]
+  [(types-equiv? (∀ α τ_1) (∀ α τ_2))
+   (types-equiv? τ_1 τ_2)]
+
+  ;; Fallback
+  [(types-equiv? _ _) #false])
 
 (define-judgment-form Effects
   #:mode (⊢_ops I I I O O O)
@@ -217,8 +241,11 @@
    -------------- "T-E-Val"
    (⊢ Σ Γ v τ ε)]
 
-  [(⊢ Σ Γ e_1 (τ_1 -> ε τ_2) ε)
-   (⊢ Σ Γ e_2 τ_1 ε)
+  [(⊢ Σ Γ e_1 (τ_1 -> ε_0 τ_2) ε)
+   (⊢ Σ Γ e_2 τ_3 ε)
+
+   (side-condition (term (types-equiv? τ_1 τ_3)))
+   (side-condition (term (same-effects? ε_0 ε)))
    ---------------------------- "T-E-App"
    (⊢ Σ Γ (e_1 e_2) τ_2 ε)]
 
@@ -265,9 +292,10 @@
    ---------------------------------- "T-E-Tuple"
    (⊢ Σ Γ (t e_1 e_2) (t τ_1 τ_2) ε)]
 
-  [(⊢_ops Σ Γ h τ effect ε)
-   (where (effect_0 ... ) ε)
-   (⊢ Σ Γ e τ (effect effect_0 ...))
+  [(⊢_ops Σ Γ h τ effect ε_1)
+   (where (effect_0 ... ) ε_1)
+   (⊢ Σ Γ e τ ε)
+   (side-condition (term (same-effects? ε (effect effect_0 ...))))
    --------------------------------- "T-Handle"
    (⊢ Σ Γ (handle ε h e) τ ε)]
 )
@@ -475,7 +503,7 @@
             (λ (times2)
               x_1 unit
               ((handler (times2) ,h_times4)
-               (λ (times4 times2) x_2 unit ,main))))
+               (λ (times2 times4) x_2 unit ,main))))
            τ
            mteff)
         τ)
