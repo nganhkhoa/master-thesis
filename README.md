@@ -1,0 +1,4 @@
+
+```
+typst c main.typ
+```

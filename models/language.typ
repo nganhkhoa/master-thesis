@@ -46,10 +46,11 @@
 #let eif(c, t, f) = $#base-kw("if") #c #base-kw("then") #t #base-kw("else") #f$
 
 #let mteff = $chevron.l chevron.r$
+#let effs(..l) = $chevron.l #l.pos().join([, ]) chevron.r$
 #let eff = ekw("eff")
 #let lab = ekw("lab")
 #let blab = ekw("blab")
-#let eblame(p) = $attach(ekw("blame"), br: #p)$
+#let eblame(p) = $attach(ekw("error"), br: #p)$
 #let handler(h) = $ekw("handler") #h$
 
 #let handle(h, e) = $ekw("handle") #h space #e$
@@ -61,10 +62,15 @@
 
 #let step = $-->$
 #let step1 = $-->$
-#let cstep = $-->$
-#let cstep1 = $attach(-->, tr: *)$
+#let stepx = $-->$
+#let cstep = $arrow.r.open$
+#let cstep1 = $attach(cstep, tr: *)$
+#let cstepx = $arrow.r.dotted$
+#let cstepx1 = $attach(cstepx, tr:*)$
 #let estep = $arrow.r.double.long$
 #let estep1 = $attach(arrow.r.double.long, tr: *)$
+#let estepx = $arrow.r.filled$
+#let estepx1 = $attach(estepx, tr: *)$
 #let compiles-into = $arrow.r.tail$
 
 #let langb = $kw("Base")$
@@ -73,15 +79,14 @@
 #let lange = $ekw("Effects")$
 
 #let type(ctx,e,t,eff: none,type: none) = {
-  if eff == none {
-    $#ctx tack.r.short #e : #t$
-  }
-  else if type == "val" {
+  if type != none and eff == none {
     $#ctx attach(tack.r.short, br: type) #e : #t$
-  } else if type == "ops" {
+  } else if type != none and eff != none {
     $#ctx attach(tack.r.short, br: type) #e : #t | #eff$
-  } else {
+  } else if type == none and eff != none {
     $#ctx tack.r.short #e : #t | #eff$
+  } else {
+    $#ctx tack.r.short #e : #t$
   }
 }
 

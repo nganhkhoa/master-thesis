@@ -25,6 +25,11 @@
         $type(Gamma, tuple(e_1,e_2), tuple(tau_1,tau_2))$
       )),
       prooftree(rule(
+        name: [T-Var],
+        $x : tau in Gamma$,
+        $type(Gamma, x, tau)$
+      )),
+      prooftree(rule(
         name: [T-Lambda],
         $type(Gamma\, x : tau_1, e, tau_2)$,
         $type(Gamma, lambda x : tau_1. e, tau_1 -> tau_2)$

@@ -18,27 +18,27 @@
     prooftree(rule(
       name: "T-E-Var",
       $x : tau in Gamma$,
-      type($Gamma$, $x$, $tau$, type: "val", eff: []),
+      type($Gamma$, $x$, $tau$, type: "val"),
     )),
 
     prooftree(rule(
       name: "T-E-App",
       type($Gamma\,x:tau_1$, $e$, $tau_2$, eff: $epsilon$),
-      type($Gamma$, $lambda x:tau_1 . e$, $tau_1 attach(->, tr: epsilon) tau_2$, type: "val", eff: []),
+      type($Gamma$, $lambda x:tau_1 . e$, $tau_1 attach(->, tr: epsilon) tau_2$, type: "val"),
     )),
 
     // Row 2
     prooftree(rule(
       name: "T-E-Val",
-      type($Gamma$, $v$, $tau$, type: "val", eff: []),
+      type($Gamma$, $v$, $tau$, type: "val"),
       type($Gamma$, $v$, $tau$, eff: $epsilon$),
     )),
 
     prooftree(rule(
       name: "T-E-TAbs",
       $k != lab$,
-      type($Gamma$, $v$, $tau$, type: "val", eff: []),
-      type($Gamma$, $Lambda alpha^k . v$, $forall alpha^k . tau$, type: "val", eff: []),
+      type($Gamma$, $v$, $tau$, type: "val"),
+      type($Gamma$, $Lambda alpha^k . v$, $forall alpha^k . tau$, type: "val"),
     )),
 
     // Row 3
@@ -61,7 +61,7 @@
       name: "T-E-Perform",
       $op : forall alpha . tau_1 -> tau_2 in Sigma(l)$,
       $alpha in.not "ftv"(Gamma)$,
-      type($Gamma$, $ekw("perform") op tau$, $teff(tau_1[alpha:=tau],chevron.l l|epsilon chevron.r,tau_2[alpha:=tau])$, type: "val", eff: []),
+      type($Gamma$, $ekw("perform") op tau$, $teff(tau_1[alpha:=tau],chevron.l l|epsilon chevron.r,tau_2[alpha:=tau])$, type: "val"),
     ))),
 
     // Row 5
@@ -69,7 +69,7 @@
       name: "T-E-Ops",
       $op_i : forall alpha . tau_1 -> tau_2 in Sigma(l)$,
       $alpha in.not "ftv"(epsilon,tau)$,
-      type($Gamma$, $f_i$, $forall alpha . teff(tau_1,epsilon,(teff((teff(tau_2,epsilon,tau)), epsilon, tau)))$, type: "val", eff: []),
+      type($Gamma$, $f_i$, $forall alpha . teff(tau_1,epsilon,(teff((teff(tau_2,epsilon,tau)), epsilon, tau)))$, type: "val"),
       type($Gamma$, ${op_1 -> f_1, dots, op_n -> f_n}$, $tau$, type: "ops", eff: $l | epsilon$),
     ))),
 
@@ -77,7 +77,7 @@
     grid.cell(colspan: 2, prooftree(rule(
       name: "T-E-Handler",
       type($Gamma$, $h$, $tau$, type: "ops", eff: $l | epsilon$),
-      type($Gamma$, $handler(h)$, $teff((teff(unit,chevron.l l|epsilon chevron.r,tau)),epsilon,tau)$, type: "val", eff: []),
+      type($Gamma$, $handler(h)$, $teff((teff(unit,chevron.l l|epsilon chevron.r,tau)),epsilon,tau)$, type: "val"),
     ))),
 
     // Row 7

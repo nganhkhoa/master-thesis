@@ -252,5 +252,5 @@
 
   (compile-and-run
     (term (mon k l j (t (flat (λ x num true)) (flat (λ x num true))) (t 1 2)))
-    #:trace-enabled false)
+    #:trace-enabled true)
 )

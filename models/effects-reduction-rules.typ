@@ -7,15 +7,14 @@
 
 #import "language.typ": *
 
-
 #figure(
   stack(
     grid(
       columns: (auto,auto,auto, auto),
       gutter: 1.5em,
-      [$(Lambda alpha^k. v)[tau]$], [$estep$], [$v[alpha:=tau]$], [Step-E-TApp],
-      [$apply(handler(h), v)$],[$estep$],[$handle(h,(apply(v,())))$], [Step-E-Handler],
-      [$handle(h,v)$],[$estep$],[$v$], [Step-E-Return],
+      [$(Lambda alpha^k. v)[tau]$], [$estepx$], [$v[alpha:=tau]$], [Step-E-TApp],
+      [$apply(handler(h), v)$],[$estepx$],[$handle(h,(apply(v,())))$], [Step-E-Handler],
+      [$handle(h,v)$],[$estepx$],[$v$], [Step-E-Return],
     ),
     v(2em),
     rule-set(
@@ -24,12 +23,20 @@
         $op in.not bop(E) and (op -> f) in h$,
         $op : forall alpha. tau_1 -> tau_2 in Sigma(l)$,
         $k = lambda x : tau_2[alpha:=tau] . handle(h, E[x])$,
-        $handle(h, E[apply(perform(op, tau), v)]) estep apply(apply(f[tau], v), k)$
+        $handle(h, E[apply(perform(op, tau), v)]) quad estepx quad apply(apply(f[tau], v), k)$
+      )),
+    ),
+    v(2em),
+    rule-set(
+      prooftree(rule(
+        name: [Step-E-Error],
+        $E != square.stroked$,
+        $E[eblame(p)], sigma estep eblame(p), sigma$
       )),
       prooftree(rule(
-        name: [Effect-Error],
-        $E != square.stroked$,
-        $E[eblame(p)] estep eblame(p)$
+        name: [Step-E],
+        $e_1 estepx e_2$,
+        $E[e_1], sigma estep E[e_2], sigma$
       )),
     ),
     v(2em),

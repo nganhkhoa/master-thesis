@@ -3,17 +3,15 @@
 
 #show: no-ref
 
-== #lange Language
-
-=== Example
-
 #let effdup = $scr("D")$
 #let effget = $scr("G")$
 #let effset = $scr("S")$
 
-Effect handler is a new construct similar to how try/catch was designed. In fact, the idea is similar to resumable exception. An effect is invoked (throw), and a handler (try) for the effect installed prior catches. A continuation is pushed into the catch context, and can be invoked to continue the execution, or abort. Yapping...
+== #lange Language
 
-In @handler-example-1, we lay out a simple example. A program wants to compute $(effdup 2) + 1$ is registered with a handler $h$ for effect #effdup, basically _duplicating_ its input. When an effect is perform, the main program pauses the execution, and push everything later into a continuation $k = lambda y. handle(h, (y + 1))$, at (i). Here, the continuation register the handler $h$ again, in case the rest of the program uses $effdup$. When the program is a value, the handler removes itself (ii).
+=== Example
+
+In @handler-example-1, we present a simple example: a program wants to compute $(effdup 2) + 1$ is registered with a handler $h$ for effect #effdup, basically _duplicating_ its input. When an effect is perform, the main program pauses the execution, and push everything later into a continuation $k = lambda y. handle(h, (y + 1))$, at (i). Here, the continuation register the handler $h$ again, in case the rest of the program uses $effdup$. When the program is a value, the handler removes itself (ii).
 
 #figure(
   stack(
@@ -117,16 +115,24 @@ The second approach is to use _parameterized handlers_ @leijen2017type, which pu
 
 === Formalism
 
-We continue to extend the #langb language with effects and effect handlers in @effects-syntax. This is done by typing the effects separately from the base types. This practice has been introduced to formalize the Koka#footnote(link("https://koka-lang.github.io/")) language. The approach we take here resembles the System $F^epsilon$ language introduced in @ningning2020effect. We added polymorphism through type application, and kinds to #langb language. Two special kinds are added to represent effects (#eff) and effect labels (#lab). A label $l in #lab$ is a group of operations. And an effect $epsilon in #eff$ is composed by chaining #lab together with other effects. An empty effect $mteff$ defines no labels, therefore no effects can be performed. In otherwords, #eff defines the set of effects that can be performed. A function can now produce some effects $epsilon in #eff$, and is represented in its type $teff(tau_1,epsilon,tau_2)$. Original type for function $tau_1->tau_2$ is understood as pure, without effects, $teff(tau_1,mteff,tau_2)$.
+#lange, inspired by @ningning2020effect, equips #langb with effects and effect handlers. We extend the type system into a kinded type system based on System F, mainly to separate between effect types and normal types. System F also provides polymorphism. The type system adapts its syntax of functions into $teff(tau_1,epsilon,tau_2)$ denotes an effect $epsilon$ (may) occurs during the execution of the function.
 
+Following @ningning2020effect, effects are group of "operations", distinct by its label. An operation $scr("O")$ of effect $epsilon$ is invoked by applying $perform(scr("O"), tau)$ with an argument, and produces an effect $epsilon$. Given an expression $e$ that would perform some effect $epsilon$, a handler $h$ providing all definitions for operations of $epsilon$ must be installed. The calculus provides two ways to install a handler, $handle(h,e)$ and $apply(handler(h),(lambda \_. e))$. The former is the base syntax, during evaluation of $e$, the handler $h$ is used. The other syntax is useful for suspending a computation, and run it only when a handler is applied, providing flexibility such as different handlers.
 
-The language is then extended with handlers, handler installation ($handle(h,e)$), and calling/performing an effect ($perform(op, tau)$). Handlers are a set of operations distinguishable by the operation's name. A handler denotes a single effect usually by its label $l in #lab$. Performing an effect is analogous function application, therefore $perform(op,tau)$ is treated as a value, where application for it has a distinct reduction rule. The evaluation context is thus extended to support handler installation.
+A handler is a mapping between operation names and their definitions. An operation is a function with the template $Lambda alpha. lambda x : tau_1. lambda k : tau_2. e$. The polymorphic type variable $alpha$ is used to make operations polymorphic. The argument $x$ is the operation argument. The argument $k$ is the _continuation_ or _resumption_, enclosing the rest of the program after the operation invocation. When $k$ is called, the program resumes with the argument provided to $k$.
+
+Because $k$ is a function, a handler can return $k$ and let the program use continuation anyhow the programer wants. This is described in @ningning2020effect as "undesirable in practice" and define a restriction named _scoped resumption_. Our language also follows the same principle and does not allow returning the continuation $k$ (directly or indirectly through closure). However, we do not enforce this and left out for the language implementators.
+
 
 #v(1em)
 #include "/models/effects.typ"
 #v(1em)
 
-Typing for an effect language requires some consideration. Following the works in @ningning2020effect, we define the type judgement relationship $type(Delta,e,tau,eff: epsilon)$ between a type context $Delta$, an expression $e$ and assert it against type $tau$ with some possible effects $epsilon$. Variables and base values do not have effects, they can take any effects. For this reason, we define $type(Delta,v,tau,eff:[],type: "val")$. Handlers are typed using $type(Delta,h,tau,eff: l | epsilon,type: "ops")$, that it handles a _single_ effect $l$, other effects in $epsilon$ remains unhandled, and all operations returns $tau$. All type rules unique to #lange is presented in @effects-type-rules.
+A function can use multiple effects, and are represented as rows with equivalence up to reordering. An empty effect is represented as $mteff$. Effects can be concatenated by $effs(l,epsilon)$ where effect row $epsilon$ is extended with effect $l$. For ease of writing, we allow writing $effs(l_1,l_2,...,l_n)$ as shorthand instead of $effs(l_1,effs(l_2,...effs(l_n)))$.
+
+The language is explicit about the effects. Lambdas are annotated with effects, as well as perform (operation invocation), and handler installation. These effect annotations are used only during type checking, they do not affect the execution.
+
+Typing for an effect language requires some consideration. Following the works in @ningning2020effect, we define the type judgement relationship $type(Delta,e,tau,eff: epsilon)$ between a type context $Delta$, an expression $e$ and assert it against type $tau$ with some possible effects $epsilon$. Variables and base values do not have effects, they can take any effects. For this reason, we define $type(Delta,v,tau,type: "val")$. Handlers are typed using $type(Delta,h,tau,eff: l | epsilon,type: "ops")$, that it handles a _single_ effect $l$, other effects in $epsilon$ remains unhandled, and all operations returns $tau$. All effects signatures are defined in a global set $Sigma$ for fast accessing the type of the operations. This set can be built by going through all handlers, and its existence is assumed during the start of type checking. All type rules unique to #lange is presented in @effects-type-rules.
 
 #v(1em)
 #include "/models/effects-type-rules.typ"
