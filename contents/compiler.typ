@@ -56,7 +56,14 @@ This handler performs the check for the value $v$, with the predicate/contract $
   ),
 ))
 
-To resolve this issue, we define a recursive function $kw("wrap")$ that will reinstall the handler at $apply(e,v)$ making sure all effects during contract checking is handled. Contracts related compilation rules are defined in @compiler-rules. With $kw("wrap")$ defined, we can make some theorems about the compiler.
+To resolve this issue, we define a recursive function $kw("wrap")$ that will reinstall the handler at $apply(e,v)$ making sure all effects during contract checking is handled. Contracts related compilation rules are defined in @compiler-rules.
+
+== Effects annotation
+
+Careful readers may have noticed that the compiler does not annotate effects. Since the only effects that may occur is the contract checking effect $heffcheck$, a lazy compiler can annotate this effect to lambdas, handlers, and performs. By the type system of #lange, a function annotated with effect without using the effect can still be typed. Our compiler will produce code annotated with $effs(heffcheck)$.
+
+== Compiler Type Preservation and Effect Safety
+
 
 The compiler should produce same type expression. However, this is problematic when effects are introduced. Recall that the type system separates between pure function, and effectful functions. And type judgement separates between non-effectful computations and effectful computations. Depending on the source, compiled program may have the same type with no effects (no monitors), or same type with some effects (monitors during computation), or purely produce a function wrapped by monitors, or effectfully produce a function wrapped by monitors (monitors during computation).
 
@@ -68,9 +75,9 @@ Compiler Type Preservation.
 If $compile(type(dot.op,e_1,tau),e_2)$ then either
 
 - $type(dot.op,e_2,tau, eff: mteff)$ or
-- $tau = tau_1 -> tau_2$ and $type(dot.op,e_2,teff(tau_1,effcheck,tau_2), eff: mteff)$ or
-- $type(dot.op,e_2,tau, eff: chevron.l heffcheck chevron.r)$ or
-- $tau = tau_1 -> tau_2$ and $type(dot.op,e_2,teff(tau_1,effcheck,tau_2), eff: chevron.l heffcheck chevron.r)$.
+- $tau = tau_1 -> tau_2$ and $type(dot.op,e_2,teff(tau_1,effs(heffcheck),tau_2), eff: mteff)$ or
+- $type(dot.op,e_2,tau, eff: effs(heffcheck))$ or
+- $tau = tau_1 -> tau_2$ and $type(dot.op,e_2,teff(tau_1,effs(heffcheck),tau_2), eff: effs(heffcheck))$.
 
 ]<compiler-type-preservation>
 
@@ -85,14 +92,18 @@ If $compile(type(dot.op,e_1,tau),e_2)$ then either
 - $tau = tau_1 -> tau_2$ $type(dot.op, apply(kw("wrap")[tau],(lambda \_: kw("unit"). e)), teff(tau_1,effcheck,tau_2), eff: mteff)$.
 ]<compiler-handle-all>
 
+== Compiler Type Preservation and Effect Safety
+
+The compiler should produce a program equivalent to the source program. If the source program produces a value, the target program should also produce (the same) value, and with an equivalent storage space.
+
 #theorem[
 Compiler Equivalance
 
 #set align(left)
 
-If $e_1 cstep v_1$ and $compile(type(dot.op,e_1,tau),e_2)$ then either
+If $e_1,mtstore cstep v_1,store$ and $compile(type(dot.op,e_1,tau),e_2)$ then either
 
-- $v_1 != blame(l,j)$ and $apply(kw("wrap")[tau], (lambda \_ : unit. e_2)) estep v_2$ and $compile(type(dot.op,v_1,tau),v_2)$ or
+- $v_1 != blame(l,j)$ and $apply(kw("wrap")[tau], (lambda \_ : unit. e_2)),mtstore estep v_2,store'$ and $compile(type(dot.op,v_1,tau),v_2)$ and $store eq store'$ or
 - $v_1 = blame(l,j)$ and $apply(kw("wrap")[tau], (lambda \_ : unit. e_2)) estep eblame(l)$.
 
 ]<compiler-equivalence>

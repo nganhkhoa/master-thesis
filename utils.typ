@@ -40,3 +40,22 @@
   }
 }
 
+#let make-proof(gap: 3em, rows) = {
+  show math.equation: set align(left)
+
+  let cells = ()
+  for (expr, justification) in rows {
+    cells.push(expr)
+    cells.push(justification)
+  }
+
+  align(center, block(
+    grid(
+      columns: 2,
+      column-gutter: gap,
+      row-gutter: 0.8em, // Mimics standard math line spacing
+      align: (left, right), // Ensures both expressions and rules are left-aligned
+      ..cells
+    )
+  ))
+}

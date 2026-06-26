@@ -13,6 +13,9 @@
 #let falseb = $kw("false")$
 #let unit = $kw("unit")$
 
+#let mtstore = $emptyset$
+#let store = $sigma$
+
 #let apply(a, b) = $#a med #b$
 
 #let tuple(a,b) = $chevron.l #a,#b chevron.r$
@@ -62,7 +65,7 @@
 
 #let step = $-->$
 #let step1 = $-->$
-#let stepx = $-->$
+#let stepx = $arrow.r.dashed$
 #let cstep = $arrow.r.open$
 #let cstep1 = $attach(cstep, tr: *)$
 #let cstepx = $arrow.r.dotted$

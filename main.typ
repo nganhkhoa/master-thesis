@@ -98,6 +98,8 @@ Structure ...
 #set heading(numbering: "A.1")
 #counter(heading).update(0)
 
+#include "proofs/core.typ"
+
 = Contract Erasure
 
 // #include "proofs/contract-erasure/attemp7.typ"
