@@ -102,8 +102,8 @@
   [(delta gte n_1 n_2)  ,(if (>= (term n_1) (term n_2)) (term true) (term false))]
   [(delta lt n_1 n_2)   ,(if (< (term n_1) (term n_2)) (term true) (term false))]
   [(delta lte n_1 n_2)  ,(if (<= (term n_1) (term n_2)) (term true) (term false))]
-  [(delta eq? n_1 n_2)  ,(if (= (term n_1) (term n_2)) (term true) (term false))]
-  [(delta neq? n_1 n_2) ,(if (not (= (term n_1) (term n_2))) (term true) (term false))]
+  [(delta eq n_1 n_2)   ,(if (= (term n_1) (term n_2)) (term true) (term false))]
+  [(delta neq n_1 n_2)  ,(if (not (= (term n_1) (term n_2))) (term true) (term false))]
   [(delta and b_1 b_2)  ,(if (and (term n_1) (term n_2)) (term true) (term false))]
   [(delta or b_1 b_2)   ,(if (or (term n_1) (term n_2)) (term true) (term false))]
   [(delta not b_1)      ,(if (term b_1) (term true) (term false))])

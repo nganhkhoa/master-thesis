@@ -21,10 +21,12 @@
   (f ::= (Λ α (λ ε x_1 τ_1 (λ ε k τ_2 e))))
 
   (e ::= ....
+         ;; surface
          (λ ε x τ e) ;; added epsilon here
          (e τ)
          (handle ε h e)
-         (blame e))
+         ;; dynamic
+         (error e))
 
   (v ::= ....
          (λ ε x τ e)
@@ -35,7 +37,7 @@
   (E ::= ....
          (E τ)
          (handle ε h E)
-         (blame E))
+         (error E))
 
   (Σ ::= ((effect : (op -> τ) ...) ...))
 
@@ -80,6 +82,7 @@
   [(bop (injr E)) (bop E)]
   [(bop (o E e)) (bop E)]
   [(bop (o v E)) (bop E)]
+  [(bop (o E)) (bop E)]
   [(bop (if E e_1 e_2)) (bop E)]
 
   ;; not sure about this lol
@@ -530,12 +533,12 @@
     ((Check (Λ α (λ () x α (λ () k α
                                    (if ((injl (injr x)) (injr (injr x)))
                                    (k (injr (injr x)))
-                                   (blame 111))))))))
+                                   (error 111))))))))
 
   (test-match Effects h (term h-check))
   (test-->> ->effects
           (term ((handle (check) h-check ((perform () Check α) (t 123 (t (λ () x num false) 1)))) ()))
-          (term ((blame 111) ())))
+          (term ((error 111) ())))
 
   (test-->> ->effects
           (term ((handle (check) h-check ((perform () Check α) (t 123 (t (λ () x num true) 1)))) ()))

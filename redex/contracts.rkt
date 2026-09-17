@@ -10,11 +10,14 @@
   (κ ::= (flat e) (κ -> κ) (κ ->i x κ) (t κ κ))
 
   (e ::= ....
+         ;; surface
          (mon k l j κ e)
+         ;; dynamic
          (check k j e v)
          (blame k j))
 
   (v ::= ....
+         ;; dynamic
          (guard k l j κ v))
 
   (E ::= ....
@@ -36,8 +39,13 @@
          (check k j (e v) v)
          MON-FLAT]
 
+    [==> (mon k l j (t κ_1 κ_2) (t v_1 v_2))
+         (t (mon k l j κ_1 v_1) (mon k l j κ_2 v_2))
+         MON-TUPLE]
+
     [==> (mon k l j κ v) (guard k l j κ v)
          (side-condition (not (redex-match? Contracts (flat e) (term κ))))
+         (side-condition (not (redex-match? Contracts (t κ_1 κ_2) (term κ))))
          MON-GUARD]
 
     [==> ((guard k l j (κ_1 -> κ_2) v_1) v_2)
@@ -64,6 +72,12 @@
   (compatible-closure ->contracts Contracts E))
 
 (module+ test
+  (test-match Contracts e (term (λ x num true)))
+  (test-match Contracts κ (term (flat (λ x num true))))
+  (test-match Contracts
+              (mon k l j (flat e) v)
+              (term (mon k l j (flat (λ x num true)) 2)))
+
   (test-match Contracts e (term (blame k j)))
 
   (test-match Contracts e
@@ -84,4 +98,15 @@
                 (λ x num (add x 1)))
            10) ()))
     (term ((blame k j) ())))
+
+  #;(let [(traces (dynamic-require 'redex/gui 'traces))
+        (reduction-steps-cutoff (dynamic-require 'redex/gui 'reduction-steps-cutoff))]
+    (reduction-steps-cutoff 100)
+    (traces ->contracts*
+            (term ((mon k l j (flat (λ x num true)) 2) ())))
+
+    (traces ->contracts* (term (((mon k l j
+                ((flat (λ x num true)) -> (flat (λ x num false)))
+                (λ x num (add x 1)))
+           10) ()))))
 )

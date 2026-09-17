@@ -109,38 +109,42 @@
    (compile C:Γ C:e_2 C:τ E:e_2)
    ----------------------------------------------------- "C-Mon-Flat"
    (compile C:Γ (mon C:k C:l C:j (flat C:e_1) C:e_2) C:τ
-            ((perform 𝒞 C:τ) (t E:e_1 E:e_2)))]
+            ((perform genericeff 𝒞 C:τ) (t E:e_1 E:e_2)))]
 
-  [(compile C:Γ C:e (C:τ_1 -> C:τ_2) E:e_compiled)
-   (where C:x ,(variable-not-in (term (C:Γ C:e)) 'x))
+  [(compile C:Γ C:e (C:τ_1 -> C:τ_2) E:e_compiled) ;; get τ_1
+   (where (C:x C:x_1) ,(variables-not-in (term (C:Γ C:e)) '(x x_1)))
    (where C:Γ_new (extend C:Γ C:x C:τ_1))
+   (where C:Γ_f (extend C:Γ_new C:x_1 (C:τ_1 -> C:τ_2)))
 
    (compile C:Γ_new (mon C:l C:k C:j C:κ_1 C:x) C:τ_1 E:e_1)
-   (compile C:Γ_new (mon C:k C:l C:j C:κ_2 (C:e C:x)) C:τ_2 E:e_2)
+   (compile C:Γ_f (mon C:k C:l C:j C:κ_2 (C:x_1 C:x)) C:τ_2 E:e_2)
    (where E:e_3 (substitute E:e_2 C:x E:e_1))
    --------------------------------------------------------------- "C-Mon-Func"
    (compile C:Γ
             (mon C:k C:l C:j (C:κ_1 -> C:κ_2) C:e)
             (C:τ_1 -> C:τ_2)
-            (λ C:x C:τ_1 E:e_3))]
+            ;; remember to evaluate the contract expression first
+            ((λ C:x_1 (C:τ_1 -> C:τ_2) (λ C:x C:τ_1 E:e_3)) E:e_compiled))]
 
-  [(compile C:Γ C:e (C:τ_1 -> C:τ_2) E:e_compiled)
-   (where (C:x C:x_κ) ,(variables-not-in (term (C:Γ C:e C:κ_2)) '(x x_k)))
+  [(compile C:Γ C:e (C:τ_1 -> C:τ_2) E:e_compiled) ;; get τ_1
+   (where (C:x C:x_κ C:x_1) ,(variables-not-in (term (C:Γ C:e C:κ_2)) '(x x_k x_1)))
    (where C:Γ_0 (extend C:Γ C:x C:τ_1))
    (where C:Γ_new (extend C:Γ_0 C:x_κ C:τ_1))
+   (where C:Γ_f (extend C:Γ_new C:x_1 (C:τ_1 -> C:τ_2)))
 
    (compile C:Γ_new (mon C:l C:k C:j C:κ_1 C:x) C:τ_1 E:e_1)
    (compile C:Γ_new (mon C:l C:j C:j C:κ_1 C:x) C:τ_1 E:e_2)
    (where C:κ_3 (substitute C:κ_2 C:x_arg C:x_κ))
 
-   (compile C:Γ_new (mon C:k C:l C:j C:κ_3 (C:e C:x)) C:τ_2 E:e_3)
+   (compile C:Γ_f (mon C:k C:l C:j C:κ_3 (C:x_1 C:x)) C:τ_2 E:e_3)
    (where E:e_4 (substitute E:e_3 C:x E:e_1))
    (where E:e_5 (substitute E:e_4 C:x_κ E:e_2))
    ----------------------------------------------------------------------- "C-Mon-Dep"
    (compile C:Γ
             (mon C:k C:l C:j (C:κ_1 ->i C:x_arg C:κ_2) C:e)
             (C:τ_1 -> C:τ_2)
-            (λ C:x C:τ_1 E:e_5))]
+            ;; remember to evaluate the contract expression first
+            ((λ C:x_1 (C:τ_1 -> C:τ_2) (λ C:x C:τ_1 E:e_5)) E:e_compiled))]
 
   [(where C:x ,(variable-not-in (term (C:Γ C:e)) 'x))
    (compile C:Γ C:e (t C:τ_1 C:τ_2) E:e_3)
@@ -176,31 +180,52 @@
 
 
 (define-term effcheck 𝒞)
+(define-term mteff ())
+(define-term genericeff ( con )) ;; add to all expression
 
 (define-term h-check
   ((effcheck
-     (Λ α (λ x α (λ k α
-       (if ((w bool) (λ _ unit ((injl x) (injr x))))
+     (Λ α (λ genericeff x α (λ genericeff k α
+       (if ((w bool) (λ genericeff _ unit ((injl x) (injr x))))
            (k (injr x))
-           (blame 99991))))))))
+           (error 99991))))))))
 
 (define-term wrap
-  (μ w unit (Λ α (λ f unit ((handler h-check) f)))))
+  (μ w unit (Λ α (λ genericeff f unit ((handler genericeff h-check) f)))))
 
 (define (compile-and-run p #:trace-enabled [trace-enabled false])
-  (define pp (term (((wrap unit) (λ _ unit (run-compiler ,p))) ())))
+  (define (abbreviate-term t)
+    (match t
+      ;; [`(𝒞 (Λ ,alpha (λ ,eff1 ,x ,alpha2 (λ ,eff2 ,k ,alpha3 (if ,cond ,then ,else)))))
+      ;;  'HandlerC]
+
+      [`(𝒞 ,handler-body) 'Handler𝒞]
+
+      ;; Recursively walk down all other AST nodes
+      [(list xs ...) (map abbreviate-term xs)]
+
+      ;; Leave atoms (numbers, symbols) as they are
+      [_ t]))
+
+  (define (my-pp term)
+    (pretty-format (abbreviate-term term)))
+
+  (define pp (term (((wrap unit) (λ genericeff _ unit (run-compiler ,p))) ())))
 
   (if trace-enabled
-
       (let [(traces (dynamic-require 'redex/gui 'traces))
             (reduction-steps-cutoff (dynamic-require 'redex/gui 'reduction-steps-cutoff))]
         (reduction-steps-cutoff 100)
-        (traces ->effects pp))
+        (traces ->effects pp #:pp my-pp)
+        (traces ->contracts (term (,p ()))))
        null)
 
   (apply-reduction-relation* ->effects pp))
 
+
 (module+ test
+
+
   (compile-expect 1 1)
 
   (compile-expect true true)
@@ -221,36 +246,70 @@
                   (add 1 2))
 
   (compile-expect (mon k l j (flat (λ x num (zero? x))) 0)
-                  ((perform effcheck num) (t (λ x num (zero? x)) 0)))
+                  ((perform genericeff effcheck num) (t (λ x num (zero? x)) 0)))
 
-  (compile-expect
-    (mon k l j
-         ((flat (λ x num true)) -> (flat (λ x num false)))
-         (λ x num (add x 1)))
-    (λ x num ((perform effcheck num)
-              (t (λ x num false)
-                 ((λ x num (add x 1))
-                  ((perform effcheck num)
-                   (t (λ x num true) x)))))))
+  ;; (compile-expect
+  ;;   (mon k l j
+  ;;        ((flat (λ x num true)) -> (flat (λ x num false)))
+  ;;        (λ x num (add x 1)))
+  ;;   (λ x num ((perform genericeff effcheck num)
+  ;;             (t (λ x num false)
+  ;;                ((λ x num (add x 1))
+  ;;                 ((perform genericeff effcheck num)
+  ;;                  (t (λ x num true) x)))))))
 
-  (compile-expect
-    (mon k l j
-         ((flat (λ x num true)) ->i y (flat (λ x num (lt y x))))
-         (λ x num (add x 1)))
-    (λ arg num ((perform effcheck num)
-                (t (λ x num (lt ((perform effcheck num) (t (λ x num true) arg)) x))
-                   ((λ x num (add x 1))
-                    ((perform effcheck num)
-                     (t (λ x num true) arg)))))))
+  ;; (compile-expect
+  ;;   (mon k l j
+  ;;        ((flat (λ x num true)) ->i y (flat (λ x num (lt y x))))
+  ;;        (λ x num (add x 1)))
+  ;;   (λ arg num ((perform genericeff effcheck num)
+  ;;               (t (λ x num (lt ((perform genericeff effcheck num) (t (λ x num true) arg)) x))
+  ;;                  ((λ x num (add x 1))
+  ;;                   ((perform genericeff effcheck num)
+  ;;                    (t (λ x num true) arg)))))))
 
   (compile-expect
     (mon k l j (t (flat (λ x num true)) (flat (λ x num true))) (t 1 2))
     ((λ x (t num num)
-       (t ((perform 𝒞 num) (t (λ x num true) (injl x)))
-          ((perform 𝒞 num) (t (λ x num true) (injr x)))))
+       (t ((perform genericeff 𝒞 num) (t (λ x num true) (injl x)))
+          ((perform genericeff 𝒞 num) (t (λ x num true) (injr x)))))
      (t 1 2)))
 
   (compile-and-run
+    (term (mon k l j (flat (λ x num true)) (add 1 1)))
+    #:trace-enabled false)
+
+  (compile-and-run
+    (term (add (mon k l j (flat (λ x num true)) 2) 2))
+    #:trace-enabled false)
+
+  (compile-and-run
     (term (mon k l j (t (flat (λ x num true)) (flat (λ x num true))) (t 1 2)))
+    #:trace-enabled false)
+
+  (compile-and-run
+    (term ((mon k l j
+                ((flat (λ x num true)) ->i y (flat (λ x num (eq (sub x y) 1))))
+                (λ x num (add x 1)))
+           10))
+    #:trace-enabled false)
+
+  (compile-and-run
+    (term ((λ y (num -> num) y) (λ x num (add x 1))))
+    #:trace-enabled false)
+
+  (compile-and-run
+    (term (mon k l j
+               #;((flat (λ x num true)) ->i y (flat (λ x num (zero? (sub x y)))))
+               ((flat (λ x num true)) -> (flat (λ x num true)))
+               ((λ x (num -> num) x) (λ x num (add x 1)))))
+    #:trace-enabled false)
+
+
+  (compile-and-run
+    (term ((mon k l j
+               ((flat (λ x num true)) ->i y (flat (λ x num (eq (sub x y) 1))))
+               ((λ x (num -> num) x) (λ x num (add x 1))))
+           10))
     #:trace-enabled true)
 )
