@@ -1,4 +1,4 @@
-#import "@preview/great-theorems:0.1.1": *
+#import "@preview/great-theorems:0.1.2": *
 #show: great-theorems-init
 
 #let no-ref(it) = {

@@ -12,6 +12,7 @@
 #let trueb = $kw("true")$
 #let falseb = $kw("false")$
 #let unit = $kw("unit")$
+#let loc = $kw("loc")$
 
 #let mtstore = $emptyset$
 #let store = $sigma$
@@ -57,7 +58,13 @@
 #let handler(h) = $ekw("handler") #h$
 
 #let handle(h, e) = $ekw("handle") #h space #e$
-#let perform(op, tau) = $ekw("perform") #op #tau$
+#let perform(op, tau: none, eff: none) = {
+  if tau != none {
+    $ekw("perform") #eff #op #tau$
+  } else {
+    $ekw("perform") #op$
+  }
+}
 
 #let teff(tau_1,epsilon,tau_2) = $#tau_1 attach(->,tr:#epsilon) #tau_2$
 

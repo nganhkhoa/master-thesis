@@ -201,6 +201,12 @@
 
       [`(𝒞 ,handler-body) 'Handler𝒞]
 
+      [`((perform ,_ ,𝒞 ,_) (,_ ,e1 ,e2))
+       (string->symbol
+        (format "EffectCheck(~a,~a)"
+                (abbreviate-term e1)
+                (abbreviate-term e2)))]
+
       ;; Recursively walk down all other AST nodes
       [(list xs ...) (map abbreviate-term xs)]
 

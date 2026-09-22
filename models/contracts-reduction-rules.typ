@@ -27,8 +27,8 @@
       [],[],grid.cell(colspan: 2, align: right, [where $kappa_3 = {mon(l,j,j,kappa_1,v_2)\/x}kappa_2$],),
 
 
-      [$injl(guard(tuple(v_1,v_2),tuple(kappa_1,kappa_2),k,l,j))$],[$cstepx$],[$guard(v_1,kappa_1,k,l,j)$],[Guard-Inj-Left],
-      [$injr(guard(tuple(v_1,v_2),tuple(kappa_1,kappa_2),k,l,j))$],[$cstepx$],[$guard(v_2,kappa_2,k,l,j)$],[Guard-Inj-Right],
+      // [$injl(guard(tuple(v_1,v_2),tuple(kappa_1,kappa_2),k,l,j))$],[$cstepx$],[$guard(v_1,kappa_1,k,l,j)$],[Guard-Inj-Left],
+      // [$injr(guard(tuple(v_1,v_2),tuple(kappa_1,kappa_2),k,l,j))$],[$cstepx$],[$guard(v_2,kappa_2,k,l,j)$],[Guard-Inj-Right],
 
       [$getcell(guard(v,kappa,k,l,j))$], [$cstepx$], [$mon(k,l,j,kappa,getcell(v))$], [Mon-Get],
       [$setcell(guard(v_1,kappa,k,l,j),v_2)$], [$cstepx$], [$mon(k,l,j,refc(kappa), e)$], [Mon-Set],

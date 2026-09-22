@@ -51,7 +51,7 @@
           Or[$...$][]
           Or[$Lambda alpha^k. v$][]
           Or[$handler(h)$][]
-          Or[$perform(op,tau)$][]
+          Or[$perform(op,tau: tau)$][]
           Or[$eblame(p)$][]
         }),
         Prod($p$, {

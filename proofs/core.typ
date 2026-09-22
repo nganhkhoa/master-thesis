@@ -106,35 +106,53 @@ By induction on $e_1,sigma step e_2,sigma'$.
 
 - Case $injr(tuple(v_1, v_2)), sigma step v_2$ similarly above.
 
-- Case $E[newcell(v)], sigma step E[kw("loc")], sigma[kw("loc") -> v]$
+- Case $E[newcell(v)], sigma step E[loc], sigma[loc -> v]$
 #make-proof((
   ( $ e_1 = E[newcell(v)] $,                   "Given" ),
-  ( $ e_2 = E[kw("loc")] $,                    "Given" ),
+  ( $ e_2 = E[loc] $,                    "Given" ),
   ( $ type(Gamma, E[newcell(v)], tau) $,       "Given" ),
-  ( $ type(Gamma, newcell(v), tau_1) $,        [@langb-decomposition] ),
+  ( $ type(Gamma, newcell(v), tau_1) $,        "Decomposition" ),
   ( $ type(Gamma, newcell(v), ref(tau_2)) $,   rule("T-New")),
-  ( $ type(Gamma, kw("loc"), ref(tau_2)) $,    rule("T-Loc")),
-  ( $ type(Gamma, E[kw("loc")], tau) $,        [@langb-context-replacement] ),
+  ( $ type(Gamma, loc, ref(tau_2)) $,    rule("T-Loc")),
+  ( $ type(Gamma, E[loc], tau) $,        [@langb-context-replacement] ),
+  ( $ type(Gamma, e_2, tau) $,                 "" )
+))
+
+- Case $E[getcell(loc)], sigma step E[v], sigma$ for $v = sigma(loc)$
+#make-proof((
+  ( $ e_1 = E[getcell(loc)] $,                   "Given" ),
+  ( $ e_2 = E[v] $,                              "Given" ),
+  ( $ type(Gamma, E[getcell(loc)], tau) $,       "Given" ),
+  ( $ type(Gamma, getcell(loc), tau_1) $,        "Decomposition" ),
+  ( $ type(Gamma, v, tau_1) $,   [??]),
+  ( $ type(Gamma, E[v], tau) $,        [@langb-context-replacement] ),
+  ( $ type(Gamma, e_2, tau) $,                 "" )
+))
+
+- Case $E[setcell(v_1,v_2)], sigma step E[loc], sigma[loc -> v]$
+#make-proof((
+  ( $ e_1 = E[setcell(v_1,v_2)] $,                   "Given" ),
+  ( $ e_2 = E[loc] $,                    "Given" ),
+  ( $ type(Gamma, E[setcell(v_1,v_2)], tau) $,       "Given" ),
+  ( $ type(Gamma, setcell(v_1,v_2), tau_1) $,        "Decomposition" ),
+  ( $ type(Gamma, setcell(v_1,v_2), ref(tau_2)) $,   rule("T-New")),
+  ( $ type(Gamma, loc, ref(tau_2)) $,    rule("T-Loc")),
+  ( $ type(Gamma, E[loc], tau) $,        [@langb-context-replacement] ),
   ( $ type(Gamma, e_2, tau) $,                 "" )
 ))
 ]
 
 #theorem(title: [#langb Progress])[
+
 If $type(dot, e_1, tau)$ then $e_1$ is a value or exists $e_2, store$ such that $e_1, mtstore step e_2, store$.
 ] <langb-Progress>
 
 #proof(of: <langb-Progress>)[
 ]
 
-#lemma(title: [Decomposition])[
-If $type(Gamma, E[e], tau)$ then exists a type $tau_1$, such that $type(Gamma, e, tau_1)$.
-] <langb-decomposition>
-
-#proof(of: <langb-decomposition>)[
-]
-
 #lemma(title: [Context Replacement])[
-If $type(Gamma, E[e_1], tau)$ and $type(Gamma, e_1, tau_1)$ then for any $e_2$ such that, $type(Gamma, e_2, tau_1)$, $type(Gamma, E[e_2], tau)$.
+
+If $type(Gamma, E[e_1], tau)$ and $type(Gamma, e_1, tau_1)$ then for any $e_2$ such that, $type(Gamma, e_2, tau_1)$, obtain $type(Gamma, E[e_2], tau)$.
 ] <langb-context-replacement>
 
 #proof(of: <langb-context-replacement>)[
@@ -157,6 +175,7 @@ By induction on $E$.
 ]
 
 #lemma(title: [Substitution])[
+
 If $type(Gamma, e_1, tau_1)$ and $type(Gamma\,x:tau_1, e_2, tau_2)$ then $type(Gamma, e_2[x:=e_1], tau_2)$.
 ] <replace-type>
 

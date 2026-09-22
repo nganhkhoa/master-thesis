@@ -25,15 +25,15 @@
           Or[$tau -> tau$][]
           Or[$tuple(tau,tau)$][]
           Or[$ref(tau)$][]
-          Or[$kw("unit")$][]
+          Or[$unit$][]
         }),
         Prod($o$, {
           Or[num][]
           Or[bool][]
         }),
         Prod($e$, {
-          Or[$n | b | tuple(e,e) | "x"$][]
-          Or[$lambda x : tau . e | mu x : tau . e | kw("loc")$][]
+          Or[$n | b | tuple(e,e) | x$][]
+          Or[$lambda x : tau . e | mu x : tau . e$][]
           Or[$e + e | e - e | e and e | e or e$][]
           Or[$apply(e, e) | ife(e, e, e)$][]
           Or[$iszero(e)$][]
@@ -49,8 +49,8 @@
           Or[$trueb | falseb$][]
         }),
         Prod($v$, {
-          Or[$kw("unit")$][]
-          Or[$n | b | tuple(v,v) | "x" | lambda x. e | kw("loc")$][]
+          Or[$unit | loc$][]
+          Or[$n | b | tuple(v,v) | x | lambda x. e$][]
         }),
         Prod($E$, {
           Or[$square.stroked$][]
