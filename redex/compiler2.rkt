@@ -6,7 +6,7 @@
 
 ;; (require "base.rkt")
 (require "contracts.rkt")
-(require "effects.rkt")
+(require "effects2.rkt")
 
 (define-union-language CompilerLang (C: Contracts) (E: Effects))
 
@@ -186,12 +186,17 @@
 (define-term h-check
   ((effcheck
      (Λ α (λ genericeff x α (λ genericeff k α
-       (if ((w bool) (λ genericeff _ unit ((injl x) (injr x))))
-           (k (injr x))
-           (error 99991))))))))
+       (h
+        (λ genericeff _ unit
+          (if ((injl x) (injr x))
+            (k (injr x))
+            (error 99991))))))))))
+
+;; (define-term wrap
+;;   (μ w unit (Λ α (λ genericeff f unit ((handler genericeff h-check) f)))))
 
 (define-term wrap
-  (μ w unit (Λ α (λ genericeff f unit ((handler genericeff h-check) f)))))
+  (λ genericeff f unit ((μ h unit (handler genericeff h-check)) f)))
 
 (define (compile-and-run p #:trace-enabled [trace-enabled false] #:trace-print [trace-print false])
   (define (abbreviate-term t)
@@ -216,7 +221,7 @@
   (define (my-pp term)
     (pretty-format (abbreviate-term term)))
 
-  (define pp (term (((wrap unit) (λ genericeff _ unit (run-compiler ,p))) ())))
+  (define pp (term ((wrap (λ genericeff _ unit (run-compiler ,p))) ())))
 
   (if trace-enabled
       (let [(traces (dynamic-require 'redex/gui 'traces))
@@ -353,6 +358,7 @@
                ((flat (λ x num true)) ->i y (flat (λ x num (eq (sub x y) 1))))
                ((λ x (num -> num) x) (λ x num (add x 1))))
            10))
-    ; #:trace-enabled true
-    #:trace-print true)
+    #:trace-enabled true
+    #:trace-print false)
 )
+

@@ -1,4 +1,4 @@
-#import "setup.typ": *
+#import "/proofs/setup.typ": *
 #import "/utils.typ": *
 #import "/models/language.typ": *
 
@@ -6,6 +6,33 @@
 #show: great-theorems-init
 
 #let relate(e) = $accent(#e, tilde)$
+
+Proof for compiler from $langc$ to $"Untyped" "Deep" lange$, the handler semantic is deep, where the continuation automatically reinstall the handler.
+
+#grid(
+  columns: (auto,auto,auto),
+  gutter: 1.5em,
+
+  [$heffcheck : lab$],
+  [$=$],
+  grid.cell(align: left,
+    [${effcheck -> forall alpha. tuple(blab, tuple(alpha -> boolt, alpha)) -> alpha}$]),
+
+  [$kw("wrap")$], [$=$],
+  grid.cell(align: left,
+    [$mu w : forall alpha. ((teff((), chevron.l heffcheck chevron.r, alpha)) -> alpha). Lambda alpha. med lambda f: (teff((),chevron.l heffcheck chevron.r,alpha)).$]
+  ),
+
+  [], [],
+  [$apply(handler({effcheck -> lambda tuple(l,tuple(e,v)). lambda k. ife(apply(w[kw("bool")], (lambda \_. apply(e,v))),apply(k,v),eblame(l))}), f)$],
+  [], grid.cell(colspan: 2, align: right,
+    [where $lambda tuple(l,tuple(e,v))$ deconstructs the argument as tuple pattern]),
+)
+
+
+The proof get into the way a lot because it switch back and forth between states prepended with handle and states without handle.
+
+#line(length: 100%)
 
 Compiler Correctness by proving (1) $langc ~ "Untyped " lange$, (2) $"Untyped " lange ~ lange$, then obtain $langc ~ lange$. (2) is trivial.
 
@@ -18,43 +45,6 @@ $"CompileUntyped"(e) = e'$ if $compile(type(Gamma,tau,e),e'')$ and $e' = "untype
 
 #proof[
   By lemma on simulation, and that the $"CompileUntyped"$ relation is a subset of $R_e$.
-]
-
-#let treq(a,b) = $"EQ"(#a,#b)$
-
-// $
-// treq(e,e') = cases(
-//   "true" "if" ,
-//   "true" "if" ,
-//   "false" "otherwise",
-// )
-// $
-
-
-#lemma()[
-  If $e ~ e'$ and $e cstep1 v$ then $handle(heffcheck,e') estep1 relate(v)$. (Similarly with blame? Maybe define $langc r = v | blame(k,j)$, $lange r = v | blame$)
-]
-
-#proof[
-  By breaking down the $cstep1$, and induction on it.
-
-  - Case $e cstep e_1$ and $e_1 cstep1 v$
-
-    By lemma step simulation there exists a $e'_1$, such that $e_1 ~ e'_1$ and either:
-    - $handle(heffcheck, e') estep1 handle(heffcheck,e'_1)$
-    - $handle(heffcheck, e') estep1 e'_1$ and $e'_1 = ife(handle(heffcheck,e'_(1a)),e'_(1b),e'_(1c))$
-    - $e' estep1 handle(heffcheck,e'_1)$
-    - $e' estep1 e'_1$
-
-    By IH, $handle(heffcheck,e'_1) estep1 relate(v)$.
-
-  - Case $v cstep1 v$
-
-    We can obtain $relate(v)$.
-
-    $handle(heffcheck, relate(v)) estep relate(v)$.
-
-    $handle(heffcheck, relate(v)) estep1 relate(v)$. Reflexivity.
 ]
 
 Let's first define these relations:
@@ -71,135 +61,148 @@ Let's first define these relations:
 
 //   If $(kappa,e) in R_kappa$, we write $kappa attach(~, br: R_kappa) e$ or $kappa ~ e$. We define $relate(kappa)$ as shorthand for any expression $relate(e)$ satisfying $kappa ~ relate(e)$.
 
+And we have a predicate between $langc e$ and $"Untyped" lange e'$.
 
-Through trace analysis, we notice that the expression of $lange$ is always appended with a handle, except for two cases:
+$E^+  = square.stroked | E^+[E^*[check(k,j,square.stroked,v)]]$
 
-- When it is equivalent to a check being performed.
-- When the wrapper $w$ is unwrapping itself.
+$relate(E)^+  = square.stroked | relate(E)^+[ife(square.stroked, apply((lambda x. handle(heffcheck,relate(E)^*[x])),relate(v)), blame)]$
 
-Simulation lemma:
+and their relation is straightforward, they also belong to $E ~ relate(E)$ so we can reuse the syntax.
+
+#let treq(a,b) = $"EQ"(#a,#b)$
+
+$
+treq(e,e') = cases(
+  "true" "if" e = v "and" e' = relate(v),
+  "true" "if" e' = handle(heffcheck,relate(e)) "and" e != E^*[check(k,j,e'',v)],
+  "true" "if" e = E^+[E^*[check(k,j,e_1,v)]] "and",
+  quad quad quad e' = relate(E)^+[ife(e'_1,apply((lambda x. handle(heffcheck,relate(E)^*[x])),relate(v)),blame)] "and",
+  quad quad quad treq(e_1,e'_1),
+  "false" "otherwise",
+)
+$
+
+
+#lemma()[
+  If $e cstep1 r$ and $treq(e,e')$ then $e' estep1 relate(r)$.
+]
+
+#proof[
+  By breaking down the $cstep1$, and induction on it.
+
+  - Case $v cstep1 v$
+
+    $e' = relate(r)$ because $treq(e,e')$.
+
+    $e' estep1 relate(r)$. Reflexivity.
+
+  - Case $e cstep e_1$ and $e_1 cstep1 r$
+
+    By simulation, we have $e' estep1 e'_1$ such that $treq(e_1,e'_1)$.
+
+    By IH, $e'_1 estep1 relate(r)$.
+
+    By chaining steps, $e' estep1 relate(r)$.
+]
+
 
 We also need to make a claim that in no where in $e'_1$ do we have $perform(eff)$ that $eff != effcheck$.
 
 #lemma()[
-  If $e_1 cstep e_2$ and $e_1 ~ e'_1$ then there exists $e'_2$ such that $e_2 ~ e'_2$ and either:
-  - $handle(heffcheck,e_2) estep1 handle(heffcheck,e'_2)$
-  - $handle(heffcheck,e_2) estep1 e'_2$ and $e'_2 = ife(handle(heffcheck,e_(2a)),e_(2b),e_(2c))$
-  - $e_2 estep1 handle(heffcheck,e'_2)$ and $e_2 = ife(handle(heffcheck,e_(2a)),e_(2b),e_(2c))$
-  - $e_2 estep1 e'_2$ and $e_2 = ife(handle(heffcheck,e_(2a)),e_(2b),e_(2c))$
-
-  We limit to if/else expression if it is not prepended with handle.
+  If $e_1 cstep e_2$ and $treq(e_1,e'_1)$ then there exists $e'_2$ such that $e'_1 estep1 e'_2$ and $treq(e_2,e'_2)$.
 ] <simulation>
 
 #proof(of: <simulation>)[
+By case analysis on $e_1 cstep e_2$ with respect to $treq(e_1,e'_1)$. By decomposition lemma, we know that the program can be rewritten into:
 
-Doing both case analysis on $e_1 cstep e_2$ and structure of $e_1 = E^*[e_(1a)]$ and $e_1 = E[E^*_1[check(k,j,E^*_2[e_(1b)],v)]]$
+$e_1 = E[e_3]$, $e_2 = E[e_4]$ and that $e_3 cstep e_4$ is a redex reduction.
 
-- Case of $E_0[ife(trueb,e_3,e_4)] cstep E_0[e_3]$
+- Case $e_3 = mon(k,l,j,flat(e),v) cstep check(k,j,apply(e,v),v) = e_4$
 
-  - Case $E_0 = E^*$
+  - Case $e_1 = v$ is invalid.
 
-    $e_1 = E^*[ife(trueb,e_3,e_4)] ~ relate(E)^*[ife(trueb,relate(e)_3,relate(e)_4)] = e'_1$
+  Context breakdown lemma, $E = E^+[E^*]$.
 
-    $handle(heffcheck,e'_1) estep1 handle(heffcheck,relate(E)^*[relate(e)_3])$
+  $e_1 = E^+[E^*[e_3]]$
 
-    Let $e'_2 = relate(E)^*[relate(e)_3]$. Immediately, $e_2 ~ e'_2$. Matches case 1.
+  - Case $E^+ = square.stroked$
 
-  - Case $E_0 = E[E^*_1[check(k,j,E^*_2,v)]]$
+    $e_1 = E^*[e_3] ~ relate(E)^*[apply(perform(effcheck),tuple(relate(e),v))]$
 
-    $e_1 = E[E^*_1[check(k,j,E^*_2[ife(trueb,e_3,e_4)],v)]] ~ relate(E)[ife(handle(heffcheck, relate(E)^*_2[ife(trueb,relate(e)_3,relate(e)_4)]), apply((lambda x. handle(heffcheck, relate(E)^*_1[x])), relate(v)),blame))] = e'_1$
+    Let $e'_1 = handle(heffcheck,relate(E)^*[apply(perform(effcheck),tuple(relate(e),v))])$
 
-    $e'_1 estep relate(E)[ife(handle(heffcheck, relate(E)^*_2[relate(e)_3]), apply((lambda x. handle(heffcheck, relate(E)^*_1[x])), relate(v)),blame))] = e'_2$.
+    $e'_1 estep1 ife(handle(heffcheck,apply(relate(e),relate(v))),apply((lambda x. handle(heffcheck,relate(E)[x])),relate(v)),blame) = e'_2$
 
-    $e'_1 estep1 e'_2$.
+    By case 2, $treq(apply(e,v),handle(heffcheck,apply(relate(e),relate(v))))$
 
-    By definition $e_2 ~ e'_2$. Matches case 4.
+    Immediately $treq(e_2,e'_2)$ by case 3.
 
+  - Case $E^+ = E^+_1[E^*_1[check(k_1,j_1,square.stroked,v_1)]]$
 
+    $e_1 = E^+_1[E^*_1[check(k_1,j_1,E^*[e_3],v_1)]]$
 
-  Similarly for other trivial cases?
+    $
+    relate(e)_1 =& relate(E)^+_1[ife(handle(heffcheck,relate(E)^*[relate(e)_3]),apply((lambda x. handle(heffcheck,relate(E)^*[x])),relate(v)_1),blame)] \
+    =& relate(E)^+_1[ife(handle(heffcheck,relate(E)^*[apply(perform(effcheck),tuple(relate(e),relate(v)))]),apply((lambda x. handle(heffcheck,relate(E)^*[x])),relate(v)_1),blame)] \
+    estep1& relate(E)^+_2[ife(handle(heffcheck,apply(relate(e),relate(v))),apply((lambda x. handle(heffcheck, relate(E)^*[x])),relate(v)),blame)] = e'_2
+    $
 
-- Case of $E_0[mon(k,l,j,flat(e),v)] cstep E_0[check(k,j,apply(e,v),v)]$
+    $E^+_1[E^*_1[check(k_1,j_1,E^*[check(k,j,apply(e,v),v)],v_1)]]$
 
-  - Case $E_0 = E^*$
+    $E^*[check(k,j,apply(e,v),v)] ~ ife(handle(heffcheck,apply(relate(e),relate(v))),apply((lambda x. handle(heffcheck, relate(E)^*[x])),relate(v)),blame)$
 
-    $e_1 = E^*[mon(k,l,j,flat(e),v)] ~ relate(E)^*[apply(perform(effcheck),tuple(e,v))] = e'_1$
+    $treq(E^*[check(k,j,apply(e,v),v)], ife(handle(heffcheck,apply(relate(e),relate(v))),apply((lambda x. handle(heffcheck, relate(E)^*[x])),relate(v)),blame))$ (case 3)
 
-    $handle(heffcheck,e'_1) estep1 ife(handle(heffcheck,apply(relate(e),relate(v))), apply((lambda x. handle(heffcheck,relate(E)^*[x])),relate(v)),blame) = e'_2$.
+    By case 3, $treq(e_2,e'_2)$.
 
-    $e_2 = E^*[check(k,j,apply(e,v),v)] ~ e'_2$ by definition. Matches case 2.
+    (Case 2 is invalid, because of the shape of $e_2$)
 
-  - Case $E_0 = E[E^*_1[check(k_0,j_0,E^*_2,v_0)]]$
+- Case $e_3 = check(k,j,trueb,v) cstep v = e_4$
 
-    $e_1 = E[E^*_1[check(k_0,j_0,E^*_2[mon(k,l,j,flat(e),v)],v_0)]] ~ relate(E)[ife(handle(heffcheck, relate(E)^*_2[relate(e)_3]), apply((lambda x. handle(heffcheck,relate(E)^*_1[x])),relate(v)_0),blame)] = e'_1$
+  - Case $e_1 = v$ is invalid.
 
-    Where $e_3 = mon(k,l,j,flat(e),v)$. Obtain $relate(e)_3 = apply(perform(effcheck),tuple(relate(e),relate(v)))$.
+  - Case $e_1 = E^+[E^*[check(k,j,trueb,v)]]$.
 
-    $e_2 = E[E^*_1[check(k_0,j_0,E^*_2[check(k,j,apply(e,v),v)],v_0)]]$
+    By $treq(e_1,e'_1)$:
 
-    $relate(E)^*$ doesn't have any handle. $relate(E)^*_2$ doesn't have any handle as well.
+    $e'_1 = relate(E)^+[ife(e'_3,apply((lambda x. handle(heffcheck,relate(E)^*[x])),relate(v)),blame)]$
 
-    $e'_4 = handle(heffcheck, relate(E)^*_2[relate(e)_3]) \ estep1 ife(handle(heffcheck,apply(relate(e),relate(v))),apply((lambda x. handle(heffcheck,relate(E)^*_2[x])),relate(v)),blame) = e'_5$.
+    $treq(trueb,e'_3)$, because $trueb$ is a value, we obtain $e'_3 = trueb$.
 
-    $e_5 = E^*_2[check(k,j,apply(e,v),v)] ~ e'_5$ by definition.
+    $e'_1 estep1 relate(E)^+[handle(heffcheck,relate(E)^*[relate(v)])]$
 
-    $e'_1 estep1 relate(E)[ife(e'_5, apply((lambda x. handle(heffcheck,relate(E)^*_1[x])),relate(v)_0),blame)] = e'_2$
+    $e_1 cstep E^+[E^*[v]]$
 
-    Note that this if expression has no handle. Which we have to add to the relation.
+    - Case $E^+ = square.stroked$
 
-    $e_2 ~ e'_2$. Matches case 4.
+      Straight up, $treq(E^*[v], handle(heffcheck,relate(E)^*[relate(v)]))$
 
-- Case $E[mon(k,l,j,kappa_1 -> kappa_2,v)] cstep E[guard(v,kappa_1 -> kappa_2,k,l,j)]$
+    - Case $E^+ = E^+_1[E^*_1[check(k,j,square.stroked,v)]]$
 
-  // $e_1 = E[mon(k,l,j,kappa_1 -> kappa_2,v)] ~ relate(e)_3 = e'_1$
+      $relate(E)^+ = relate(E)^+_1[ife(square.stroked, apply((lambda x. handle(heffcheck,relate(E)^*_1[x])),relate(v)), blame)]$
 
-  // $handle(heffcheck,e'_1) estep1 handle(heffcheck,e'_1)$. Reflexivity.
+      $e_2 = E^+_1[E^*_1[check(k,j,E^*[v],v)]]$
 
-  // Where $e_3 = E[apply((lambda f. lambda x. apply(f,x)),mon(k,l,j,kappa_2,apply(v,mon(l,k,j,kappa_1,x))))]$
+      $e'_2 = relate(E)^+_1[ife((handle(heffcheck,relate(E)^*[relate(v)])), apply((lambda x. handle(heffcheck,relate(E)^*_1[x])),relate(v)), blame)]$
 
-  // By definition $e_2 ~ relate(e)_3$. Matches case 1.
+      Trvially, $treq(E^*[v],handle(heffcheck,relate(E)^*[relate(v)]))$.
 
-- Case $E[check(k,j,trueb,v)] cstep E[v]$
+      Obtain $treq(e_2,e'_2)$.
 
-  - Case $E_0 = E^*$
-
-    $e_1 = E^*[check(k,j,trueb,v)] ~ ife(handle(heffcheck,trueb),apply((lambda x. handle(heffcheck, relate(E)^*[x])),relate(v)),blame) = e'_1$
-
-    $e'_1 estep1 handle(heffcheck, relate(E)^*[relate(v)])$.
-
-    $e_2 ~ relate(E)^*[relate(v)]$. Matches case 3.
-
-  - Case $E_0 = E[E^*_1[check(k_0,j_0,E^*_2,v_0)]]$
-
-    $e_1 = E[E^*_1[check(k_0,j_0,E^*_2[check(k,j,trueb,v)],v_0)]] ~ relate(E)[ife(handle(heffcheck,relate(e)_3), apply((lambda x. relate(E)^*_1[x]), relate(v)_0), blame)] = e'_1$
-
-    Where $e_3 = E^*_2[check(k,j,trueb,v)]$ and,
-
-    $relate(e)_3 = ife(handle(heffcheck, trueb), apply((lambda x. relate(E)^*_2[x]), relate(v)),blame)$.
-
-    $e'_1 estep1 relate(E)[ife(handle(heffcheck, relate(E)^*_2[relate(v)]), apply((lambda x. relate(E)^*_1[x]), relate(v)_0), blame)] = e'_2$
-
-    $e_2 = E[E^*_1[check(k_0,j_0,E^*_2[v],v_0)]]$
-
-    $e_2 ~ e'_2$. Matches case 4.
-
-- Case $E[check(k,j,falseb,v)] cstep E[blame(k,j)]$
-
-- Case $E[blame(k,j)] cstep blame(k,j)$
 ]
 
 #block(width: 100%)[
   #rect(stroke: 0.5pt, inset: 5pt)[
-    $tilde.op subset.eq langc E times "Untyped" lange E$
+    $tilde.op subset.eq langc E^* times "Untyped" lange E^*$
   ]
 
-  Define $relate(E)$ such that $E ~ relate(E)$.
+  $E^*$ is a context without $check(k,j,e,v)$ in $langc$.
 
-  Very fuzzy about where I should put the handle? This would break the predicate and also the relation of $R_e$.
+  Define $relate(E)^*$ such that $E^* ~ relate(E)^*$.
 
   #v(1em)
   #grid(
-    columns: (1fr, auto, auto),
+    columns: (1fr, auto, 1fr),
     column-gutter: 1em,
     row-gutter: 1.2em,
     align: (right, left, left),
@@ -208,36 +211,30 @@ Doing both case analysis on $e_1 cstep e_2$ and structure of $e_1 = E^*[e_(1a)]$
     [$tilde$],
     [$square.stroked$],
 
-    [$apply(E,e)$],
+    [$apply(E^*,e)$],
     [$tilde$],
-    [$apply(relate(E),relate(e))$],
+    [$apply(relate(E)^*,relate(e))$],
 
-    [$apply(v,E)$],
+    [$apply(v,E^*)$],
     [$tilde$],
-    [$apply(relate(v),relate(E))$],
+    [$apply(relate(v),relate(E)^*)$],
 
-    [$mon(k,l,j,flat(e),E)$],
+    [$mon(k,l,j,flat(e),E^*)$],
     [$tilde$],
-    [$apply(perform(effcheck),tuple(relate(e),relate(E)))$],
+    [$apply(perform(effcheck),tuple(relate(e),relate(E)^*))$],
 
-    [$mon(k,l,j,kappa_1 -> kappa_2,E)$],
+    [$mon(k,l,j,kappa_1 -> kappa_2,E^*)$],
     [$tilde$],
-    [$apply((lambda f. lambda x. apply(f,x)),relate(E)_1)$],
-    [],[],grid.cell(align:left,colspan:1)[$E_1=mon(k,l,j,kappa_2,apply(E,mon(l,k,j,kappa_1,x)))$],
+    [$apply((lambda f. lambda x. apply(f,x)),relate(E)^*_1)$],
+    [],[],grid.cell(align:left,colspan:1)[$E^*_1=mon(k,l,j,kappa_2,apply(E^*,mon(l,k,j,kappa_1,x)))$],
 
-    // [$mon(k,l,j,dep(kappa_1, y. kappa_2),E)$],
+    // [$E[E^*_1[check(k,j,square.stroked, v)]]$],
     // [$tilde$],
-    // [$handle(heffcheck, lambda x. relate(e_2))$],
-    // [],[],grid.cell(align:left,colspan:1)[$e_1=mon(k,l,j,kappa_1,x), x "free in??" E$],
-    // [],[],grid.cell(align:left,colspan:1)[$e_2=mon(k,l,j,kappa_2[y:=e_1],apply(E,mon(l,k,j,kappa_1,x)))$],
+    // [$tilde(E)[ife(square.stroked, (lambda x. handle(heffcheck, tilde(E)^*_1[x])) tilde(v), blame)]$],
 
-    [$E[E^*_1[check(k,j,E^*_2,v)]]$],
-    [$tilde?$],
-    [$E[ife(handle(heffcheck,apply(perform(effcheck),tuple(relate(E)^*,relate(v)))),(lambda x. relate(E)[x]) relate(v),blame)]$],
-
-    [$E[E^*_1[check(k,j,E^*_2,v)]]$],
-    [$tilde?$],
-    [$relate(E)[ife(relate(E)^*_2,(lambda x. relate(E)^*_1[x]) relate(v),blame)]$],
+    // [$E^*_1[check(k,j,E, v)]$],
+    // [$tilde$],
+    // [$ife(relate(E), (lambda x. handle(heffcheck, tilde(E)^*_1[x])) tilde(v), blame)$],
   )
 ]
 
@@ -246,13 +243,56 @@ Doing both case analysis on $e_1 cstep e_2$ and structure of $e_1 = E^*[e_(1a)]$
     $tilde.op subset.eq langc e times "Untyped" lange e$
   ]
 
-  Let $C(e) = e''$ where $compile(type(Gamma,e,tau),e')$ and $e'' = "untype"(e')$.
-
-  $E^*$ is a context where it does not have any $check$ expression. Because the logic of the handler is to rewrite up until the handler.
+  $E^*$ is a context without $check(k,j,e,v)$ in $langc$. So it does not have the check cases below.
 
   #v(1em)
   #grid(
     columns: (1fr, auto, auto),
+    column-gutter: 1em,
+    row-gutter: 1.2em,
+    align: (right, left, left),
+
+    [$v$],
+    [$tilde$],
+    [$relate(v)$],
+
+
+    [$apply(e_1,e_2)$],
+    [$tilde$],
+    [$apply(relate(e)_1,relate(e)_2)$],
+
+    [$mon(k,l,j,flat(e_1),e_2)$],
+    [$tilde$],
+    [$perform(effcheck)tuple(relate(e)_1,relate(e)_2)$],
+
+    [$mon(k,l,j,kappa_1 -> kappa_2,e)$],
+    [$tilde$],
+    [$apply((lambda f. lambda x. relate(e)_1),relate(e))$],
+    [],[],grid.cell(align:left,colspan:1)[$e_1=mon(k,l,j,kappa_2,apply(f,mon(l,k,j,kappa_1,x)))$],
+
+    // fill: (x, y) => if y in (7, 8) { rgb("eef2ff") },
+
+    [$E^*[check(k, j, e, v)]$],
+    [$tilde$],
+    [$ife(handle(heffcheck, relate(e)), apply((lambda x. handle(heffcheck, relate(E)^*[x])), relate(v)), blame)$],
+
+    [$E^*[check(k, j, e, v)]$],
+    [$tilde$],
+    [$ife(relate(e), apply((lambda x. handle(heffcheck, relate(E)^*[x])), relate(v)), blame)$],
+
+    [$blame(k,j)$],[$tilde$],[$blame$],
+  )
+]
+
+
+#block(width: 100%)[
+  #rect(stroke: 0.5pt, inset: 5pt)[
+    $tilde.op subset.eq langc v times "Untyped" lange v$
+  ]
+
+  #v(1em)
+  #grid(
+    columns: (1fr, auto, 1fr),
     column-gutter: 1em,
     row-gutter: 1.2em,
     align: (right, left, left),
@@ -269,30 +309,67 @@ Doing both case analysis on $e_1 cstep e_2$ and structure of $e_1 = E^*[e_(1a)]$
     [$tilde$],
     [$lambda x. relate(e)$],
 
-    [$apply(e_1,e_2)$],
+    [$guard(v,kappa_1 -> kappa_2,k,l,j)$],
     [$tilde$],
-    [$apply(relate(e)_1,relate(e)_2)$],
-
-    [$E[mon(k,l,j,flat(e_1),e_2)]$],
-    [$tilde$],
-    [$relate(E)[perform(effcheck)tuple(relate(e)_1,relate(e)_2)]$],
-
-    [$E[mon(k,l,j,kappa_1 -> kappa_2,e)]$],
-    [$tilde$],
-    [$relate(E)[apply((lambda f. lambda x. relate(e)_1),relate(e))]$],
-    [],[],grid.cell(align:left,colspan:1)[$e_1=mon(k,l,j,kappa_2,apply(f,mon(l,k,j,kappa_1,x)))$],
-
-    // fill: (x, y) => if y in (7, 8) { rgb("eef2ff") },
-
-    [$E[E^*[check(k, j, e, v)]]$],
-    [$tilde$],
-    [$relate(E)[ife(handle(heffcheck, relate(e)), apply((lambda x. handle(heffcheck, relate(E)^*[x])), relate(v)), blame)]$],
-
-    [$E[E^*[check(k, j, e, v)]]$],
-    [$tilde$],
-    [$relate(E)[ife(relate(e), apply((lambda x. handle(heffcheck, relate(E)^*[x])), relate(v)), blame)]$],
-
-    [$E[blame(k,j)]$],[$tilde$],[$blame$],
-    [$blame(k,j)$],[$tilde$],[$blame$],
+    [$relate(e)$],
+    [],[],grid.cell(align:left,colspan:1)[$e=lambda x. mon(k,l,j,kappa_2,apply(relate(v),mon(l,k,j,kappa_1,x)))$],
   )
+]
+
+#lemma(title: "Relation is correct")[
+  If $e ~ e'$ and $E ~ E'$ then $E[e] ~ E'[e']$.
+]
+
+
+#lemma(title: "Breaking down Context E")[
+  For all $E$, $E = E^+[E^*]$
+]
+
+#proof[
+By induction on $E$.
+
+- Case $E = square.stroked$
+
+  Choose $E^+ = E^* = square.stroked$
+
+- Case $E = E_1 e$
+
+  By IH, $E_1 = E^+_1[E^*_1]$
+
+  $E = apply(E^+_1[E^*_1],e)$
+
+  - Case $E^+_1 = square.stroked$
+
+    Then $E = apply(E^*_1,e)$
+
+    Choose $E^+ = square.stroked, E^*=apply(E^*_1,e)$
+
+  - Case $E^+_1 = E^+_2[E^*_2[check(k,j,square.stroked,v)]]$
+
+    Then $E = apply(E^+_2[E^*_2[check(k,j,E^*_1,v)]],e) = (apply(E^+_2,e))[E^*_2[check(k,j,E^*_1,v)]]$
+
+    Choose $E^+ = (apply(E^+_2,e))[E^*_2[check(k,j,square.stroked,v)]], E^*=E^*_1$
+
+  Similarly to other basic cases.
+
+- Case $E = check(k,j,E_1,v)$
+
+  By IH, $E_1 = E^+_1[E^*_1]$
+
+  $E = check(k,j,E^+_1[E^*_1],v) = check(k,j,E^+_1,v)[E^*_1]$
+
+  - Case $E^+_1 = square.stroked$
+
+    Then $E = check(k,j,square.stroked,v)[E^*_1]$
+
+    Let $E^+ = check(k,j,square.stroked,v), E^* = E^*_1$
+
+  - Case $E^+_1 = E^+_2[E^*_2[check(k_1,j_1,square.stroked,v_1)]]$.
+
+    Then $E = check(k,j,E^+_2[E^*_2[check(k_1,j_1,square.stroked,v_1)]],v)[E^*_1]$
+
+    Let $E^+ = check(k,j,E^+_2[E^*_2[check(k_1,j_1,square.stroked,v_1)]],v), E^* = E^*_1$
+
+    (This last step is because $E[E^+_0] = E^+_1$, intuitively, it is true, if you have any context, and plug in a context that is doing some checking, then it becomes the context that is doing some checking.)
+
 ]
