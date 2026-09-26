@@ -13,12 +13,12 @@
     rule-set(
       prooftree(rule(
         name: [Compile-Get-State],
-        $compile(type(Gamma,getstate(),tau), apply(perform(effstateget, tau), unit))$,
+        $compile(type(Gamma,getstate(),tau), apply(perform(effstateget, tau: tau), unit))$,
       )),
       prooftree(rule(
         name: [Compile-Modify-State],
         $compile(type(Gamma,e,tau), e_1)$,
-        $compile(type(Gamma,modifystate(delta,e),unit), apply(perform(effstateset, tau), e_1))$,
+        $compile(type(Gamma,modifystate(delta,e),unit), apply(perform(effstateset, tau: tau), e_1))$,
       )),
     ),
     v(2em),

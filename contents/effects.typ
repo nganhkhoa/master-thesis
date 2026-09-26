@@ -27,11 +27,11 @@ In @handler-example-1, we present a simple example: a program wants to compute $
       gutter: 0.5em,
 
       [],
-      [$handle(h, ((apply(perform(effdup, numt), 2)) + 1))$],
+      [$handle(h, ((apply(perform(effdup, tau: numt), 2)) + 1))$],
       [],
 
       [$estep$],
-      [$handle(h, apply(perform(effdup, numt), 2))$],
+      [$handle(h, apply(perform(effdup, tau: numt), 2))$],
       [],
 
       [$estep$],
@@ -80,20 +80,20 @@ The second approach is to use _parameterized handlers_ @leijen2017type, which pu
       gutter: 0.5em,
 
       [],
-      [$apply((handle(h, (apply((lambda x. lambda s. x),((apply(perform(effset,numt), 42)) + (apply(perform(effget, numt), unit)) + 100))))), 0)$],
+      [$apply((handle(h, (apply((lambda x. lambda s. x),((apply(perform(effset,tau: numt), 42)) + (apply(perform(effget, tau: numt), unit)) + 100))))), 0)$],
       [],
 
       [$estep1$],
       [$apply(apply(apply((lambda#underline(rgb("2D8DDD"), $v$). lambda#underline(rgb("#7D8DDD"), $k$). lambda#underline(rgb("#987112"), $s$).
-        apply(apply(k,s),v)), #underline(rgb("2D8DDD"), 42)), #underline(rgb("#7D8DDD"), $lambda y. handle(h, (apply((lambda x. lambda s. x),(y + (apply(perform(effget, numt), unit)) + 100))))$)), #underline(rgb("#987112"), 0))$],
+        apply(apply(k,s),v)), #underline(rgb("2D8DDD"), 42)), #underline(rgb("#7D8DDD"), $lambda y. handle(h, (apply((lambda x. lambda s. x),(y + (apply(perform(effget, tau: numt), unit)) + 100))))$)), #underline(rgb("#987112"), 0))$],
       [],
 
       [$estep1$],
-      [$apply(apply((lambda y. handle(h, (apply((lambda x. lambda s. x),(y + (apply(perform(effget, numt), unit)) + 100))))),0), 42)$],
+      [$apply(apply((lambda y. handle(h, (apply((lambda x. lambda s. x),(y + (apply(perform(effget, tau: numt), unit)) + 100))))),0), 42)$],
       [],
 
       [$estep1$],
-      [$apply(handle(h, (apply((lambda x.lambda s. x), ((0 + (apply(perform(effget, numt), unit)) + 100))))), 42)$],
+      [$apply(handle(h, (apply((lambda x.lambda s. x), ((0 + (apply(perform(effget, tau: numt), unit)) + 100))))), 42)$],
       [],
 
       [$estep1$],
@@ -117,7 +117,7 @@ The second approach is to use _parameterized handlers_ @leijen2017type, which pu
 
 #lange, inspired by @ningning2020effect, equips #langb with effects and effect handlers. We extend the type system into a kinded type system based on System F, mainly to separate between effect types and normal types. System F also provides polymorphism. The type system adapts its syntax of functions into $teff(tau_1,epsilon,tau_2)$ denotes an effect $epsilon$ (may) occurs during the execution of the function.
 
-Following @ningning2020effect, effects are group of "operations", distinct by its label. An operation $scr("O")$ of effect $epsilon$ is invoked by applying $perform(scr("O"), tau)$ with an argument, and produces an effect $epsilon$. Given an expression $e$ that would perform some effect $epsilon$, a handler $h$ providing all definitions for operations of $epsilon$ must be installed. The calculus provides two ways to install a handler, $handle(h,e)$ and $apply(handler(h),(lambda \_. e))$. The former is the base syntax, during evaluation of $e$, the handler $h$ is used. The other syntax is useful for suspending a computation, and run it only when a handler is applied, providing flexibility such as different handlers.
+Following @ningning2020effect, effects are group of "operations", distinct by its label. An operation $scr("O")$ of effect $epsilon$ is invoked by applying $perform(scr("O"), tau: tau)$ with an argument, and produces an effect $epsilon$. Given an expression $e$ that would perform some effect $epsilon$, a handler $h$ providing all definitions for operations of $epsilon$ must be installed. The calculus provides two ways to install a handler, $handle(h,e)$ and $apply(handler(h),(lambda \_. e))$. The former is the base syntax, during evaluation of $e$, the handler $h$ is used. The other syntax is useful for suspending a computation, and run it only when a handler is applied, providing flexibility such as different handlers.
 
 A handler is a mapping between operation names and their definitions. An operation is a function with the template $Lambda alpha. lambda x : tau_1. lambda k : tau_2. e$. The polymorphic type variable $alpha$ is used to make operations polymorphic. The argument $x$ is the operation argument. The argument $k$ is the _continuation_ or _resumption_, enclosing the rest of the program after the operation invocation. When $k$ is called, the program resumes with the argument provided to $k$.
 

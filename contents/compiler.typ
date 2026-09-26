@@ -21,7 +21,7 @@ h_("naive") &= {effcheck -> lambda tuple(l,tuple(e,v)). lambda k. ife(apply(e,v)
 &#text([where $lambda tuple(l,tuple(e,v))$ deconstructs the value into tuple pattern])
 $
 
-This handler performs the check for the value $v$, with the predicate/contract $e$. The continuation $k$ is invoked with the value if the check passes, and blame the label $l$ if the contract is violated. At first glance, this handler is correct. In fact, the handler should produce correct semantic, as long as no dependent contracts are used. When dependent contracts are used, $e$ is now populated with monitored arguments, which after compilation should include $apply(perform(effcheck, tau),"arg")$. And since the handler is moved into the continuation $k$, there is no handler at $apply(e,v)$. Take the following program wrapped with the naive handler $h_("naive")$.
+This handler performs the check for the value $v$, with the predicate/contract $e$. The continuation $k$ is invoked with the value if the check passes, and blame the label $l$ if the contract is violated. At first glance, this handler is correct. In fact, the handler should produce correct semantic, as long as no dependent contracts are used. When dependent contracts are used, $e$ is now populated with monitored arguments, which after compilation should include $apply(perform(effcheck, tau: tau),"arg")$. And since the handler is moved into the continuation $k$, there is no handler at $apply(e,v)$. Take the following program wrapped with the naive handler $h_("naive")$.
 
 #align(left, stack(
   grid(
@@ -31,8 +31,8 @@ This handler performs the check for the value $v$, with the predicate/contract $
 
     [], [$apply(mon(k,l,j,dep(flat(e_1), lambda y. flat(e_2)), f), 42)$],
     [], grid.cell(align: right, [where $e_1 = lambda x. trueb$, $e_2 = lambda x. x > y$, and $f = lambda x. x + x$]),
-    [$#compiles-into$], [$apply((lambda x_1. apply(perform(effcheck, numt), tuple(k, tuple(e_3, apply(f, (apply(perform(effcheck, numt), tuple(l, tuple(e_1, x_1))))))))), 42)$],
-    [], grid.cell(align: right, [where $e_3 = e_2[y:=apply(perform(effcheck, numt), tuple(l, tuple(e_1, x_1)))]$]),
+    [$#compiles-into$], [$apply((lambda x_1. apply(perform(effcheck, tau: numt), tuple(k, tuple(e_3, apply(f, (apply(perform(effcheck, tau: numt), tuple(l, tuple(e_1, x_1))))))))), 42)$],
+    [], grid.cell(align: right, [where $e_3 = e_2[y:=apply(perform(effcheck, tau: numt), tuple(l, tuple(e_1, x_1)))]$]),
   ),
   v(1em),
   line(length: 100%),
@@ -43,15 +43,15 @@ This handler performs the check for the value $v$, with the predicate/contract $
     align: (left, left),
     gutter: 1em,
 
-    [], [$apply(handler(h_"naive"), lambda \_. (apply(lambda x_1. apply(perform(effcheck, numt), tuple(k, tuple(e_3, apply(f, (apply(perform(effcheck, numt), tuple(l, tuple(e_1, x_1)))))))), 42)))$],
+    [], [$apply(handler(h_"naive"), lambda \_. (apply(lambda x_1. apply(perform(effcheck, tau: numt), tuple(k, tuple(e_3, apply(f, (apply(perform(effcheck, tau: numt), tuple(l, tuple(e_1, x_1)))))))), 42)))$],
 
-    [$estep$], [$handle(h_"naive", (apply(lambda x_1. apply(perform(effcheck, numt), tuple(k, tuple(e_3, apply(f, (apply(perform(effcheck, numt), tuple(l, tuple(e_1, x_1)))))))), 42)))$],
-    [$estep$], [$handle(h_"naive", apply(perform(effcheck, numt), tuple(k, tuple(e'_3, apply(f, (apply(perform(effcheck, numt), tuple(l, tuple(e_1, 42)))))))))$],
-    [], grid.cell(align: right, [where $e'_3 = e_2[y:=apply(perform(effcheck, numt), tuple(l, tuple(e_1, 42)))]$]),
-    [$estep1$], [$handle(h_"naive", apply(perform(effcheck, numt), tuple(k, tuple(e'_3, apply(f, 42)))))$],
-    [$estep1$], [$handle(h_"naive", apply(perform(effcheck, numt), tuple(k, tuple(e'_3, 84))))$],
+    [$estep$], [$handle(h_"naive", (apply(lambda x_1. apply(perform(effcheck, tau: numt), tuple(k, tuple(e_3, apply(f, (apply(perform(effcheck, tau: numt), tuple(l, tuple(e_1, x_1)))))))), 42)))$],
+    [$estep$], [$handle(h_"naive", apply(perform(effcheck, tau: numt), tuple(k, tuple(e'_3, apply(f, (apply(perform(effcheck, tau: numt), tuple(l, tuple(e_1, 42)))))))))$],
+    [], grid.cell(align: right, [where $e'_3 = e_2[y:=apply(perform(effcheck, tau: numt), tuple(l, tuple(e_1, 42)))]$]),
+    [$estep1$], [$handle(h_"naive", apply(perform(effcheck, tau: numt), tuple(k, tuple(e'_3, apply(f, 42)))))$],
+    [$estep1$], [$handle(h_"naive", apply(perform(effcheck, tau: numt), tuple(k, tuple(e'_3, 84))))$],
     [$estep1$], [$ife(apply(e'_3,84),apply((lambda x. handle(h_"naive", x)),84),eblame(k))$],
-    [$estep1$], [$ife(84 > (apply(perform(effcheck, numt), tuple(l, tuple(e_1, 42)))), apply((lambda x. handle(h_"naive", x)),84),eblame(k))$],
+    [$estep1$], [$ife(84 > (apply(perform(effcheck, tau: numt), tuple(l, tuple(e_1, 42)))), apply((lambda x. handle(h_"naive", x)),84),eblame(k))$],
     [], [_stuck_]
   ),
 ))

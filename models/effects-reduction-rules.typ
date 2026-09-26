@@ -23,7 +23,7 @@
         $op in.not bop(E) and (op -> f) in h$,
         $op : forall alpha. tau_1 -> tau_2 in Sigma(l)$,
         $k = lambda x : tau_2[alpha:=tau] . handle(h, E[x])$,
-        $handle(h, E[apply(perform(op, tau), v)]) quad estepx quad apply(apply(f[tau], v), k)$
+        $handle(h, E[apply(perform(op, tau: tau), v)]) quad estepx quad apply(apply(f[tau], v), k)$
       )),
     ),
     v(2em),

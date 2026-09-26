@@ -112,6 +112,10 @@ Structure ...
 // #include "proofs/effects/preservation.typ"
 
 
-= Compiler Soundness
+= Compiler Equivalence for Effect (Deep handlers)
 
 #include "proofs/compiler.typ"
+
+= Compiler Equivalence for Effect (Shallow handlers)
+
+#include "proofs/compiler-shallow.typ"
