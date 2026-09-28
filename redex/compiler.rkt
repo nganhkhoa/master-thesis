@@ -113,18 +113,28 @@
 
   [(compile C:Γ C:e (C:τ_1 -> C:τ_2) E:e_compiled) ;; get τ_1
    (where (C:x C:x_1) ,(variables-not-in (term (C:Γ C:e)) '(x x_1)))
-   (where C:Γ_new (extend C:Γ C:x C:τ_1))
-   (where C:Γ_f (extend C:Γ_new C:x_1 (C:τ_1 -> C:τ_2)))
+   ;; (where C:Γ_new (extend C:Γ C:x C:τ_1))
+   ;; (where C:Γ_f (extend C:Γ_new C:x_1 (C:τ_1 -> C:τ_2)))
 
-   (compile C:Γ_new (mon C:l C:k C:j C:κ_1 C:x) C:τ_1 E:e_1)
-   (compile C:Γ_f (mon C:k C:l C:j C:κ_2 (C:x_1 C:x)) C:τ_2 E:e_2)
-   (where E:e_3 (substitute E:e_2 C:x E:e_1))
+   ;; (compile C:Γ_new (mon C:l C:k C:j C:κ_1 C:x) C:τ_1 E:e_1)
+   ;; (compile C:Γ_f (mon C:k C:l C:j C:κ_2 (C:x_1 C:x)) C:τ_2 E:e_2)
+
+   (compile C:Γ
+            (λ C:x_1 (C:τ_1 -> C:τ_2)
+              (λ C:x C:τ_1
+                (mon C:k C:l C:j C:κ_2
+                     (C:x_1 (mon C:l C:k C:j C:κ_1 C:x)))))
+            ((C:τ_1 -> C:τ_2) -> (C:τ_1 -> C:τ_2))
+            E:e_4)
+
+   ;; (where E:e_3 (substitute E:e_2 C:x E:e_1))
    --------------------------------------------------------------- "C-Mon-Func"
    (compile C:Γ
             (mon C:k C:l C:j (C:κ_1 -> C:κ_2) C:e)
             (C:τ_1 -> C:τ_2)
             ;; remember to evaluate the contract expression first
-            ((λ C:x_1 (C:τ_1 -> C:τ_2) (λ C:x C:τ_1 E:e_3)) E:e_compiled))]
+            ;; ((λ C:x_1 (C:τ_1 -> C:τ_2) (λ C:x C:τ_1 E:e_3)) E:e_compiled))]
+            (E:e_4 E:e_compiled))]
 
   [(compile C:Γ C:e (C:τ_1 -> C:τ_2) E:e_compiled) ;; get τ_1
    (where (C:x C:x_κ C:x_1) ,(variables-not-in (term (C:Γ C:e C:κ_2)) '(x x_k x_1)))
@@ -350,9 +360,10 @@
 
   (compile-and-run
     (term ((mon k l j
-               ((flat (λ x num true)) ->i y (flat (λ x num (eq (sub x y) 1))))
+               ;; ((flat (λ x num true)) ->i y (flat (λ x num (eq (sub x y) 1))))
+               ((flat (λ x num true)) -> (flat (λ x num true)))
                ((λ x (num -> num) x) (λ x num (add x 1))))
            10))
-    ; #:trace-enabled true
-    #:trace-print true)
+    #:trace-enabled true
+    #:trace-print false)
 )

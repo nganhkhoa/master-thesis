@@ -1,3 +1,5 @@
+#import "@preview/curryst:0.6.0": rule, prooftree, rule-set
+
 #import "/proofs/setup.typ": *
 #import "/utils.typ": *
 #import "/models/language.typ": *
@@ -36,15 +38,114 @@ The proof get into the way a lot because it switch back and forth between states
 
 Compiler Correctness by proving (1) $langc ~ "Untyped " lange$, (2) $"Untyped " lange ~ lange$, then obtain $langc ~ lange$. (2) is trivial.
 
-$"CompileUntyped"(e) = e'$ if $compile(type(Gamma,tau,e),e'')$ and $e' = "untyped"(e'')$
+
+#let treq(a,b) = $"EQ"(#a,#b)$
 
 
 #theorem()[
-  If $"Untyped" lange e' = "CompileUntyped"(langc e)$ and $e cstep1 v$ then $e' estep1 "CompileUntyped"(v)$.
+  If $compile(type(dot,e,tau),e')$ and $e^* = "untyped"(apply(kw("wrap")[tau],(lambda \_. e')))$ and $e cstep1 b$ then $e^* estep1 b$.
 ]
 
 #proof[
-  By lemma on simulation, and that the $"CompileUntyped"$ relation is a subset of $R_e$.
+
+  $e^* estep1 e'_1$ and $treq(e,e'_1)$ by @wrap-step-eq.
+
+  $e'_1 estep1 b$ by @full-simulation.
+
+  $e^* estep1 b$ by combining steps.
+]
+
+#lemma(title: "Wrapped compiled program steps to an equivalent state with source program")[
+
+  If $compile(type(dot,e,tau),e')$ and $e^*_1 = "untyped"(apply(kw("wrap")[tau],(lambda \_. e')))$ then it exists $e^*_2$ such that $e^*_1 estep1 e^*_2$ and $treq(e,e^*_2)$.
+
+  In this lemma, we use $e^*$ as shorthand to denote $e$ untyped.
+] <wrap-step-eq>
+
+#proof[
+
+By @compiler-is-relation, $e ~ e'^*$.
+
+$e^*_1 estep1 apply(handler(heffcheck),lambda \_. e'^*) estep handle(heffcheck, e'^*) = e^*_2$
+
+By definition, $treq(e,e^*_2)$.
+
+// By case on $compile(type(dot,e,tau),e')$.
+
+// - Case #prooftree(rule(
+//     $compile(type(dot,e_3,tau -> boolt), e_5)$,
+//     $compile(type(dot,e_4,tau), e_6)$,
+//     $compile(type(dot,mon(k,l,j,flat(e_3),e_4),tau), apply(perform(effcheck, tau: tau), tuple(k, tuple(e_5, e_6))))$,
+//   ))
+
+//   $
+//   e^*_1 &= kw("wrap")(lambda \_. apply(perform(effcheck), tuple(k, tuple(e^*_5, e^*_6)))) \
+//   &= apply(handler(heffcheck), (lambda \_. apply(perform(effcheck), tuple(k, tuple(e^*_5, e^*_6))))) \
+//   &estep handle(heffcheck, (apply(perform(effcheck), tuple(k, tuple(e^*_5, e^*_6))))) = e^*_2
+//   $
+
+//   $e ~ apply(perform(effcheck), tuple(k, tuple(e^*_5, e^*_6)))$ by @compiler-is-relation
+
+//   By definition $treq(e,e^*_2)$.
+
+// - Case #prooftree(rule(
+//         $x,f in.not "dom"(Gamma)$,
+//         $compile(type(dot,e_3,tau_2), e_4)$,
+//         $compile(type(dot\,x:tau_1\,f:tau_1->tau_2,mon(k,l,j,kappa_2,apply(f,x)),tau_2), e_5)$,
+//         $compile(type(dot\,x:tau_1,mon(l,k,j,kappa_1,x),tau_1),e_6)$,
+//         $e_7 = e_5[x:=e_6]$,
+//         $compile(type(Gamma,mon(k,l,j,kappa_1->kappa_2,e_3),tau_1 -> tau_2),apply((lambda f: tau_1 -> tau_2. lambda x: tau_1. e_7),e_4))$,
+//       ))
+
+//   $
+//   e^*_1 &= apply(kw("wrap"),(lambda \_. apply((lambda f. lambda x. e^*_7),e^*_4))) \
+//   &= apply(handler(heffcheck), (lambda \_. apply((lambda f. lambda x. e^*_7),e^*_4))) \
+//   &estep handle(heffcheck, apply((lambda f. lambda x. e^*_7),e^*_4)) = e^*_2
+//   $
+
+//   $e ~ apply((lambda f. lambda x. e^*_7),e^*_4)$ by @compiler-is-relation.
+
+//   $treq(e,e^*_2)$ by definition.
+
+]
+
+#lemma(title: "Compiler is subset of relation")[
+
+  If $compile(type(dot,e_1,tau),e_2)$ then $e_1 ~ e^*_2$.
+
+  In this lemma, we use $e^*$ as shorthand to denote $e$ untyped.
+] <compiler-is-relation>
+
+#proof[
+
+By induction on structure of $compile(type(dot,e_1,tau),e_2)$.
+
+- Case #prooftree(rule(
+    $compile(type(dot,e_3,tau -> boolt), e_5)$,
+    $compile(type(dot,e_4,tau), e_6)$,
+    $compile(type(dot,mon(k,l,j,flat(e_3),e_4),tau), apply(perform(effcheck, tau: tau), tuple(k, tuple(e_5, e_6))))$,
+  ))
+
+  $e^*_2 = apply(perform(effcheck), tuple(k, tuple(e^*_5, e^*_6)))$
+
+  By I.H. $e_3 ~ e^*_5$ and $e_4 ~ e^*_6$.
+
+  Then $e_1 ~ e^*_2$ by relation.
+
+- Case #prooftree(rule(
+        $compile(type(dot,e_3,tau_2), e_4)$,
+        $compile(type(dot,
+            lambda f : tau_1 -> tau_2. lambda x : tau_1. mon(k,l,j,kappa_2,apply(f, mon(l,k,j,kappa_1,x))),
+            (tau_1 -> tau_2) -> (tau_1 -> tau_2)),
+          e_5)$,
+        $compile(type(dot,mon(k,l,j,kappa_1->kappa_2,e_1),tau_1 -> tau_2),apply(e_5, e_4))$,
+      ))
+
+    By I.H., $e_3 ~ e^*_4$
+
+    By I.H., $lambda f : tau_1 -> tau_2. lambda x : tau_1. mon(k,l,j,kappa_2,apply(f, mon(l,k,j,kappa_1,x))) ~ e^*_5$
+
+  Then $e_1 ~ e^*_2$ by relation.
 ]
 
 Let's first define these relations:
@@ -69,8 +170,6 @@ $relate(E)^+  = square.stroked | relate(E)^+[ife(square.stroked, apply((lambda x
 
 and their relation is straightforward, they also belong to $E ~ relate(E)$ so we can reuse the syntax.
 
-#let treq(a,b) = $"EQ"(#a,#b)$
-
 $
 treq(e,e') = cases(
   "true" "if" e = v "and" e' = relate(v),
@@ -85,7 +184,7 @@ $
 
 #lemma()[
   If $e cstep1 r$ and $treq(e,e')$ then $e' estep1 relate(r)$.
-]
+] <full-simulation>
 
 #proof[
   By breaking down the $cstep1$, and induction on it.
@@ -189,6 +288,20 @@ $e_1 = E[e_3]$, $e_2 = E[e_4]$ and that $e_3 cstep e_4$ is a redex reduction.
 
       Obtain $treq(e_2,e'_2)$.
 
+
+- Case $e_3 = mon(k,l,j,kappa_1 -> kappa_2, v) cstep guard(v, kappa_1 -> kappa_2, k,l,j) = e_4$
+
+  - Case $e_1 = v$ is invalid.
+
+  Context breakdown lemma, $E = E^+[E^*]$.
+
+  $e_1 = E^+[E^*[e_3]]$
+
+  - Case $E^+ = square.stroked$
+
+    $e_1 = E^*[e_3] ~ relate(E)^*[(lambda f. lambda x. mon(k,l,j,kappa_2,apply(f,mon(l,k,j,kappa_1,x)))) relate(v)]$
+
+  - Case $E^+ = E^+_1[E^*_1[check(k_1,j_1,square.stroked,v_1)]]$
 ]
 
 #block(width: 100%)[
@@ -267,8 +380,8 @@ $e_1 = E[e_3]$, $e_2 = E[e_4]$ and that $e_3 cstep e_4$ is a redex reduction.
 
     [$mon(k,l,j,kappa_1 -> kappa_2,e)$],
     [$tilde$],
-    [$apply((lambda f. lambda x. relate(e)_1),relate(e))$],
-    [],[],grid.cell(align:left,colspan:1)[$e_1=mon(k,l,j,kappa_2,apply(f,mon(l,k,j,kappa_1,x)))$],
+    [$apply(relate(e)_1,relate(e))$],
+    [],[],grid.cell(align:left,colspan:1)[$e_1=lambda f. lambda x. mon(k,l,j,kappa_2,apply(f,mon(l,k,j,kappa_1,x)))$],
 
     // fill: (x, y) => if y in (7, 8) { rgb("eef2ff") },
 
