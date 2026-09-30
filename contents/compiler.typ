@@ -4,6 +4,8 @@
 
 #show: no-ref
 
+#show: great-theorems-init
+
 = Formal Compiler
 
 A compiler from #langc to #lange is straightforward for expressions inherited from the #langb language. The compiler keeps these same expressions, albeit each sub-expression must be compiled _recursively_ to ensure no contracts remains after compilation. Remaining expressions are contract-related expressions. Our idea is that a contract check is a side effect, defined as #effcheck. This effect idealy receives a tuple $tuple(l, tuple(e, v))$ of blame label $l$, contract predicate $e$, and to-be-checked value $v$. Then, a flat contract is simly an effect perform with its correct inputs.
@@ -67,46 +69,28 @@ Careful readers may have noticed that the compiler does not annotate effects. Si
 
 The compiler should produce same type expression. However, this is problematic when effects are introduced. Recall that the type system separates between pure function, and effectful functions. And type judgement separates between non-effectful computations and effectful computations. Depending on the source, compiled program may have the same type with no effects (no monitors), or same type with some effects (monitors during computation), or purely produce a function wrapped by monitors, or effectfully produce a function wrapped by monitors (monitors during computation).
 
-#theorem[
-Compiler Type Preservation.
+#theorem(title: "Compiler Type Preservation")[
 
-#set align(left)
+If $compile(type(dot.op,e_1,tau),e_2)$ then $type(dot.op,e_2,tau^*,eff: effs(heffcheck))$
+] <compiler-type-preservation>
 
-If $compile(type(dot.op,e_1,tau),e_2)$ then either
+#theorem(title: [Compiler Effect Safety with $kw("wrap")$])[
 
-- $type(dot.op,e_2,tau, eff: mteff)$ or
-- $tau = tau_1 -> tau_2$ and $type(dot.op,e_2,teff(tau_1,effs(heffcheck),tau_2), eff: mteff)$ or
-- $type(dot.op,e_2,tau, eff: effs(heffcheck))$ or
-- $tau = tau_1 -> tau_2$ and $type(dot.op,e_2,teff(tau_1,effs(heffcheck),tau_2), eff: effs(heffcheck))$.
+If $compile(type(dot.op,e_1,tau),e_2)$ and $type(dot.op,e_2,tau^*,eff: effs(heffcheck))$ then $type(dot.op, apply(kw("wrap")[tau^*],(lambda \_: kw("unit"). e)), tau^*, eff: mteff)$
+] <compiled-wrapped-safe>
 
-]<compiler-type-preservation>
+#proof[
+  True by type checking.
+]
 
-#theorem[
-Compiler Effect Safety with $kw("wrap")$.
-
-#set align(left)
-
-If $compile(type(dot.op,e_1,tau),e_2)$ then either
-
-- $type(dot.op, apply(kw("wrap")[tau],(lambda \_: kw("unit"). e)), tau, eff: mteff)$ or
-- $tau = tau_1 -> tau_2$ $type(dot.op, apply(kw("wrap")[tau],(lambda \_: kw("unit"). e)), teff(tau_1,effcheck,tau_2), eff: mteff)$.
-]<compiler-handle-all>
-
-== Compiler Type Preservation and Effect Safety
+== Compiler Correctness
 
 The compiler should produce a program equivalent to the source program. If the source program produces a value, the target program should also produce (the same) value, and with an equivalent storage space.
 
-#theorem[
-Compiler Equivalance
+#theorem(title: "Compiler Correctness")[
 
-#set align(left)
-
-If $e_1,mtstore cstep v_1,store$ and $compile(type(dot.op,e_1,tau),e_2)$ then either
-
-- $v_1 != blame(l,j)$ and $apply(kw("wrap")[tau], (lambda \_ : unit. e_2)),mtstore estep v_2,store'$ and $compile(type(dot.op,v_1,tau),v_2)$ and $store eq store'$ or
-- $v_1 = blame(l,j)$ and $apply(kw("wrap")[tau], (lambda \_ : unit. e_2)) estep eblame(l)$.
-
-]<compiler-equivalence>
+If $compile(type(dot,e,tau),e')$ and $e^* = "untyped"(apply(kw("wrap")[tau],(lambda \_. e')))$ and $e cstep1 b$ then $e^* estep1 b$.
+] <compiler-correctness>
 
 #v(1em)
 #include "/models/compiler.typ"
@@ -134,11 +118,11 @@ Our compiler has supports for functions and tuples, this is useful for us to des
 #include "/models/compiler-ref.typ"
 #v(1em)
 
-== Contract States
+// == Contract States
 
-Adapting the #langcs, we can move the states into a handler for contract states. With careful encoding, we can make it so that the main code cannot access this state, @compiler-state-rules. All contracts are unified in a single state, provided by the handler. By type rules, we can make sure that $kw("wrap")_s$ does not allow (contract) state effects in main code.
+// Adapting the #langcs, we can move the states into a handler for contract states. With careful encoding, we can make it so that the main code cannot access this state, @compiler-state-rules. All contracts are unified in a single state, provided by the handler. By type rules, we can make sure that $kw("wrap")_s$ does not allow (contract) state effects in main code.
 
-#v(1em)
-#include "/models/compiler-state.typ"
-#v(1em)
+// #v(1em)
+// #include "/models/compiler-state.typ"
+// #v(1em)
 

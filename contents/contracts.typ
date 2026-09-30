@@ -3,9 +3,9 @@
 
 #show: no-ref
 
-== #langc Language
+= #langc Language
 
-=== Example
+== Example
 
 Contracts provide a run-time validation of programs, similar to how assertions work. Contracts extend basic assertions to support functions, especially higher-order ones, correctness. Past research has move from pre/post condition placing on functions, into obligations @robert2013icfp, or monitors. These constructions support blame tracking, enabling the developer to know _who_, which function, is responsible for a violation.
 
@@ -60,7 +60,7 @@ Contracts provide a run-time validation of programs, similar to how assertions w
   caption: [Contracts in action]
 ) <contracts-example-1>
 
-=== Formal
+== Language Model
 
 We define #langc, in @contracts-syntax, by extending the #langb language with contracts. Contracts protect an expression, ensuring that the evaluated value conform to the contracts defined. Contracts are defined for all possible types of value. Base values, including booleans and numbers, are trivial to enfore a contract on them. While functions need to check for both its argument and return result. Not only that, functions are first-class citizen in the language, and we can form higher-order functions. A contract for function may want to "see" the argument when checking the result, such is the idea of dependent contracts. Both contracts higher-order functions, and dependent contracts semantics are discussed in @robert2013icfp.
 
@@ -81,12 +81,12 @@ When a contract violation occurs, a blame is thrown with the party, caller or ca
 #v(1em)
 
 
-=== Contracts with States
+// == Contracts with States
 
-Contracts contexts are local. A function's domain contract cannot remain its state across function calls, nor can it access other contracts context. Sharing contexts between contracts brings many benefits. Temporal contracts @disney2011temporal enforces protocol correctness by placing contract on traces between module interaction. Yapping...
+// Contracts contexts are local. A function's domain contract cannot remain its state across function calls, nor can it access other contracts context. Sharing contexts between contracts brings many benefits. Temporal contracts @disney2011temporal enforces protocol correctness by placing contract on traces between module interaction. Yapping...
 
-We define here a language that allows contracts to share a single global context. This is managed rather by the run-time contract state $sigma^scr("S")$. Contract state can be obtained, and modified through two new expressions available only in flat contracts. The semantics for the run-time is simple and is left out. The type of state is unknown, to use this state, consider a metafunction $delta^scr("S")$, that takes the state and outputs desired information.
+// We define here a language that allows contracts to share a single global context. This is managed rather by the run-time contract state $sigma^scr("S")$. Contract state can be obtained, and modified through two new expressions available only in flat contracts. The semantics for the run-time is simple and is left out. The type of state is unknown, to use this state, consider a metafunction $delta^scr("S")$, that takes the state and outputs desired information.
 
-#v(1em)
-#include "/models/contracts-state.typ"
-#v(1em)
+// #v(1em)
+// #include "/models/contracts-state.typ"
+// #v(1em)

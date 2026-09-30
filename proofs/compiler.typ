@@ -57,25 +57,34 @@ Let's first define these relations:
 
 //   If $(kappa,e) in R_kappa$, we write $kappa attach(~, br: R_kappa) e$ or $kappa ~ e$. We define $relate(kappa)$ as shorthand for any expression $relate(e)$ satisfying $kappa ~ relate(e)$.
 
-And we have a predicate between $langc e$ and $"Untyped" lange e'$.
+We define a separated context to deal with how $check(k,j,e,v)$ are related from source to target.
 
-$E^+  = square.stroked | E^+[E^*[check(k,j,square.stroked,v)]]$
+#block(width: 100%)[
+  #rect(stroke: 0.5pt, inset: 5pt)[
+    $tilde.op subset.eq langc E^+ times "Untyped" lange E^+$
+  ]
 
-$relate(E)^+  = square.stroked | relate(E)^+[ife(square.stroked, apply((lambda x. handle(heffcheck,relate(E)^*[x])),relate(v)), blame)]$
 
-and their relation is straightforward, they also belong to $E ~ relate(E)$ so we can reuse the syntax.
+  $E^+  =& square.stroked | E^+[E^*[check(k,j,square.stroked,v)]]$
 
-$
-treq(e,e') = cases(
-  "true" "if" e = v "and" e' = relate(v),
-  "true" "if" e' = handle(heffcheck,relate(e)) "and" e != E^*[check(k,j,e'',v)],
-  "true" "if" e = E^+[E^*[check(k,j,e_1,v)]] "and",
-  quad quad quad e' = relate(E)^+[ife(e'_1,apply((lambda x. handle(heffcheck,relate(E)^*[x])),relate(v)),eblame(j))] "and",
-  quad quad quad treq(e_1,e'_1),
-  "true" "if" e = blame(k,j) "and" e' = eblame(j),
-  "false" "otherwise",
-)
-$
+  Define $relate(E)^+$ such that $E^+ ~ relate(E)^+$.
+
+  #v(1em)
+  #grid(
+    columns: (1fr, auto, 1fr),
+    column-gutter: 1em,
+    row-gutter: 1.2em,
+    align: (right, left, left),
+
+    [$square.stroked$],
+    [$tilde$],
+    [$square.stroked$],
+
+    [$E^+[E^*[check(k,j,square.stroked,v)]]$],
+    [$tilde$],
+    [$relate(E)^+[ife(square.stroked, apply((lambda x. handle(heffcheck,relate(E)^*[x])),relate(v)), blame)]$],
+  )
+]
 
 #block(width: 100%)[
   #rect(stroke: 0.5pt, inset: 5pt)[
@@ -111,8 +120,8 @@ $
 
     [$mon(k,l,j,kappa_1 -> kappa_2,E^*)$],
     [$tilde$],
-    [$apply((lambda f. lambda x. apply(f,x)),relate(E)^*_1)$],
-    [],[],grid.cell(align:left,colspan:1)[$E^*_1=mon(k,l,j,kappa_2,apply(E^*,mon(l,k,j,kappa_1,x)))$],
+    [$apply(relate(e)_1,relate(E)^*)$],
+    [],[],grid.cell(align:left,colspan:1)[$e_1$ as in the $mon(k,l,j,kappa_1 -> kappa_2,e)$ row below],
 
     [$mon(k,l,j,dep(kappa_1, lambda y. kappa_2),E^*)$],
     [$tilde$],
@@ -156,12 +165,7 @@ $
     [$mon(k,l,j,dep(kappa_1, lambda y. kappa_2),e)$],
     [$tilde$],
     [$apply(relate(e)_1,relate(e))$],
-    [],[],grid.cell(align:left,colspan:1)[$e_1=lambda f. lambda x. apply((lambda y. mon(k,l,j,kappa_2,apply(f,mon(l,k,j,kappa_1,x)))), mon(l,j,j,kappa_1,x))$],
-
-    [${e_y\/y}e$],
-    [$tilde$],
-    [$relate(e)[y:=relate(v)_y]$],
-    [],[],grid.cell(align:left,colspan:1)[where $e_y = mon(l,j,j,kappa_1,v)$, $e_y cstep1 v_y$ and $v_y ~ relate(v)_y$ (indy argument)],
+    [],[],grid.cell(align:left,colspan:1)[$e_1=lambda f. lambda x. mon(k,l,j,{mon(l,j,j,kappa_1,x)\/y}kappa_2,apply(f,mon(l,k,j,kappa_1,x)))$],
 
     [$blame(k,j)$],[$tilde$],[$eblame(j)$],
   )
@@ -179,6 +183,10 @@ $
     column-gutter: 1em,
     row-gutter: 1.2em,
     align: (right, left, left),
+
+    [$x$],
+    [$tilde$],
+    [$x$],
 
     [$b$],
     [$tilde$],
@@ -200,7 +208,7 @@ $
     [$guard(v,dep(kappa_1, lambda y. kappa_2),k,l,j)$],
     [$tilde$],
     [$relate(e)$],
-    [],[],grid.cell(align:left,colspan:1)[$e=lambda x. apply((lambda y. mon(k,l,j,kappa_2,apply(relate(v),mon(l,k,j,kappa_1,x)))), mon(l,j,j,kappa_1,x))$],
+    [],[],grid.cell(align:left,colspan:1)[$e=lambda x. relate(mon(k,l,j,{mon(l,j,j,kappa_1,x)\/y}kappa_2,apply(v,mon(l,k,j,kappa_1,x))))$],
   )
 ]
 
@@ -222,23 +230,39 @@ Inductive cases:
 
   By I.H., $E_1[e] ~ E'_1[e']$. By relation definition, $apply(v, E_1[e]) ~ apply(v', E'_1[e'])$.
 
-- Case $E = mon(k,l,j,flat(e_0),E_1)$ and $E' = apply(perform(effcheck),tuple(relate(e_0),E'_1))$ where $e_0 ~ e'_0$ and $E_1 ~ E'_1$.
+- Case $E = mon(k,l,j,flat(e_0),E_1)$ and $E' = apply(perform(effcheck),tuple(e'_0,E'_1))$ where $e_0 ~ e'_0$ and $E_1 ~ E'_1$.
 
-  By I.H., $E_1[e] ~ E'_1[e']$. By relation definition, $mon(k,l,j,flat(e_0),E_1[e]) ~ apply(perform(effcheck),tuple(relate(e_0),E'_1[e']))$.
+  By I.H., $E_1[e] ~ E'_1[e']$. By relation definition, $mon(k,l,j,flat(e_0),E_1[e]) ~ apply(perform(effcheck),tuple(e'_0,E'_1[e']))$.
 
-- Case $E = mon(k,l,j,kappa_1 -> kappa_2,E_1)$ and $E' = apply(relate(e_c),E'_1)$ where $kappa_1 -> kappa_2 ~ e_c$ and $E_1 ~ E'_1$.
+- Case $E = mon(k,l,j,kappa_1 -> kappa_2,E_1)$ and $E' = apply(e'_c,E'_1)$ where $e_c ~ e'_c$ and $E_1 ~ E'_1$, with $e_c = lambda f. lambda x. mon(k,l,j,kappa_2,apply(f,mon(l,k,j,kappa_1,x)))$.
 
-  By I.H., $E_1[e] ~ E'_1[e']$. By relation definition and contract compilation, $mon(k,l,j,kappa_1 -> kappa_2,E_1[e]) ~ apply(relate(e_c),E'_1[e'])$.
+  By I.H., $E_1[e] ~ E'_1[e']$. By the $mon(k,l,j,kappa_1 -> kappa_2,e)$ row of the relation (with $e := E_1[e]$ and $relate(e)_1 := e'_c$), $mon(k,l,j,kappa_1 -> kappa_2,E_1[e]) ~ apply(e'_c,E'_1[e'])$.
 
-- Case $E = mon(k,l,j,dep(kappa_1, lambda y. kappa_2),E_1)$ and $E' = apply(relate(e_c),E'_1)$ where $e_c = lambda f. lambda x. apply((lambda y. mon(k,l,j,kappa_2,apply(f,mon(l,k,j,kappa_1,x)))), mon(l,j,j,kappa_1,x))$ and $E_1 ~ E'_1$.
+- Case $E = mon(k,l,j,dep(kappa_1, lambda y. kappa_2),E_1)$ and $E' = apply(e'_c,E'_1)$ where $e_c ~ e'_c$ and $E_1 ~ E'_1$, with $e_c = lambda f. lambda x. mon(k,l,j,{mon(l,j,j,kappa_1,x)\/y}kappa_2,apply(f,mon(l,k,j,kappa_1,x)))$.
 
-  By I.H., $E_1[e] ~ E'_1[e']$. By relation definition, $mon(k,l,j,dep(kappa_1, lambda y. kappa_2),E_1[e]) ~ apply(relate(e_c),E'_1[e'])$.
+  By I.H., $E_1[e] ~ E'_1[e']$. By the $mon(k,l,j,dep(kappa_1, lambda y. kappa_2),e)$ row of the relation (with $e := E_1[e]$ and $relate(e)_1 := e'_c$), $mon(k,l,j,dep(kappa_1, lambda y. kappa_2),E_1[e]) ~ apply(e'_c,E'_1[e'])$.
 
 Note: We don't need explicit check cases here since $E^*$ contexts don't contain checks by definition.
 
 All cases follow from the induction hypothesis and the compositional nature of the relation.
 ]
 
+
+#lemma(title: "Relation is closed under substitution")[
+  If $e ~ e'$ and $v ~ v'$ then $e[x:=v] ~ e'[x:=v']$.
+] <relation-subst>
+
+#proof[
+By induction on the derivation of $e ~ e'$.
+
+- Case $x ~ x$. Then $x[x:=v] = v ~ v' = x[x:=v']$.
+
+- Case $z ~ z$ with $z != x$. Both sides are unchanged.
+
+- Case $lambda z. e_1 ~ lambda z. e'_1$ with $e_1 ~ e'_1$. Choose $z != x$ and $z in.not "fv"(v, v')$ by renaming. By I.H., $e_1[x:=v] ~ e'_1[x:=v']$, then the $lambda$ row.
+
+- All other rows ($apply$, $mon$ with flat, arrow and dependent contracts, $guard$, $b$, $N$, $blame$) are compositional. The substitution goes into every related sub-expression, including the predicates inside contracts and the wrappers $e_1$, and each follows by I.H.
+]
 
 #lemma(title: "Breaking down Context E")[
   For all $E$, $E = E^+[E^*]$
@@ -289,13 +313,14 @@ By induction on $E$.
 
     Let $E^+ = check(k,j,E^+_2[E^*_2[check(k_1,j_1,square.stroked,v_1)]],v), E^* = E^*_1$
 
-    (This last step is because $E[E^+_0] = E^+_1$, intuitively, it is true, if you have any context, and plug in a context that is doing some checking, then it becomes the context that is doing some checking.)
+    (This last step is because $E[E^+_0] = E^+_1$ @context-composition-preservation)
 
 ]
 
 #lemma(title: "Context composition preserves check structure")[
+
   If $E^+ = E^+_0[E^*_0[check(k,j,square.stroked,v)]]$ and $E$ is any evaluation context, then $E[E^+] = E^+_1$ for some $E^+_1$ of the form $E^+_1 = E^+_2[E^*_2[check(k',j',square.stroked,v')]]$.
-]
+] <context-composition-preservation>
 
 #proof[
 By induction on the structure of $E$.
@@ -333,19 +358,39 @@ In all cases, composing any context with a check-containing context yields anoth
 
 #lemma(title: "Compiler is subset of relation")[
 
-  If $compile(type(dot,e_1,tau),e_2)$ then $e_1 ~ e^*_2$.
+  If $compile(type(Gamma,e_1,tau),e_2)$ then $e_1 ~ e^*_2$.
+
+  In particular, for closed programs, if $compile(type(dot,e_1,tau),e_2)$ then $e_1 ~ e^*_2$.
 
   In this lemma, we use $e^*$ as shorthand to denote $e$ untyped.
 ] <compiler-is-relation>
 
 #proof[
 
-By induction on structure of $compile(type(dot,e_1,tau),e_2)$.
+By induction on structure of $compile(type(Gamma,e_1,tau),e_2)$.
 
 - Case #prooftree(rule(
-    $compile(type(dot,e_3,tau -> boolt), e_5)$,
-    $compile(type(dot,e_4,tau), e_6)$,
-    $compile(type(dot,mon(k,l,j,flat(e_3),e_4),tau), apply(perform(effcheck, tau: tau), tuple(k, tuple(e_5, e_6))))$,
+    $x : tau in Gamma$,
+    $compile(type(Gamma, x, tau), x)$,
+  ))
+
+  $e^*_2 = x$. Then $x ~ x$ by relation.
+
+- Case #prooftree(rule(
+    $compile(type(Gamma\, x : tau_1, e, tau_2), e')$,
+    $compile(type(Gamma, lambda x : tau_1. e, tau_1 -> tau_2), lambda x : tau_1. e')$,
+  ))
+
+  $e^*_2 = lambda x. e'^*$
+
+  By I.H. on the premise with context $Gamma, x : tau_1$, $e ~ e'^*$.
+
+  Then $lambda x. e ~ lambda x. e'^*$ by relation.
+
+- Case #prooftree(rule(
+    $compile(type(Gamma,e_3,tau -> boolt), e_5)$,
+    $compile(type(Gamma,e_4,tau), e_6)$,
+    $compile(type(Gamma,mon(k,l,j,flat(e_3),e_4),tau), apply(perform(effcheck, tau: tau), tuple(k, tuple(e_5, e_6))))$,
   ))
 
   $e^*_2 = apply(perform(effcheck), tuple(k, tuple(e^*_5, e^*_6)))$
@@ -355,12 +400,12 @@ By induction on structure of $compile(type(dot,e_1,tau),e_2)$.
   Then $e_1 ~ e^*_2$ by relation.
 
 - Case #prooftree(rule(
-        $compile(type(dot,e_3,tau_2), e_4)$,
-        $compile(type(dot,
+        $compile(type(Gamma,e_3,tau_2), e_4)$,
+        $compile(type(Gamma,
             lambda f : tau_1 -> tau_2. lambda x : tau_1. mon(k,l,j,kappa_2,apply(f, mon(l,k,j,kappa_1,x))),
             (tau_1 -> tau_2) -> (tau_1 -> tau_2)),
           e_5)$,
-        $compile(type(dot,mon(k,l,j,kappa_1->kappa_2,e_1),tau_1 -> tau_2),apply(e_5, e_4))$,
+        $compile(type(Gamma,mon(k,l,j,kappa_1->kappa_2,e_1),tau_1 -> tau_2),apply(e_5, e_4))$,
       ))
 
     By I.H., $e_3 ~ e^*_4$
@@ -370,26 +415,44 @@ By induction on structure of $compile(type(dot,e_1,tau),e_2)$.
   Then $e_1 ~ e^*_2$ by relation.
 
 - Case #prooftree(rule(
-        $compile(type(dot,e_3,tau_1 -> tau_2), e_4)$,
-        $compile(type(dot,
-            lambda f. lambda x. apply((lambda y. mon(k,l,j,kappa_2,apply(f, mon(l,k,j,kappa_1,x)))), mon(l,j,j,kappa_1,x)),
+        $compile(type(Gamma,e_3,tau_1 -> tau_2), e_4)$,
+        $compile(type(Gamma,
+            lambda f. lambda x. mon(k,l,j,{mon(l,j,j,kappa_1,x)\/y}kappa_2,apply(f, mon(l,k,j,kappa_1,x))),
             (tau_1 -> tau_2) -> (tau_1 -> tau_2)),
           e_5)$,
-        $compile(type(dot,mon(k,l,j,dep(kappa_1, lambda y. kappa_2),e_3),tau_1 -> tau_2),apply(e_5, e_4))$,
+        $compile(type(Gamma,mon(k,l,j,dep(kappa_1, lambda y. kappa_2),e_3),tau_1 -> tau_2),apply(e_5, e_4))$,
       ))
 
     By I.H., $e_3 ~ e^*_4$
 
-    By I.H., $lambda f. lambda x. apply((lambda y. mon(k,l,j,kappa_2,apply(f, mon(l,k,j,kappa_1,x)))), mon(l,j,j,kappa_1,x)) ~ e^*_5$
+    By I.H., $lambda f. lambda x. mon(k,l,j,{mon(l,j,j,kappa_1,x)\/y}kappa_2,apply(f, mon(l,k,j,kappa_1,x))) ~ e^*_5$
 
   Then $e_1 ~ e^*_2$ by relation.
+
+- Other cases are similar.
 ]
 
 == Compiler Correctness
 
-#theorem()[
+Define a predicate between $langc e$ and $"Untyped" lange e'$.
+
+$
+treq(e,e') = cases(
+  "true" "if" e = v "and" e' = relate(v),
+  "true" "if" e' = handle(heffcheck,relate(e)) "and" e != E^*[check(k,j,e'',v)],
+  "true" "if" e = E^+[E^*[check(k,j,e_1,v)]] "and",
+  quad quad quad e' = relate(E)^+[ife(e'_1,apply((lambda x. handle(heffcheck,relate(E)^*[x])),relate(v)),eblame(j))] "and",
+  quad quad quad treq(e_1,e'_1),
+  "true" "if" e = blame(k,j) "and" e' = eblame(j),
+  "false" "otherwise",
+)
+$
+
+
+#theorem(title: "Compiler Correctness")[
+
   If $compile(type(dot,e,tau),e')$ and $e^* = "untyped"(apply(kw("wrap")[tau],(lambda \_. e')))$ and $e cstep1 b$ then $e^* estep1 b$.
-]
+] <compiler-correctness>
 
 #proof[
 
@@ -467,9 +530,15 @@ By definition, $treq(e,e^*_2)$.
 
     $e' estep1 relate(r)$. Reflexivity.
 
+  - Case $blame(k,j) cstep1 eblame(j)$
+
+    $e' = relate(r)$ because $treq(e,e')$.
+
+    $e' estep1 relate(r)$. Reflexivity.
+
   - Case $e cstep e_1$ and $e_1 cstep1 r$
 
-    By simulation, we have $e' estep1 e'_1$ such that $treq(e_1,e'_1)$.
+    By @simulation, we have $e' estep1 e'_1$ such that $treq(e_1,e'_1)$.
 
     By IH, $e'_1 estep1 relate(r)$.
 
@@ -627,41 +696,37 @@ $e_1 = E[e_3]$, $e_2 = E[e_4]$ and that $e_3 cstep e_4$ is a redex reduction.
 
   Same as the case $mon(k,l,j,kappa_1 -> kappa_2, v)$, with
 
-  $e_5 = lambda f. lambda x. apply((lambda y. mon(k,l,j,kappa_2,apply(f,mon(l,k,j,kappa_1,x)))), mon(l,j,j,kappa_1,x)) = lambda f. lambda x. e_(5a)$
+  $e_5 = lambda f. lambda x. mon(k,l,j,{mon(l,j,j,kappa_1,x)\/y}kappa_2,apply(f,mon(l,k,j,kappa_1,x))) = lambda f. lambda x. e_(5a)$
 
   $lambda x. relate(e)_(5a)[f:=relate(v)] ~ guard(v, dep(kappa_1, lambda y. kappa_2), k,l,j)$ by the relation on values.
 
 - Case $e_3 = apply(guard(v_1,dep(kappa_1, lambda y. kappa_2),k,l,j),v_2) cstep mon(k,l,j, kappa_3, apply(v_1, mon(l,k,j,kappa_1,v_2))) = e_4$ where $kappa_3 = {mon(l,j,j,kappa_1,v_2)\/y}kappa_2$
 
-  Assume contract predicates are pure (they do not use the store).
-
   - Case $e_1 = v$ is invalid.
 
-  Context breakdown lemma, $E = E^+[E^*]$. We show $E^+ = square.stroked$, the other case is the same inside $relate(E)^+_1$, by case 3.
+  Context breakdown lemma, $E = E^+[E^*]$.
 
-  $relate(e)_3 = apply(relate(e)_5, relate(v)_2)$ where $e_5 = lambda x. apply((lambda y. e_(5a)), mon(l,j,j,kappa_1,x))$ and $e_(5a) = mon(k,l,j,kappa_2,apply(relate(v)_1,mon(l,k,j,kappa_1,x)))$
+  Let $e_6 = mon(k,l,j,{mon(l,j,j,kappa_1,x)\/y}kappa_2,apply(v_1,mon(l,k,j,kappa_1,x)))$. Since $x in.not "fv"(v_1, kappa_1, kappa_2)$, $e_4 = e_6[x:=v_2]$.
 
-  By $treq(e_1,e'_1)$ (case 2), $e'_1 = handle(heffcheck, relate(E)^*[relate(e)_3])$
+  - Case $E^+ = square.stroked$
 
-  $e'_1 estep1 handle(heffcheck, relate(E)^*[apply((lambda y. relate(e)_(5a)[x:=relate(v)_2]), relate(e)_7)])$ by $beta$, where $e_7 = mon(l,j,j,kappa_1,v_2)$
+    $relate(e)_3 = apply((lambda x. relate(e)_6), relate(v)_2)$ by the $guard$ row of the relation on values.
 
-  The target checks the indy argument $mon(l,j,j,kappa_1,v_2)$ first, the source checks the argument $mon(l,k,j,kappa_1,v_2)$ first. For $kappa_1 = flat(e_p)$ both become $check(l,j,apply(e_p,v_2),v_2)$, so we pair the two checks.
+    By $treq(e_1,e'_1)$ (case 2), $e'_1 = handle(heffcheck, relate(E)^*[apply((lambda x. relate(e)_6), relate(v)_2)])$
 
-  - Case the check fails.
+    $e'_1 estep1 handle(heffcheck, relate(E)^*[relate(e)_6[x:=relate(v)_2]]) = e'_2$ by $beta$.
 
-    Both programs reach $check(l,j,falseb,v_2)$, then $blame(l,j) ~ eblame(j)$ as in the case $check(k,j,falseb,v)$.
+    $e_2 = E^*[e_6[x:=v_2]]$
 
-  - Case the check succeeds, $mon(l,j,j,kappa_1,v_2) cstep1 v_y$ ($v_y = v_2$ for flat $kappa_1$, otherwise $v_y = guard(v_2,kappa_1,l,j,j)$).
-
-    Let $e_6 = mon(k,l,j,kappa_2,apply(v_1,mon(l,k,j,kappa_1,v_2)))$, then $e_2 = E^*[{mon(l,j,j,kappa_1,v_2)\/y}e_6]$.
-
-    $e'_1 estep1 handle(heffcheck, relate(E)^*[relate(e)_6[y:=relate(v)_y]]) = e'_2$
-
-    By purity, the target's argument check $mon(l,k,j,kappa_1,relate(v)_2)$ succeeds again. Each later evaluation of $mon(l,j,j,kappa_1,v_2)$ inside $kappa_2$ in the source gives $v_y$ again and is matched by zero target steps.
-
-    ${mon(l,j,j,kappa_1,v_2)\/y}e_6 ~ relate(e)_6[y:=relate(v)_y]$ by the indy row.
+    $e_6[x:=v_2] ~ relate(e)_6[x:=relate(v)_2]$ by @relation-subst.
 
     Obtain $treq(e_2,e'_2)$ (case 2).
+
+  - Case $E^+ = E^+_1[E^*_1[check(k_1,j_1,square.stroked,v_1)]]$
+
+    Same as the case $E^+ = square.stroked$, inside $relate(E)^+$, by case 3.
+
+  The indy monitors $mon(l,j,j,kappa_1,v_2)$ inside $kappa_3$ are ordinary $mon$ redexes. Each one is related to the compiled monitor at the same position in $relate(e)_6[x:=relate(v)_2]$, so when the source evaluates one, it is one of the $mon$ cases above.
 
 - Case $e_3 = check(k,j,falseb,v) cstep blame(k,j) = e_4$
 

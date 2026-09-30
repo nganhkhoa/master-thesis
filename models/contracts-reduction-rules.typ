@@ -22,7 +22,7 @@
       [$apply(guard(v_1,kappa_1 -> kappa_2,k,l,j),v_2)$], [$cstepx$], [$mon(k,l,j,kappa_2,apply(v_1, mon(l,k,j,kappa_1,v_2)))$], [Guard-Func],
 
       [$apply(guard(v_1,dep(kappa_1, lambda x. kappa_2),k,l,j),v_2)$], [$cstepx$],
-      [$mon(k,l,j, kappa_3, apply(v_1, mon(k,l,j,kappa_1,v_2)))$],
+      [$mon(k,l,j, kappa_3, apply(v_1, mon(l,k,j,kappa_1,v_2)))$],
       [Guard-Dep],
       [],[],grid.cell(colspan: 2, align: right, [where $kappa_3 = {mon(l,j,j,kappa_1,v_2)\/x}kappa_2$],),
 

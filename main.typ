@@ -79,8 +79,6 @@ OCaml code based off this compiler model. Lastly, we provide a Redex PLT model t
 
 Structure ...
 
-= Formal Language Models
-
 #include "contents/core.typ"
 #include "contents/contracts.typ"
 #include "contents/effects.typ"
@@ -110,7 +108,6 @@ Structure ...
 // #include "proofs/effects/context.typ"
 // #include "proofs/effects/progress.typ"
 // #include "proofs/effects/preservation.typ"
-
 
 = Compiler Equivalence for Effect (Deep handlers)
 

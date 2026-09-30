@@ -7,9 +7,9 @@
 #let effget = $scr("G")$
 #let effset = $scr("S")$
 
-== #lange Language
+= #lange Language
 
-=== Example
+== Example
 
 In @handler-example-1, we present a simple example: a program wants to compute $(effdup 2) + 1$ is registered with a handler $h$ for effect #effdup, basically _duplicating_ its input. When an effect is perform, the main program pauses the execution, and push everything later into a continuation $k = lambda y. handle(h, (y + 1))$, at (i). Here, the continuation register the handler $h$ again, in case the rest of the program uses $effdup$. When the program is a value, the handler removes itself (ii).
 
@@ -113,7 +113,7 @@ The second approach is to use _parameterized handlers_ @leijen2017type, which pu
   caption: [Handler with state]
 ) <handler-example-2>
 
-=== Formalism
+== Language Model
 
 #lange, inspired by @ningning2020effect, equips #langb with effects and effect handlers. We extend the type system into a kinded type system based on System F, mainly to separate between effect types and normal types. System F also provides polymorphism. The type system adapts its syntax of functions into $teff(tau_1,epsilon,tau_2)$ denotes an effect $epsilon$ (may) occurs during the execution of the function.
 

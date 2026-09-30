@@ -34,7 +34,7 @@
         name: [Compile-Dep],
         $f,x in.not "dom"(Gamma) union {y} union "fv"(kappa_1,kappa_2)$,
         $compile(type(Gamma,e_1,tau_1 -> tau_2), e_2)$,
-        $e_w = lambda f : tau_1 -> tau_2. lambda x : tau_1. apply((lambda y : tau_1. mon(k,l,j,kappa_2,apply(f, mon(l,k,j,kappa_1,x)))), mon(l,j,j,kappa_1,x))$,
+        $e_w = lambda f : tau_1 -> tau_2. lambda x : tau_1. mon(k,l,j,{mon(l,j,j,kappa_1,x)\/y}kappa_2,apply(f, mon(l,k,j,kappa_1,x)))$,
         $compile(type(Gamma,e_w,(tau_1 -> tau_2) -> (tau_1 -> tau_2)), e_3)$,
         $compile(type(Gamma,mon(k,l,j,dep(kappa_1, lambda y. kappa_2),e_1),tau_1 -> tau_2),apply(e_3, e_2))$,
       )),
