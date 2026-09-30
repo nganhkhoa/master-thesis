@@ -43,7 +43,7 @@
 
 (define-judgment-form CompilerLang
   #:mode (compile I I O O)
-  #:contract (compile C:Γ C:e C:τ E:e)
+  #:contract (compile C:Γ any C:τ E:e)
 
   [(where C:τ (lookup C:Γ C:x))
    (where E:x ,(term C:x))
@@ -111,20 +111,120 @@
    (compile C:Γ (mon C:k C:l C:j (flat C:e_1) C:e_2) C:τ
             ((perform genericeff 𝒞 C:τ) (t E:e_1 E:e_2)))]
 
+  ;; General rule for dependent contracts with any types
+  [(compile C:Γ C:e_1 (C:τ_1 -> bool) E:e_1)
+   (where C:Γ_y (extend C:Γ C:y C:τ_1))
+   (compile C:Γ_y C:e_2 (C:τ_2 -> bool) E:e_2)
+   (compile C:Γ C:e (C:τ_1 -> C:τ_2) E:e_compiled)
+   (where (C:f C:x) ,(variables-not-in (term (C:Γ C:e_1 C:e_2 C:e C:y)) '(f x)))
+   ----------------------------------------------------- "C-Mon-Dep"
+   (compile C:Γ (mon C:k C:l C:j ((flat C:e_1) ->i C:y (flat C:e_2)) C:e) (C:τ_1 -> C:τ_2)
+            ((λ C:f (C:τ_1 -> C:τ_2) (λ C:x C:τ_1
+               ((perform genericeff 𝒞 C:τ_2) 
+                 (t (substitute E:e_2 C:y (C:f ((perform genericeff 𝒞 C:τ_1) (t E:e_1 C:x))))
+                    (C:f ((perform genericeff 𝒞 C:τ_1) (t E:e_1 C:x))))))) E:e_compiled))]
+
+  ;; Contract compilation rules (κ -> expressions)
+  ;; These rules compile contracts (κ) directly to expressions (e)
+  
+  ;; Compile flat contracts to expressions
+  [(compile C:Γ C:e (C:τ -> bool) E:e)
+   ------------------------------------------------- "C-Flat-Contract"
+   (compile C:Γ (flat C:e) ((C:τ -> C:τ) -> (C:τ -> C:τ))
+            (λ f (C:τ -> C:τ) (λ x C:τ (f ((perform genericeff 𝒞 C:τ) (t E:e x))))))]
+
+  ;; Compile function contracts to expressions  
+  [(compile C:Γ C:κ_1 ((C:τ_1 -> C:τ_1) -> (C:τ_1 -> C:τ_1)) E:e_1)
+   (compile C:Γ C:κ_2 ((C:τ_2 -> C:τ_2) -> (C:τ_2 -> C:τ_2)) E:e_2)
+   (where (C:g C:f C:x) ,(variables-not-in (term (C:Γ C:κ_1 C:κ_2)) '(g f x)))
+   ------------------------------------------------- "C-Func-Contract"
+   (compile C:Γ (C:κ_1 -> C:κ_2) (((C:τ_1 -> C:τ_2) -> (C:τ_1 -> C:τ_2)) -> ((C:τ_1 -> C:τ_2) -> (C:τ_1 -> C:τ_2)))
+            (λ C:g ((C:τ_1 -> C:τ_2) -> (C:τ_1 -> C:τ_2)) 
+              (λ C:f (C:τ_1 -> C:τ_2) 
+                (λ C:x C:τ_1 
+                  (E:e_2 (C:g (λ h (C:τ_1 -> C:τ_2) (E:e_1 (λ z C:τ_1 (C:f z)) h)) C:x))))))]
+
+  ;; Compile dependent flat contracts to expressions - THE MISSING RULE!
+  [(compile C:Γ C:e_1 (C:τ_1 -> bool) E:e_1)
+   (where C:Γ_y (extend C:Γ C:y C:τ_1))
+   (compile C:Γ_y C:e_2 (C:τ_2 -> bool) E:e_2)
+   (where (C:g C:f C:x) ,(variables-not-in (term (C:Γ C:e_1 C:e_2 C:y)) '(g f x)))
+   ------------------------------------------------- "C-Dep-Flat-Contract"
+   (compile C:Γ ((flat C:e_1) ->i C:y (flat C:e_2)) (((C:τ_1 -> C:τ_2) -> (C:τ_1 -> C:τ_2)) -> ((C:τ_1 -> C:τ_2) -> (C:τ_1 -> C:τ_2)))
+            (λ C:g ((C:τ_1 -> C:τ_2) -> (C:τ_1 -> C:τ_2)) 
+              (λ C:f (C:τ_1 -> C:τ_2) 
+                (λ C:x C:τ_1 
+                  ((perform genericeff 𝒞 C:τ_2) 
+                    (t (substitute E:e_2 C:y (C:f ((perform genericeff 𝒞 C:τ_1) (t E:e_1 C:x))))
+                       (C:f ((perform genericeff 𝒞 C:τ_1) (t E:e_1 C:x)))))))))]
+
+  ;; Contract compilation rules (κ -> wrapper functions)
+  [(compile C:Γ C:e (C:τ -> bool) E:e)
+   ----------------------------------------------------- "C-Contract-Flat"
+   (compile C:Γ (flat C:e) ((C:τ -> C:τ) -> (C:τ -> C:τ))
+            (λ f (C:τ -> C:τ) (λ x C:τ (f ((perform genericeff 𝒞 C:τ) (t E:e x))))))]
+
+  [(compile C:Γ C:κ_1 ((C:τ_1 -> C:τ_1) -> (C:τ_1 -> C:τ_1)) E:e_1)
+   (compile C:Γ C:κ_2 ((C:τ_2 -> C:τ_2) -> (C:τ_2 -> C:τ_2)) E:e_2)
+   ----------------------------------------------------- "C-Contract-Func"
+   (compile C:Γ (C:κ_1 -> C:κ_2) (((C:τ_1 -> C:τ_2) -> (C:τ_1 -> C:τ_2)) -> ((C:τ_1 -> C:τ_2) -> (C:τ_1 -> C:τ_2)))
+            (λ g ((C:τ_1 -> C:τ_2) -> (C:τ_1 -> C:τ_2)) (λ f (C:τ_1 -> C:τ_2) 
+              (E:e_2 (g (λ h (C:τ_1 -> C:τ_2) (E:e_1 (λ z C:τ_1 (f z)))))))))]
+
+  [(compile C:Γ C:κ_1 ((C:τ_1 -> C:τ_1) -> (C:τ_1 -> C:τ_1)) E:e_1)
+   (where C:Γ_y (extend C:Γ C:y C:τ_1))
+   (compile C:Γ_y C:κ_2 ((C:τ_2 -> C:τ_2) -> (C:τ_2 -> C:τ_2)) E:e_2)
+   ----------------------------------------------------- "C-Contract-Dep"
+   (compile C:Γ (C:κ_1 ->i C:y C:κ_2) (((C:τ_1 -> C:τ_2) -> (C:τ_1 -> C:τ_2)) -> ((C:τ_1 -> C:τ_2) -> (C:τ_1 -> C:τ_2)))
+            (λ g ((C:τ_1 -> C:τ_2) -> (C:τ_1 -> C:τ_2)) (λ f (C:τ_1 -> C:τ_2) (λ x C:τ_1
+              ((substitute E:e_2 C:y (g (λ h (C:τ_1 -> C:τ_2) (E:e_1 (λ z C:τ_1 (f z)) x))) (λ u C:τ_2 u))
+                (g (λ h (C:τ_1 -> C:τ_2) (E:e_1 (λ z C:τ_1 (f z)) x))))))))]
+
+
+
+  ;; General monitor rule using contract compilation 
+  [(compile C:Γ C:e (C:τ_1 -> C:τ_2) E:e_compiled)
+   (compile C:Γ C:κ (((C:τ_1 -> C:τ_2) -> (C:τ_1 -> C:τ_2)) -> ((C:τ_1 -> C:τ_2) -> (C:τ_1 -> C:τ_2))) E:e_contract)
+   ----------------------------------------------------- "C-Mon-Contract"
+   (compile C:Γ (mon C:k C:l C:j C:κ C:e) (C:τ_1 -> C:τ_2) (E:e_contract E:e_compiled))]
+
+  ;; Specific hardcoded rule that used to exist - but now made generic for any types
+  [(compile C:Γ C:e_1 (C:τ_1 -> bool) E:e_1)
+   (where C:Γ_y (extend C:Γ C:y C:τ_1))
+   (compile C:Γ_y C:e_2 (C:τ_2 -> bool) E:e_2)
+   (compile C:Γ C:e (C:τ_1 -> C:τ_2) E:e_compiled)
+   (where (C:f C:x) ,(variables-not-in (term (C:Γ C:e_1 C:e_2 C:e)) '(f x)))
+   ----------------------------------------------------- "C-Mon-Dep-Flat-Simple"
+   (compile C:Γ (mon C:k C:l C:j ((flat C:e_1) ->i C:y (flat C:e_2)) C:e) (C:τ_1 -> C:τ_2)
+            ((λ C:f (C:τ_1 -> C:τ_2) (λ C:x C:τ_1
+               ((perform genericeff 𝒞 C:τ_2) 
+                 (t (substitute E:e_2 C:y (C:f ((perform genericeff 𝒞 C:τ_1) (t E:e_1 C:x))))
+                    (C:f ((perform genericeff 𝒞 C:τ_1) (t E:e_1 C:x))))))) E:e_compiled))]
+
   [(compile C:Γ C:e (C:τ_1 -> C:τ_2) E:e_compiled) ;; get τ_1
    (where (C:x C:x_1) ,(variables-not-in (term (C:Γ C:e)) '(x x_1)))
-   (where C:Γ_new (extend C:Γ C:x C:τ_1))
-   (where C:Γ_f (extend C:Γ_new C:x_1 (C:τ_1 -> C:τ_2)))
+   ;; (where C:Γ_new (extend C:Γ C:x C:τ_1))
+   ;; (where C:Γ_f (extend C:Γ_new C:x_1 (C:τ_1 -> C:τ_2)))
 
-   (compile C:Γ_new (mon C:l C:k C:j C:κ_1 C:x) C:τ_1 E:e_1)
-   (compile C:Γ_f (mon C:k C:l C:j C:κ_2 (C:x_1 C:x)) C:τ_2 E:e_2)
-   (where E:e_3 (substitute E:e_2 C:x E:e_1))
+   ;; (compile C:Γ_new (mon C:l C:k C:j C:κ_1 C:x) C:τ_1 E:e_1)
+   ;; (compile C:Γ_f (mon C:k C:l C:j C:κ_2 (C:x_1 C:x)) C:τ_2 E:e_2)
+
+   (compile C:Γ
+            (λ C:x_1 (C:τ_1 -> C:τ_2)
+              (λ C:x C:τ_1
+                (mon C:k C:l C:j C:κ_2
+                     (C:x_1 (mon C:l C:k C:j C:κ_1 C:x)))))
+            ((C:τ_1 -> C:τ_2) -> (C:τ_1 -> C:τ_2))
+            E:e_4)
+
+   ;; (where E:e_3 (substitute E:e_2 C:x E:e_1))
    --------------------------------------------------------------- "C-Mon-Func"
    (compile C:Γ
             (mon C:k C:l C:j (C:κ_1 -> C:κ_2) C:e)
             (C:τ_1 -> C:τ_2)
             ;; remember to evaluate the contract expression first
-            ((λ C:x_1 (C:τ_1 -> C:τ_2) (λ C:x C:τ_1 E:e_3)) E:e_compiled))]
+            ;; ((λ C:x_1 (C:τ_1 -> C:τ_2) (λ C:x C:τ_1 E:e_3)) E:e_compiled))]
+            (E:e_4 E:e_compiled))]
 
   [(compile C:Γ C:e (C:τ_1 -> C:τ_2) E:e_compiled) ;; get τ_1
    (where (C:x C:x_κ C:x_1) ,(variables-not-in (term (C:Γ C:e C:κ_2)) '(x x_k x_1)))
@@ -139,7 +239,7 @@
    (compile C:Γ_f (mon C:k C:l C:j C:κ_3 (C:x_1 C:x)) C:τ_2 E:e_3)
    (where E:e_4 (substitute E:e_3 C:x E:e_1))
    (where E:e_5 (substitute E:e_4 C:x_κ E:e_2))
-   ----------------------------------------------------------------------- "C-Mon-Dep"
+   ----------------------------------------------------------------------- "C-Mon-Dep-Complex"
    (compile C:Γ
             (mon C:k C:l C:j (C:κ_1 ->i C:x_arg C:κ_2) C:e)
             (C:τ_1 -> C:τ_2)
@@ -186,17 +286,12 @@
 (define-term h-check
   ((effcheck
      (Λ α (λ genericeff x α (λ genericeff k α
-       (h
-        (λ genericeff _ unit
-          (if ((injl x) (injr x))
-            (k (injr x))
-            (error 99991))))))))))
-
-;; (define-term wrap
-;;   (μ w unit (Λ α (λ genericeff f unit ((handler genericeff h-check) f)))))
+       (if ((w bool) (λ genericeff _ unit ((injl x) (injr x))))
+           (k (injr x))
+           (error 99991))))))))
 
 (define-term wrap
-  (λ genericeff f unit ((μ h unit (handler genericeff h-check)) f)))
+  (μ w unit (Λ α (λ genericeff f unit ((handler genericeff h-check) f)))))
 
 (define (compile-and-run p #:trace-enabled [trace-enabled false] #:trace-print [trace-print false])
   (define (abbreviate-term t)
@@ -221,7 +316,7 @@
   (define (my-pp term)
     (pretty-format (abbreviate-term term)))
 
-  (define pp (term ((wrap (λ genericeff _ unit (run-compiler ,p))) ())))
+  (define pp (term (((wrap unit) (λ genericeff _ unit (run-compiler ,p))) ())))
 
   (if trace-enabled
       (let [(traces (dynamic-require 'redex/gui 'traces))
@@ -339,7 +434,8 @@
                 ((flat (λ x num true)) ->i y (flat (λ x num (eq (sub x y) 1))))
                 (λ x num (add x 1)))
            10))
-    #:trace-enabled false)
+    #:trace-enabled false
+    #:trace-print true)
 
   (compile-and-run
     (term ((λ y (num -> num) y) (λ x num (add x 1))))
@@ -355,10 +451,10 @@
 
   (compile-and-run
     (term ((mon k l j
-               ((flat (λ x num true)) ->i y (flat (λ x num (eq (sub x y) 1))))
+               ;; ((flat (λ x num true)) ->i y (flat (λ x num (eq (sub x y) 1))))
+               ((flat (λ x num true)) -> (flat (λ x num true)))
                ((λ x (num -> num) x) (λ x num (add x 1))))
            10))
-    #:trace-enabled true
+    #:trace-enabled false
     #:trace-print false)
 )
-

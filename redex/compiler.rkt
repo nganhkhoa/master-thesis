@@ -45,6 +45,11 @@
   #:mode (compile I I O O)
   #:contract (compile C:Γ C:e C:τ E:e)
 
+
+
+
+
+
   [(where C:τ (lookup C:Γ C:x))
    (where E:x ,(term C:x))
    ---------------------------- "C-VAR"
@@ -136,25 +141,28 @@
             ;; ((λ C:x_1 (C:τ_1 -> C:τ_2) (λ C:x C:τ_1 E:e_3)) E:e_compiled))]
             (E:e_4 E:e_compiled))]
 
+  ;; ((guard k l j (κ_1 ->i y κ_2) f) v)
+  ;;   --> (mon k l j κ_2[y := (mon l j j κ_1 v)] (f (mon l k j κ_1 v)))
+  ;; the indy-monitored argument is bound to y (with type τ_1) before
+  ;; checking the range, so κ_2 is compiled in a context where y : τ_1
   [(compile C:Γ C:e (C:τ_1 -> C:τ_2) E:e_compiled) ;; get τ_1
-   (where (C:x C:x_κ C:x_1) ,(variables-not-in (term (C:Γ C:e C:κ_2)) '(x x_k x_1)))
-   (where C:Γ_0 (extend C:Γ C:x C:τ_1))
-   (where C:Γ_new (extend C:Γ_0 C:x_κ C:τ_1))
-   (where C:Γ_f (extend C:Γ_new C:x_1 (C:τ_1 -> C:τ_2)))
+   (where (C:x C:x_1) ,(variables-not-in (term (C:Γ C:e C:κ_1 C:κ_2 C:x_arg)) '(x x_1)))
 
-   (compile C:Γ_new (mon C:l C:k C:j C:κ_1 C:x) C:τ_1 E:e_1)
-   (compile C:Γ_new (mon C:l C:j C:j C:κ_1 C:x) C:τ_1 E:e_2)
-   (where C:κ_3 (substitute C:κ_2 C:x_arg C:x_κ))
-
-   (compile C:Γ_f (mon C:k C:l C:j C:κ_3 (C:x_1 C:x)) C:τ_2 E:e_3)
-   (where E:e_4 (substitute E:e_3 C:x E:e_1))
-   (where E:e_5 (substitute E:e_4 C:x_κ E:e_2))
+   (compile C:Γ
+            (λ C:x_1 (C:τ_1 -> C:τ_2)
+              (λ C:x C:τ_1
+                ((λ C:x_arg C:τ_1
+                   (mon C:k C:l C:j C:κ_2
+                        (C:x_1 (mon C:l C:k C:j C:κ_1 C:x))))
+                 (mon C:l C:j C:j C:κ_1 C:x))))
+            ((C:τ_1 -> C:τ_2) -> (C:τ_1 -> C:τ_2))
+            E:e_4)
    ----------------------------------------------------------------------- "C-Mon-Dep"
    (compile C:Γ
             (mon C:k C:l C:j (C:κ_1 ->i C:x_arg C:κ_2) C:e)
             (C:τ_1 -> C:τ_2)
             ;; remember to evaluate the contract expression first
-            ((λ C:x_1 (C:τ_1 -> C:τ_2) (λ C:x C:τ_1 E:e_5)) E:e_compiled))]
+            (E:e_4 E:e_compiled))]
 
   [(where C:x ,(variable-not-in (term (C:Γ C:e)) 'x))
    (compile C:Γ C:e (t C:τ_1 C:τ_2) E:e_3)
@@ -274,6 +282,35 @@
 
   (apply-reduction-relation* ->effects pp))
 
+;; Semantic check: run the source program with ->contracts and the compiled
+;; program with ->effects, and compare the observable outcomes.
+;;   - blame in source  <=> error in target
+;;   - first-order values (num, bool, unit, tuples of them) must be equal
+;;   - higher-order values are only required to be values on both sides
+(define (observe result)
+  (define (contains? pred t)
+    (or (pred t) (and (list? t) (ormap (λ (x) (contains? pred x)) t))))
+  (define (first-order? v)
+    (match v
+      [(? number?) #t]
+      ['true #t] ['false #t] ['unit #t]
+      [`(t ,a ,b) (and (first-order? a) (first-order? b))]
+      [_ #f]))
+  (match result
+    [(list (list e _))
+     (cond
+       [(contains? (λ (t) (match t [`(blame ,_ ,_) #t] [`(error ,_) #t] [_ #f])) e)
+        'blame]
+       [(first-order? e) e]
+       [else 'procedure])]
+    [_ (list 'unexpected result)]))
+
+(define (compile-check-semantics p)
+  (define source (apply-reduction-relation* ->contracts (term (,p ()))))
+  (define target (compile-and-run p))
+  (test-equal (observe target) (observe source))
+  (observe source))
+
 
 (module+ test
 
@@ -364,6 +401,116 @@
                ((flat (λ x num true)) -> (flat (λ x num true)))
                ((λ x (num -> num) x) (λ x num (add x 1))))
            10))
-    #:trace-enabled true
+    #:trace-enabled false
     #:trace-print false)
+
+  ;; semantic checks: source and compiled program must agree
+  (define-syntax-rule (check-semantics p expected)
+    (test-equal (compile-check-semantics (term p)) (term expected)))
+
+  (check-semantics (add 1 2) 3)
+  (check-semantics (mon k l j (flat (λ x num (zero? x))) 0) 0)
+  (check-semantics (mon k l j (flat (λ x num (zero? x))) 1) blame)
+  (check-semantics (add (mon k l j (flat (λ x num true)) 2) 2) 4)
+  (check-semantics (add (mon k l j (flat (λ x num false)) 2) 2) blame)
+  (check-semantics (mon k l j (t (flat (λ x num true)) (flat (λ x num true))) (t 1 2))
+                   (t 1 2))
+  (check-semantics (mon k l j (t (flat (λ x num true)) (flat (λ x num (zero? x)))) (t 1 2))
+                   blame)
+
+  ;; function contracts
+  (check-semantics ((mon k l j
+                         ((flat (λ x num true)) -> (flat (λ x num true)))
+                         (λ x num (add x 1)))
+                    10)
+                   11)
+  (check-semantics ((mon k l j
+                         ((flat (λ x num true)) -> (flat (λ x num false)))
+                         (λ x num (add x 1)))
+                    10)
+                   blame)
+  (check-semantics ((mon k l j
+                         ((flat (λ x num (pos? x))) -> (flat (λ x num true)))
+                         (λ x num (add x 1)))
+                    -5)
+                   blame)
+  (check-semantics (mon k l j
+                        ((flat (λ x num true)) -> (flat (λ x num true)))
+                        (λ x num (add x 1)))
+                   procedure)
+  ;; higher-order: contract on the argument function
+  (check-semantics ((mon k l j
+                         (((flat (λ x num (pos? x))) -> (flat (λ x num true)))
+                          -> (flat (λ x num true)))
+                         (λ g (num -> num) (g 3)))
+                    (λ x num (mul x 2)))
+                   6)
+  (check-semantics ((mon k l j
+                         (((flat (λ x num true)) -> (flat (λ x num (pos? x))))
+                          -> (flat (λ x num true)))
+                         (λ g (num -> num) (g 3)))
+                    (λ x num (sub 0 x)))
+                   blame)
+  ;; curried: range is a function contract
+  (check-semantics (((mon k l j
+                          ((flat (λ x num true))
+                           -> ((flat (λ x num true)) -> (flat (λ x num (gt x 0)))))
+                          (λ a num (λ b num (add a b))))
+                     1) 2)
+                   3)
+  (check-semantics (((mon k l j
+                          ((flat (λ x num true))
+                           -> ((flat (λ x num true)) -> (flat (λ x num (gt x 0)))))
+                          (λ a num (λ b num (add a b))))
+                     1) -5)
+                   blame)
+
+  ;; dependent contracts
+  (check-semantics ((mon k l j
+                         ((flat (λ x num true)) ->i y (flat (λ x num (eq (sub x y) 1))))
+                         (λ x num (add x 1)))
+                    10)
+                   11)
+  (check-semantics ((mon k l j
+                         ((flat (λ x num true)) ->i y (flat (λ x num (zero? (sub x y)))))
+                         (λ x num (add x 1)))
+                    10)
+                   blame)
+  (check-semantics ((mon k l j
+                         ((flat (λ x num (pos? x))) ->i y (flat (λ x num (gt x y))))
+                         (λ x num (add x 1)))
+                    -3)
+                   blame)
+  ;; the dependent variable shadows / coincides with the lambda parameter name
+  (check-semantics ((mon k l j
+                         ((flat (λ x num true)) ->i x (flat (λ r num (gt r x))))
+                         (λ x num (mul x 2)))
+                    5)
+                   10)
+  (check-semantics ((mon k l j
+                         ((flat (λ x num true)) ->i x (flat (λ r num (gt r x))))
+                         (λ x num (mul x 2)))
+                    -5)
+                   blame)
+  ;; dependent contract with a function-contract range
+  (check-semantics (((mon k l j
+                          ((flat (λ x num true))
+                           ->i y ((flat (λ x num true)) -> (flat (λ r num (gt r y)))))
+                          (λ a num (λ b num (add a b))))
+                     1) 2)
+                   3)
+  (check-semantics (((mon k l j
+                          ((flat (λ x num true))
+                           ->i y ((flat (λ x num true)) -> (flat (λ r num (gt r y)))))
+                          (λ a num (λ b num (add a b))))
+                     1) -2)
+                   blame)
+  ;; nested monitors
+  (check-semantics ((mon k l j
+                         ((flat (λ x num true)) -> (flat (λ x num (lt x 100))))
+                         (mon k l j
+                              ((flat (λ x num (pos? x))) -> (flat (λ x num true)))
+                              (λ x num (mul x 10))))
+                    5)
+                   50)
 )
