@@ -37,35 +37,3 @@
   }
 }
 
-#let make-proof(gap: 3em, rows) = {
-  show math.equation: set align(left)
-
-  let cells = ()
-  for (expr, justification) in rows {
-    cells.push(expr)
-    cells.push(justification)
-  }
-
-  align(center, block(
-    grid(
-      columns: 2,
-      column-gutter: gap,
-      row-gutter: 0.8em, // Mimics standard math line spacing
-      align: (left, right), // Ensures both expressions and rules are left-aligned
-      ..cells
-    )
-  ))
-}
-
-// A derivation as a two column table: the judgment on the left, the rule
-// used on the right. The rule column always gets its full width.
-#let derivation(rows) = block(width: 100%, grid(
-  columns: (1fr, auto),
-  column-gutter: 2em,
-  row-gutter: 0.8em,
-  align: (left, right),
-  ..rows.flatten(),
-))
-
-// rule names inside derivations
-#let rn(r) = $mono(#r)$

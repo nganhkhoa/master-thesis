@@ -16,17 +16,6 @@
 
 #let rel(e) = $accent(#e, tilde)$
 #let treq(a,b) = $"EQ"(#a,#b)$
-#let rn(r) = $mono(#r)$
-// like make-proof, but the rule column always gets its full width
-#let mp(rows) = {
-  block(width: 100%, grid(
-    columns: (1fr, auto),
-    column-gutter: 2em,
-    row-gutter: 0.8em,
-    align: (left, right),
-    ..rows.map(((a, b)) => (a, b)).flatten(),
-  ))
-}
 
 = #langc to #lange Compiler Correctness (Deep Handler)
 
@@ -241,40 +230,40 @@ By induction on the structure of $E$.
 
 Base case: $E = square.stroked$.
 
-#mp((( $E[e] = e ~ e' = E'[e']$, "Assumption"),))
+#derivation((( $E[e] = e ~ e' = E'[e']$, "Assumption"),))
 
 Inductive cases:
 - Case $E = apply(E_1, e_0)$ and $E' = apply(E'_1, e'_0)$ where $E_1 ~ E'_1$ and $e_0 ~ e'_0$.
 
-  #mp((
+  #derivation((
     ($E_1[e] ~ E'_1[e']$, "I.H."),
     ($apply(E_1[e], e_0) ~ apply(E'_1[e'], e'_0)$, "Relation definition"),
   ))
 
 - Case $E = apply(v, E_1)$ and $E' = apply(v', E'_1)$ where $v ~ v'$ and $E_1 ~ E'_1$.
 
-  #mp((
+  #derivation((
     ($E_1[e] ~ E'_1[e']$, "I.H."),
     ($apply(v, E_1[e]) ~ apply(v', E'_1[e'])$, "Relation definition"),
   ))
 
 - Case $E = mon(k,l,j,flat(e_0),E_1)$ and $E' = apply(perform(effcheck),tuple(e'_0,E'_1))$ where $e_0 ~ e'_0$ and $E_1 ~ E'_1$.
 
-  #mp((
+  #derivation((
     ($E_1[e] ~ E'_1[e']$, "I.H."),
     ($mon(k,l,j,flat(e_0),E_1[e]) ~ apply(perform(effcheck),tuple(e'_0,E'_1[e']))$, "Relation definition"),
   ))
 
 - Case $E = mon(k,l,j,kappa_1 -> kappa_2,E_1)$ and $E' = apply(e'_c,E'_1)$ where $e_c ~ e'_c$ and $E_1 ~ E'_1$, with $e_c = lambda f. lambda x. mon(k,l,j,kappa_2,apply(f,mon(l,k,j,kappa_1,x)))$.
 
-  #mp((
+  #derivation((
     ($E_1[e] ~ E'_1[e']$, "I.H."),
     ($mon(k,l,j,kappa_1 -> kappa_2,E_1[e]) ~ apply(e'_c,E'_1[e'])$, [Relation row for $mon(k,l,j,kappa_1 -> kappa_2,e)$, with $e := E_1[e]$ and $rel(e)_1 := e'_c$]),
   ))
 
 - Case $E = mon(k,l,j,dep(kappa_1, lambda y. kappa_2),E_1)$ and $E' = apply(e'_c,E'_1)$ where $e_c ~ e'_c$ and $E_1 ~ E'_1$, with $e_c = lambda f. lambda x. mon(k,l,j,{mon(l,j,j,kappa_1,x)\/y}kappa_2,apply(f,mon(l,k,j,kappa_1,x)))$.
 
-  #mp((
+  #derivation((
     ($E_1[e] ~ E'_1[e']$, "I.H."),
     ($mon(k,l,j,dep(kappa_1, lambda y. kappa_2),E_1[e]) ~ apply(e'_c,E'_1[e'])$, [Relation row for $mon(k,l,j,dep(kappa_1, lambda y. kappa_2),e)$, with $e := E_1[e]$ and $rel(e)_1 := e'_c$]),
   ))
@@ -304,15 +293,15 @@ By induction on the derivation of $e ~ e'$.
 
 - Case $x ~ x$.
 
-  #mp((( $x[x:=v] = v ~ v' = x[x:=v']$, "Assumption"),))
+  #derivation((( $x[x:=v] = v ~ v' = x[x:=v']$, "Assumption"),))
 
 - Case $z ~ z$ with $z != x$.
 
-  #mp((( $z[x:=v] = z ~ z = z[x:=v']$, "Both sides are unchanged"),))
+  #derivation((( $z[x:=v] = z ~ z = z[x:=v']$, "Both sides are unchanged"),))
 
 - Case $lambda z. e_1 ~ lambda z. e'_1$ with $e_1 ~ e'_1$. Choose $z != x$ and $z in.not "fv"(v, v')$ by renaming.
 
-  #mp((
+  #derivation((
     ($e_1[x:=v] ~ e'_1[x:=v']$, "I.H."),
     ($lambda z. e_1[x:=v] ~ lambda z. e'_1[x:=v']$, [The $lambda$ row]),
   ))
@@ -333,21 +322,21 @@ By induction on $E$.
 
 - Case $E = E_1 e$
 
-  #mp((
+  #derivation((
     ($E_1 = E^+_1[E^*_1]$, "I.H."),
     ($E = apply(E^+_1[E^*_1],e)$, "Definition"),
   ))
 
   - Case $E^+_1 = square.stroked$
 
-    #mp((
+    #derivation((
       ($E = apply(E^*_1,e)$, "By the case assumption"),
       ($E^+ = square.stroked, E^*=apply(E^*_1,e)$, "Choose"),
     ))
 
   - Case $E^+_1 = E^+_2[E^*_2[check(k,j,square.stroked,v)]]$
 
-    #mp((
+    #derivation((
       ($E = apply(E^+_2[E^*_2[check(k,j,E^*_1,v)]],e) = (apply(E^+_2,e))[E^*_2[check(k,j,E^*_1,v)]]$, "By the case assumption"),
       ($E^+ = (apply(E^+_2,e))[E^*_2[check(k,j,square.stroked,v)]], E^*=E^*_1$, "Choose"),
     ))
@@ -356,21 +345,21 @@ By induction on $E$.
 
 - Case $E = check(k,j,E_1,v)$
 
-  #mp((
+  #derivation((
     ($E_1 = E^+_1[E^*_1]$, "I.H."),
     ($E = check(k,j,E^+_1[E^*_1],v) = check(k,j,E^+_1,v)[E^*_1]$, "Definition"),
   ))
 
   - Case $E^+_1 = square.stroked$
 
-    #mp((
+    #derivation((
       ($E = check(k,j,square.stroked,v)[E^*_1]$, "By the case assumption"),
       ($E^+ = check(k,j,square.stroked,v), E^* = E^*_1$, "Let"),
     ))
 
   - Case $E^+_1 = E^+_2[E^*_2[check(k_1,j_1,square.stroked,v_1)]]$.
 
-    #mp((
+    #derivation((
       ($E = check(k,j,E^+_2[E^*_2[check(k_1,j_1,square.stroked,v_1)]],v)[E^*_1]$, "By the case assumption"),
       ($E^+ = check(k,j,E^+_2[E^*_2[check(k_1,j_1,square.stroked,v_1)]],v), E^* = E^*_1$, [Let; [@context-composition-preservation]]),
     ))
@@ -387,12 +376,12 @@ By induction on the structure of $E$.
 
 Base case: $E = square.stroked$.
 
-#mp((( $E[E^+] = E^+ = E^+_0[E^*_0[check(k,j,square.stroked,v)]]$, "Required form"),))
+#derivation((( $E[E^+] = E^+ = E^+_0[E^*_0[check(k,j,square.stroked,v)]]$, "Required form"),))
 
 Inductive cases:
 - Case $E = apply(E_1, e)$. By I.H., $E_1[E^+] = E^+_1$ where $E^+_1 = E^+_2[E^*_2[check(k',j',square.stroked,v')]]$.
 
-  #mp((
+  #derivation((
     ($E[E^+] = apply(E_1[E^+], e) = apply(E^+_2[E^*_2[check(k',j',square.stroked,v')]], e)$, "Definition"),
     ($E[E^+] = (apply(E^+_2, e))[E^*_2[check(k',j',square.stroked,v')]]$, "Reassociate context composition"),
     ($E^+_3 = apply(E^+_2, e)$, "Take; required form"),
@@ -402,12 +391,12 @@ Inductive cases:
 
 - Case $E = check(k_0,j_0,E_1,v_0)$. By I.H., $E_1[E^+] = E^+_1$.
 
-  #mp((( $E[E^+] = check(k_0,j_0,E^+_1,v_0)$, "Definition"),))
+  #derivation((( $E[E^+] = check(k_0,j_0,E^+_1,v_0)$, "Definition"),))
 
   If $E^+_1 = square.stroked$, then $E[E^+] = check(k_0,j_0,square.stroked,v_0)$ which has the required form.
 
   If $E^+_1 = E^+_2[E^*_2[check(k',j',square.stroked,v')]]$, then:
-  #mp((
+  #derivation((
     ($E[E^+] = check(k_0,j_0,E^+_2[E^*_2[check(k',j',square.stroked,v')]],v_0)$, "Case assumption"),
     ($E[E^+] = check(k_0,j_0,E^+_2,v_0)[E^*_2[check(k',j',square.stroked,v')]]$, "Reassociate context composition"),
     ($E^+_3 = check(k_0,j_0,E^+_2,v_0)$, "Take; required form"),
@@ -436,7 +425,7 @@ By induction on structure of $compile(type(Gamma,e_1,tau),e_2)$.
     $compile(type(Gamma, x, tau), x)$,
   ))
 
-  #mp((
+  #derivation((
     ($e^*_2 = x$, "Definition"),
     ($x ~ x$, "Relation"),
   ))
@@ -446,7 +435,7 @@ By induction on structure of $compile(type(Gamma,e_1,tau),e_2)$.
     $compile(type(Gamma, lambda x : tau_1. e, tau_1 -> tau_2), lambda x : tau_1. e')$,
   ))
 
-  #mp((
+  #derivation((
     ($e^*_2 = lambda x. e'^*$, "Definition"),
     ($e ~ e'^*$, [I.H. on the premise with context $Gamma, x : tau_1$]),
     ($lambda x. e ~ lambda x. e'^*$, "Relation"),
@@ -458,7 +447,7 @@ By induction on structure of $compile(type(Gamma,e_1,tau),e_2)$.
     $compile(type(Gamma,mon(k,l,j,flat(e_3),e_4),tau), apply(perform(effcheck, tau: tau), tuple(k, tuple(e_5, e_6))))$,
   ))
 
-  #mp((
+  #derivation((
     ($e^*_2 = apply(perform(effcheck), tuple(k, tuple(e^*_5, e^*_6)))$, "Definition"),
     ($e_3 ~ e^*_5$, "I.H."),
     ($e_4 ~ e^*_6$, "I.H."),
@@ -474,7 +463,7 @@ By induction on structure of $compile(type(Gamma,e_1,tau),e_2)$.
         $compile(type(Gamma,mon(k,l,j,kappa_1->kappa_2,e_1),tau_1 -> tau_2),apply(e_5, e_4))$,
       ))
 
-  #mp((
+  #derivation((
     ($e_3 ~ e^*_4$, "I.H."),
     ($lambda f : tau_1 -> tau_2. lambda x : tau_1. mon(k,l,j,kappa_2,apply(f, mon(l,k,j,kappa_1,x))) ~ e^*_5$, "I.H."),
     ($e_1 ~ e^*_2$, "Relation"),
@@ -489,7 +478,7 @@ By induction on structure of $compile(type(Gamma,e_1,tau),e_2)$.
         $compile(type(Gamma,mon(k,l,j,dep(kappa_1, lambda y. kappa_2),e_3),tau_1 -> tau_2),apply(e_5, e_4))$,
       ))
 
-  #mp((
+  #derivation((
     ($e_3 ~ e^*_4$, "I.H."),
     ($lambda f. lambda x. mon(k,l,j,{mon(l,j,j,kappa_1,x)\/y}kappa_2,apply(f, mon(l,k,j,kappa_1,x))) ~ e^*_5$, "I.H."),
     ($e_1 ~ e^*_2$, "Relation"),
@@ -572,7 +561,7 @@ $
 
 #proof[
 
-  #mp((
+  #derivation((
     ($e^* estep1 e'_1$, [@wrap-step-eq]),
     ($treq(e,e'_1)$, [@wrap-step-eq]),
     ($e'_1 estep1 b$, [@full-simulation]),
@@ -589,7 +578,7 @@ $
 
 #proof[
 
-#mp((
+#derivation((
   ($e ~ e'^*$, [@compiler-is-relation]),
   ($e^*_1 estep1 apply(handler(heffcheck),lambda \_. e'^*) estep1 handle(heffcheck, e'^*) = e^*_2$, "Wrapper reduction"),
   ($treq(e,e^*_2)$, "Definition"),
@@ -643,14 +632,14 @@ $
 
   - Case $v cstep1 v$
 
-    #mp((
+    #derivation((
       ($e' = rel(r)$, [Definition of $treq(e,e')$]),
       ($e' estep1 rel(r)$, "Reflexivity"),
     ))
 
   - Case $blame(k,j) cstep1 blame(k,j)$
 
-    #mp((
+    #derivation((
       ($r = blame(k,j)$, "Case assumption"),
       ($rel(r) = eblame(j)$, "Relation"),
       ($e' = eblame(j) = rel(r)$, [Definition of $treq(e,e')$]),
@@ -659,7 +648,7 @@ $
 
   - Case $e cstep e_1$ and $e_1 cstep1 r$
 
-    #mp((
+    #derivation((
       ($e' estep1 e'_1$, [@simulation]),
       ($treq(e_1,e'_1)$, [@simulation]),
       ($e'_1 estep1 rel(r)$, "I.H."),
@@ -677,7 +666,7 @@ We also need to make a claim that in no where in $e'_1$ do we have $perform(eff)
 #proof(of: <simulation>)[
 By case analysis on $e_1 cstep e_2$ with respect to $treq(e_1,e'_1)$. By decomposition lemma, we know that the program can be rewritten into:
 
-#mp((
+#derivation((
   ($e_1 = E[e_3]$, "Decomposition lemma"),
   ($e_2 = E[e_4]$, "Decomposition lemma"),
   ($e_3 cstepx e_4$, "Redex reduction"),
@@ -689,7 +678,7 @@ When $treq(e_1,e'_1)$ holds by case 2, @relation-context-decomposition supplies 
 
   - Case $e_1 = v$ is invalid.
 
-  #mp((
+  #derivation((
     ($E = E^+[E^*]$, "Context breakdown lemma"),
     ($e_1 = E^+[E^*[e_3]]$, "Substitution"),
   ))
@@ -698,7 +687,7 @@ When $treq(e_1,e'_1)$ holds by case 2, @relation-context-decomposition supplies 
 
     By inversion of case 2 of $treq(e_1,e'_1)$, $e_1 ~ rel(e_1)$. Since $e_1 = E^*[e_3]$, @relation-context-decomposition gives contexts and expressions that we name $rel(E)^*$ and $rel(e)_3$.
 
-    #mp((
+    #derivation((
       ($E^* ~ rel(E)^*$, [@relation-context-decomposition]),
       ($e_3 ~ rel(e)_3$, [@relation-context-decomposition]),
       ($rel(e_1) = rel(E)^*[rel(e)_3]$, [@relation-context-decomposition]),
@@ -711,9 +700,9 @@ When $treq(e_1,e'_1)$ holds by case 2, @relation-context-decomposition supplies 
 
   - Case $E^+ = E^+_1[E^*_1[check(k_1,j_1,square.stroked,v_1)]]$
 
-    #mp((( $e_1 = E^+_1[E^*_1[check(k_1,j_1,E^*[e_3],v_1)]]$, "Context decomposition"),))
+    #derivation((( $e_1 = E^+_1[E^*_1[check(k_1,j_1,E^*[e_3],v_1)]]$, "Context decomposition"),))
 
-    #mp((
+    #derivation((
       ($e'_1 = rel(E)^+_1[ife(handle(heffcheck,rel(E)^*[rel(e)_3]),apply((lambda x. handle(heffcheck,rel(E)^*_1[x])),rel(v)_1),eblame(j_1))]$, [Definition of $"EQ"$]),
       ($e'_1 = rel(E)^+_1[ife(handle(heffcheck,rel(E)^*[apply(perform(effcheck),tuple(rel(e),rel(v)))]),apply((lambda x. handle(heffcheck,rel(E)^*_1[x])),rel(v)_1),eblame(j_1))]$, "Relation"),
       ($e'_1 estep1 rel(E)^+[ife(handle(heffcheck,apply(rel(e),rel(v))),apply((lambda x. handle(heffcheck, rel(E)^*[x])),rel(v)),eblame(j))] = e'_2$, "Reduction"),
@@ -721,7 +710,7 @@ When $treq(e_1,e'_1)$ holds by case 2, @relation-context-decomposition supplies 
 
     where $rel(E)^+ = rel(E)^+_1[ife(square.stroked,apply((lambda x. handle(heffcheck,rel(E)^*_1[x])),rel(v)_1),eblame(j_1))]$
 
-    #mp((
+    #derivation((
       ($e_2 = E^+_1[E^*_1[check(k_1,j_1,E^*[check(k,j,apply(e,v),v)],v_1)]]$, "Reduction under context"),
       ($treq(E^*[check(k,j,apply(e,v),v)], ife(handle(heffcheck,apply(rel(e),rel(v))),apply((lambda x. handle(heffcheck, rel(E)^*[x])),rel(v)),eblame(j)))$, "Case 3"),
       ($treq(e_2,e'_2)$, "Case 3"),
@@ -735,7 +724,7 @@ When $treq(e_1,e'_1)$ holds by case 2, @relation-context-decomposition supplies 
 
   - Case $e_1 = E^+[E^*[check(k,j,trueb,v)]]$.
 
-    #mp((
+    #derivation((
       ($e'_1 = rel(E)^+[ife(e'_3,apply((lambda x. handle(heffcheck,rel(E)^*[x])),rel(v)),eblame(j))]$, [$treq(e_1,e'_1)$]),
       ($treq(trueb,e'_3)$, [Since $trueb$ is a value]),
       ($e'_3 = trueb$, [Definition of $"EQ"$]),
@@ -745,11 +734,11 @@ When $treq(e_1,e'_1)$ holds by case 2, @relation-context-decomposition supplies 
 
     - Case $E^+ = square.stroked$
 
-      #mp((( $treq(E^*[v], handle(heffcheck,rel(E)^*[rel(v)]))$, "Case 2"),))
+      #derivation((( $treq(E^*[v], handle(heffcheck,rel(E)^*[rel(v)]))$, "Case 2"),))
 
     - Case $E^+ = E^+_1[E^*_1[check(k_1,j_1,square.stroked,v_1)]]$
 
-      #mp((
+      #derivation((
         ($rel(E)^+ = rel(E)^+_1[ife(square.stroked, apply((lambda x. handle(heffcheck,rel(E)^*_1[x])),rel(v)_1), eblame(j_1))]$, "Relation"),
         ($e_2 = E^+_1[E^*_1[check(k_1,j_1,E^*[v],v_1)]]$, "Source reduction"),
         ($e'_2 = rel(E)^+_1[ife(handle(heffcheck,rel(E)^*[rel(v)]), apply((lambda x. handle(heffcheck,rel(E)^*_1[x])),rel(v)_1), eblame(j_1))]$, "Target reduction"),
@@ -762,7 +751,7 @@ When $treq(e_1,e'_1)$ holds by case 2, @relation-context-decomposition supplies 
 
   - Case $e_1 = v$ is invalid.
 
-  #mp((
+  #derivation((
     ($E = E^+[E^*]$, "Context breakdown lemma"),
     ($e_1 = E^+[E^*[e_3]]$, "Substitution"),
   ))
@@ -773,7 +762,7 @@ When $treq(e_1,e'_1)$ holds by case 2, @relation-context-decomposition supplies 
 
     By inversion of case 2 of $treq(e_1,e'_1)$, $e_1 ~ rel(e_1)$. Since $e_1 = E^*[e_3]$, @relation-context-decomposition gives contexts and expressions that we name $rel(E)^*$ and $rel(e)_3$.
 
-    #mp((
+    #derivation((
       ($E^* ~ rel(E)^*$, [@relation-context-decomposition]),
       ($e_3 ~ rel(e)_3$, [@relation-context-decomposition]),
       ($rel(e_1) = rel(E)^*[rel(e)_3]$, [@relation-context-decomposition]),
@@ -791,7 +780,7 @@ When $treq(e_1,e'_1)$ holds by case 2, @relation-context-decomposition supplies 
 
     where $e_(5a) = mon(k,l,j,kappa_2,apply(f,mon(l,k,j,kappa_1,x)))$.
 
-    #mp((
+    #derivation((
       ($e'_1 = rel(E)^+_1[ife(handle(heffcheck,rel(E)^*[apply(rel(e)_5,rel(v))]),apply((lambda x. handle(heffcheck,rel(E)^*_1[x])),rel(v)_1),eblame(j_1))]$, [Definition of $"EQ"$]),
       ($e'_1 estep1 rel(E)^+_1[ife(handle(heffcheck,rel(E)^*[lambda x. rel(e)_(5a)[f:=rel(v)]]),apply((lambda x. handle(heffcheck,rel(E)^*_1[x])),rel(v)_1),eblame(j_1))] = e'_2$, "Reduction"),
       ($e_2 = E^+_1[E^*_1[check(k_1,j_1,E^*[guard(v,kappa_1 -> kappa_2,k,l,j)],v_1)]]$, "Source reduction"),
@@ -803,7 +792,7 @@ When $treq(e_1,e'_1)$ holds by case 2, @relation-context-decomposition supplies 
 
   - Case $e_1 = v$ is invalid.
 
-  #mp((
+  #derivation((
     ($E = E^+[E^*]$, "Context breakdown lemma"),
     ($e_1 = E^+[E^*[e_3]]$, "Substitution"),
   ))
@@ -814,7 +803,7 @@ When $treq(e_1,e'_1)$ holds by case 2, @relation-context-decomposition supplies 
 
     By inversion of case 2 of $treq(e_1,e'_1)$, $e_1 ~ rel(e_1)$. Since $e_1 = E^*[e_3]$, @relation-context-decomposition gives contexts and expressions that we name $rel(E)^*$ and $rel(e)_3$.
 
-    #mp((
+    #derivation((
       ($E^* ~ rel(E)^*$, [@relation-context-decomposition]),
       ($e_3 ~ rel(e)_3$, [@relation-context-decomposition]),
       ($rel(e_1) = rel(E)^*[rel(e)_3]$, [@relation-context-decomposition]),
@@ -833,7 +822,7 @@ When $treq(e_1,e'_1)$ holds by case 2, @relation-context-decomposition supplies 
 
   Same as the case $mon(k,l,j,kappa_1 -> kappa_2, v)$, with
 
-  #mp((
+  #derivation((
     ($e_5 = lambda f. lambda x. mon(k,l,j,{mon(l,j,j,kappa_1,x)\/y}kappa_2,apply(f,mon(l,k,j,kappa_1,x))) = lambda f. lambda x. e_(5a)$, "Definition"),
     ($lambda x. rel(e)_(5a)[f:=rel(v)] ~ guard(v, dep(kappa_1, lambda y. kappa_2), k,l,j)$, "Relation on values"),
   ))
@@ -850,7 +839,7 @@ When $treq(e_1,e'_1)$ holds by case 2, @relation-context-decomposition supplies 
 
     By inversion of case 2 of $treq(e_1,e'_1)$, $e_1 ~ rel(e_1)$. Since $e_1 = E^*[e_3]$, @relation-context-decomposition gives contexts and expressions that we name $rel(E)^*$ and $rel(e)_3$.
 
-    #mp((
+    #derivation((
       ($E^* ~ rel(E)^*$, [@relation-context-decomposition]),
       ($e_3 ~ rel(e)_3$, [@relation-context-decomposition]),
       ($rel(e_1) = rel(E)^*[rel(e)_3]$, [@relation-context-decomposition]),
@@ -872,7 +861,7 @@ When $treq(e_1,e'_1)$ holds by case 2, @relation-context-decomposition supplies 
 
   - Case $e_1 = E^+[E^*[check(k,j,falseb,v)]]$
 
-    #mp((
+    #derivation((
       ($e'_1 = rel(E)^+[ife(falseb,apply((lambda x. handle(heffcheck,rel(E)^*[x])),rel(v)),eblame(j))]$, [$treq(e_1,e'_1)$]),
       ($e'_1 estep1 rel(E)^+[eblame(j)] = e'_2$, "Reduction"),
       ($e_2 = E^+[E^*[blame(k,j)]]$, "Source reduction"),

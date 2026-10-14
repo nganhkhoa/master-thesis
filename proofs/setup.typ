@@ -5,32 +5,10 @@
 
 #let mathcounter = rich-counter(
   identifier: "mathblocks",
-  inherited_levels: 1
+  inherited_levels: 1,
 )
 
-#let theorem = mathblock(
-  blocktitle: "Theorem",
-  counter: mathcounter,
-  // align: left,
-)
-
-#let lemma = mathblock(
-  blocktitle: "Lemma",
-  counter: mathcounter,
-)
-
-#let remark = mathblock(
-  blocktitle: "Remark",
-  prefix: [_Remark._],
-  inset: 5pt,
-  fill: lime,
-  radius: 5pt,
-)
-
-#let proof = proofblock()
-
-
-// Appendix variants: number with the appendix heading letters ("A.1")
+// Appendix theorem environments, numbered by their enclosing appendix heading.
 #let appendix-theorem = mathblock(
   blocktitle: "Theorem",
   counter: mathcounter,
@@ -42,6 +20,20 @@
   counter: mathcounter,
   numbering: "A.1",
 )
+
+#let proof = proofblock()
+
+// A derivation is a two-column table: judgment on the left, justification on
+// the right. The full-width block prevents the rule column from being clipped.
+#let derivation(rows) = block(width: 100%, grid(
+  columns: (1fr, auto),
+  column-gutter: 2em,
+  row-gutter: 0.8em,
+  align: (left, right),
+  ..rows.flatten(),
+))
+
+#let rn(r) = $mono(#r)$
 
 // Number of an appendix theorem/lemma, for restating it elsewhere (e.g. in the body).
 #let appendix-number(lbl) = context {

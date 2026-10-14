@@ -13,7 +13,7 @@
 #show: great-theorems-init
 #show link: text.with(fill: blue)
 
-#import "/proofs/setup.typ": appendix-theorem, appendix-lemma
+#import "/proofs/setup.typ": appendix-theorem, appendix-lemma, derivation, rn
 #let theorem = appendix-theorem
 #let lemma = appendix-lemma
 
@@ -29,15 +29,6 @@
 #let proof = proofblock()
 
 
-// Proof derivations use the same full-width two-column layout as
-// compiler-typesoundness.typ.
-#let mp(rows) = block(width: 100%, grid(
-  columns: (1fr, auto),
-  column-gutter: 2em,
-  row-gutter: 0.8em,
-  align: (left, right),
-  ..rows.map(((judgment, reason)) => (judgment, reason)).flatten(),
-))
 
 #let lam = [lambda]
 #let hdl = [handler]
@@ -181,7 +172,7 @@ and likewise for every frame without a handler.
   - Case CE-Empty. $E[e] = e$ and $row(lbls(square.stroked), epsilon) = epsilon$.
 
   - Case CE-App1, $E = apply(E_0, e_0)$.
-    #mp((
+    #derivation((
       ($tec(dot, E_0, tau_1, (teff(tau_2, epsilon, tau)), epsilon)$, rn("CE-App1")),
       ($type(dot, e_0, tau_2, eff: epsilon)$, rn("CE-App1")),
       ($type(dot, e, tau_1, eff: row(lbls(E_0), epsilon))$, [given, $lbls(E) = lbls(E_0)$]),
@@ -190,7 +181,7 @@ and likewise for every frame without a handler.
     ))
 
   - Case CE-App2, $E = apply(v, E_0)$.
-    #mp((
+    #derivation((
       ($type(dot, v, teff(tau_2, epsilon, tau), type: "val")$, rn("CE-App2")),
       ($tec(dot, E_0, tau_1, tau_2, epsilon)$, rn("CE-App2")),
       ($type(dot, E_0[e], tau_2, eff: epsilon)$, "I.H."),
@@ -199,14 +190,14 @@ and likewise for every frame without a handler.
     ))
 
   - Case CE-TApp, $E = E_0[tau_0]$ and $tau = tau_2[alpha:=tau_0]$.
-    #mp((
+    #derivation((
       ($tec(dot, E_0, tau_1, forall alpha. tau_2, epsilon)$, rn("CE-TApp")),
       ($type(dot, E_0[e], forall alpha. tau_2, eff: epsilon)$, "I.H."),
       ($type(dot, E_0[e][tau_0], tau_2[alpha:=tau_0], eff: epsilon)$, rn("T-E-Tapp")),
     ))
 
   - Case CE-Handle, $E = ehandle(epsilon, h, E_0)$.
-    #mp((
+    #derivation((
       ($tops(dot, h, tau, l, epsilon)$, rn("CE-Handle")),
       ($tec(dot, E_0, tau_1, tau, row(l, epsilon))$, rn("CE-Handle")),
       ($type(dot, e, tau_1, eff: row(lbls(E_0), row(l, epsilon)))$, [given, def. of $lbls(dot.op)$]),
@@ -215,7 +206,7 @@ and likewise for every frame without a handler.
     ))
 
   - Case CE-If, $E = ife(E_0, e_2, e_3)$.
-    #mp((
+    #derivation((
       ($tec(dot, E_0, tau_1, boolt, epsilon)$, rn("CE-If")),
       ($type(dot, e_2, tau, eff: epsilon), type(dot, e_3, tau, eff: epsilon)$, rn("CE-If")),
       ($type(dot, E_0[e], boolt, eff: epsilon)$, "I.H."),
@@ -235,7 +226,7 @@ and likewise for every frame without a handler.
   - Case $E = square.stroked$. Take $tau_1 = tau$, and use CE-Empty.
 
   - Case $E = apply(E_0, e_0)$.
-    #mp((
+    #derivation((
       ($type(dot, E_0[e], teff(tau_2, epsilon, tau), eff: epsilon)$, rn("T-E-App")),
       ($type(dot, e_0, tau_2, eff: epsilon)$, rn("T-E-App")),
       ($tec(dot, E_0, tau_1, (teff(tau_2, epsilon, tau)), epsilon)$, "I.H."),
@@ -245,7 +236,7 @@ and likewise for every frame without a handler.
     ))
 
   - Case $E = apply(v, E_0)$.
-    #mp((
+    #derivation((
       ($type(dot, v, teff(tau_2, epsilon, tau), eff: epsilon)$, rn("T-E-App")),
       ($type(dot, v, teff(tau_2, epsilon, tau), type: "val")$, [inversion of #rn("T-E-Val")]),
       ($type(dot, E_0[e], tau_2, eff: epsilon)$, rn("T-E-App")),
@@ -257,7 +248,7 @@ and likewise for every frame without a handler.
     The value $v$ has a function type, so it is not a tuple, and its derivation ends in T-E-Val.
 
   - Case $E = E_0[tau_0]$.
-    #mp((
+    #derivation((
       ($type(dot, E_0[e], forall alpha. tau_2, eff: epsilon)$, [#rn("T-E-Tapp"), $tau = tau_2[alpha:=tau_0]$]),
       ($tec(dot, E_0, tau_1, forall alpha. tau_2, epsilon)$, "I.H."),
       ($type(dot, e, tau_1, eff: row(lbls(E_0), epsilon))$, "I.H."),
@@ -265,7 +256,7 @@ and likewise for every frame without a handler.
     ))
 
   - Case $E = ehandle(epsilon, h, E_0)$ with $h : Sigma(l)$.
-    #mp((
+    #derivation((
       ($tops(dot, h, tau, l, epsilon)$, rn("T-E-Handle")),
       ($type(dot, E_0[e], tau, eff: row(l, epsilon))$, rn("T-E-Handle")),
       ($tec(dot, E_0, tau_1, tau, row(l, epsilon))$, "I.H."),
@@ -275,7 +266,7 @@ and likewise for every frame without a handler.
     ))
 
   - Case $E = ife(E_0, e_2, e_3)$.
-    #mp((
+    #derivation((
       ($type(dot, E_0[e], boolt, eff: epsilon)$, rn("T-If")),
       ($type(dot, e_2, tau, eff: epsilon), type(dot, e_3, tau, eff: epsilon)$, rn("T-If")),
       ($tec(dot, E_0, tau_1, boolt, epsilon)$, "I.H."),
@@ -292,7 +283,7 @@ and likewise for every frame without a handler.
 
 #proof[
   Let $op : forall alpha. tau_1 -> tau_2 in Sigma(l)$.
-  #mp((
+  #derivation((
     ($type(dot, apply(eperform(epsilon_p, op, tau_s), v), tau_3, eff: row(lbls(E), mteff))$, [@effect-correspondence]),
     ($type(dot, eperform(epsilon_p, op, tau_s), teff(tau_4, row(lbls(E), mteff), tau_3), eff: row(lbls(E), mteff))$, rn("T-E-App")),
     ($type(dot, eperform(epsilon_p, op, tau_s), teff(tau_4, row(lbls(E), mteff), tau_3), type: "val")$, rn("T-E-Val")),
@@ -308,7 +299,7 @@ and likewise for every frame without a handler.
 ] <meaningful-effect-type>
 
 #proof[
-  #mp((
+  #derivation((
     ($type(dot, apply(eperform(epsilon_p, op, tau_s), v), tau_3, eff: row(lbls(E), epsilon))$, [@effect-correspondence]),
     ($type(dot, eperform(epsilon_p, op, tau_s), teff(tau_4, row(lbls(E), epsilon), tau_3), type: "val")$, [#rn("T-E-App"), #rn("T-E-Val")]),
     ($row(l, epsilon_0) = row(lbls(E), epsilon)$, rn("T-E-Perform")),
@@ -326,7 +317,7 @@ and likewise for every frame without a handler.
   By induction on $v$. The second part follows from the first by T-E-Val.
 
   - Case $v = tuple(v_1, v_2)$. The derivation ends in T-E-Val or in the lifted T-Tuple. In the first case we are done. In the second:
-    #mp((
+    #derivation((
       ($type(Gamma, v_1, tau_1, eff: epsilon), type(Gamma, v_2, tau_2, eff: epsilon)$, rn("T-Tuple")),
       ($type(Gamma, v_1, tau_1, type: "val"), type(Gamma, v_2, tau_2, type: "val")$, "I.H."),
       ($type(Gamma, tuple(v_1, v_2), tuple(tau_1, tau_2), type: "val")$, rn("T-E-VTuple")),
@@ -358,13 +349,13 @@ and likewise for every frame without a handler.
   - Case T-E-Var with $v_0 = x$. Then $tau = tau_1$ and $x[x:=v] = v$, which has type $tau_1$ by assumption.
 
   - Case T-E-Var with $v_0 = y != x$.
-    #mp((
+    #derivation((
       ($y : tau in Gamma_0$, [#rn("T-E-Var"), $y != x$]),
       ($type(Gamma_0, y[x:=v], tau, type: "val")$, [#rn("T-E-Var"), $y[x:=v] = y$]),
     ))
 
   - Case T-E-Abs with $v_0 = #kw("lambda")^epsilon_0 y : tau_2. e$, $y in.not {x} union "fv"(v)$.
-    #mp((
+    #derivation((
       ($type(Gamma\, y : tau_2, e, tau_3, eff: epsilon_0)$, rn("T-E-Abs")),
       ($type(Gamma_0\, y : tau_2, v, tau_1, type: "val")$, [@weakening]),
       ($type(Gamma_0\, y : tau_2, e[x:=v], tau_3, eff: epsilon_0)$, "I.H. 1"),
@@ -374,14 +365,14 @@ and likewise for every frame without a handler.
   - Case T-E-Fix with $v_0 = mu y : tau. v_1$. As T-E-Abs, with the I.H. 2 on $v_1$.
 
   - Case T-E-TAbs with $v_0 = Lambda alpha^k. v_1$.
-    #mp((
+    #derivation((
       ($type(Gamma, v_1, tau_2, type: "val"), k != lab$, rn("T-E-TAbs")),
       ($type(Gamma_0, v_1[x:=v], tau_2, type: "val")$, "I.H. 2"),
       ($type(Gamma_0, Lambda alpha^k. v_1[x:=v], forall alpha^k. tau_2, type: "val")$, rn("T-E-TAbs")),
     ))
 
   - Case T-E-Handler with $v_0 = ehandler(epsilon_0, h)$.
-    #mp((
+    #derivation((
       ($tops(Gamma, h, tau_2, l, epsilon_0)$, rn("T-E-Handler")),
       ($tops(Gamma_0, h[x:=v], tau_2, l, epsilon_0)$, "I.H. 3"),
       ($type(Gamma_0, ehandler(epsilon_0, h[x:=v]), teff((teff(unit, row(l, epsilon_0), tau_2)), epsilon_0, tau_2), type: "val")$, rn("T-E-Handler")),
@@ -396,14 +387,14 @@ and likewise for every frame without a handler.
   Part 1.
 
   - Case T-E-Val.
-    #mp((
+    #derivation((
       ($type(Gamma, v_0, tau, type: "val")$, rn("T-E-Val")),
       ($type(Gamma_0, v_0[x:=v], tau, type: "val")$, "I.H. 2"),
       ($type(Gamma_0, v_0[x:=v], tau, eff: epsilon)$, rn("T-E-Val")),
     ))
 
   - Case T-E-App with $e = apply(e_1, e_2)$.
-    #mp((
+    #derivation((
       ($type(Gamma, e_1, teff(tau_2, epsilon, tau), eff: epsilon), type(Gamma, e_2, tau_2, eff: epsilon)$, rn("T-E-App")),
       ($type(Gamma_0, e_1[x:=v], teff(tau_2, epsilon, tau), eff: epsilon)$, "I.H. 1"),
       ($type(Gamma_0, e_2[x:=v], tau_2, eff: epsilon)$, "I.H. 1"),
@@ -413,7 +404,7 @@ and likewise for every frame without a handler.
   - Case T-E-Tapp with $e = e_1[tau_0]$. The I.H. 1 on $e_1$, then T-E-Tapp.
 
   - Case T-E-Handle with $e = ehandle(epsilon, h, e_1)$. The explicit residual annotation $epsilon$ is unchanged by term substitution.
-    #mp((
+    #derivation((
       ($tops(Gamma, h, tau, l, epsilon)$, rn("T-E-Handle")),
       ($type(Gamma, e_1, tau, eff: row(l, epsilon))$, rn("T-E-Handle")),
       ($tops(Gamma_0, h[x:=v], tau, l, epsilon)$, "I.H. 3"),
@@ -440,7 +431,7 @@ and likewise for every frame without a handler.
   The interesting cases are the following.
 
   - Case T-E-Tapp with $e = e_1[tau_s]$.
-    #mp((
+    #derivation((
       ($type(Gamma, e_1, forall beta. tau_2, eff: epsilon)$, rn("T-E-Tapp")),
       ($type(Gamma[alpha:=tau_0], e_1[alpha:=tau_0], forall beta. tau_2[alpha:=tau_0], eff: epsilon[alpha:=tau_0])$, "I.H."),
       ($type(Gamma[alpha:=tau_0], e_1[alpha:=tau_0][tau_s[alpha:=tau_0]], tau_2[alpha:=tau_0][beta:=tau_s[alpha:=tau_0]], eff: epsilon[alpha:=tau_0])$, rn("T-E-Tapp")),
@@ -485,7 +476,7 @@ and likewise for every frame without a handler.
   - Case T-E-Val. $e_1$ is a value.
 
   - Case T-E-App, $e_1 = apply(e_3, e_4)$.
-    #mp((
+    #derivation((
       ($type(dot, e_3, teff(tau_1, epsilon, tau), eff: epsilon)$, rn("T-E-App")),
       ($type(dot, e_4, tau_1, eff: epsilon)$, rn("T-E-App")),
     ))
@@ -530,7 +521,7 @@ and likewise for every frame without a handler.
 
 #proof[
   By @progress-with-effect, $e_1$ is a value, or steps, or $e_1 = E[apply(eperform(epsilon_p, op, tau_s), v)]$ with $op in.not bop(E)$ and $op in Sigma(l)$. The last case is impossible:
-  #mp((
+  #derivation((
     ($type(dot, E[apply(eperform(epsilon_p, op, tau_s), v)], tau, eff: mteff)$, "Given"),
     ($l in mteff$, [@meaningful-effect-type]),
     ("Contradiction", [$mteff$ is empty]),
@@ -545,7 +536,7 @@ and likewise for every frame without a handler.
   By cases on $e_1 estepx e_2$.
 
   - Case S-App, $apply((#kw("lambda")^epsilon x : tau_1. e), v) estepx e[x:=v]$.
-    #mp((
+    #derivation((
       ($type(dot, #kw("lambda")^epsilon x : tau_1. e, teff(tau_1, epsilon, tau), eff: epsilon)$, rn("T-E-App")),
       ([The $lambda$ annotation is the body effect $epsilon$.], rn("T-E-Abs")),
       ($type(dot, v, tau_1, eff: epsilon)$, rn("T-E-App")),
@@ -555,7 +546,7 @@ and likewise for every frame without a handler.
     ))
 
   - Case Step-E-TApp, $(Lambda alpha^k. v)[tau_0] estepx v[alpha:=tau_0]$, with $tau = tau_1[alpha:=tau_0]$.
-    #mp((
+    #derivation((
       ($type(dot, Lambda alpha^k. v, forall alpha^k. tau_1, eff: epsilon), attach(tack.r.short, br: "wf") tau_0 : k$, rn("T-E-Tapp")),
       ($type(dot, v, tau_1, type: "val")$, [#rn("T-E-Val"), #rn("T-E-TAbs")]),
       ($type(dot, v[alpha:=tau_0], tau_1[alpha:=tau_0], type: "val")$, [@type-var-substitution]),
@@ -565,7 +556,7 @@ and likewise for every frame without a handler.
     The context is empty, and $alpha$ is bound in $Lambda alpha. v$, so $alpha in.not "ftv"(epsilon)$ and $epsilon[alpha:=tau_0] = epsilon$.
 
   - Case Step-E-Fix-App, $apply((mu x : tau_f. v), v_0) estepx apply(v[x:=mu x : tau_f. v], v_0)$, with $tau_f = teff(tau_1, epsilon, tau)$.
-    #mp((
+    #derivation((
       ($type(dot, mu x : tau_f. v, tau_f, type: "val")$, [#rn("T-E-App"), #rn("T-E-Val")]),
       ($type(dot, v_0, tau_1, eff: epsilon)$, rn("T-E-App")),
       ($type(x : tau_f, v, tau_f, type: "val")$, rn("T-E-Fix")),
@@ -576,7 +567,7 @@ and likewise for every frame without a handler.
   - Case Step-E-Fix-TApp. As Step-E-Fix-App, closing with T-E-Tapp.
 
   - Case Step-E-Handler, $apply(ehandler(epsilon, h), v) estepx ehandle(epsilon, h, apply(v, unit))$.
-    #mp((
+    #derivation((
       ($type(dot, ehandler(epsilon, h), teff(tau_1, epsilon, tau), eff: epsilon)$, rn("T-E-App")),
       ($type(dot, v, tau_1, eff: epsilon)$, rn("T-E-App")),
       ($type(dot, ehandler(epsilon, h), teff((teff(unit, row(l, epsilon), tau)), epsilon, tau), type: "val")$, rn("T-E-Val")),
@@ -587,13 +578,13 @@ and likewise for every frame without a handler.
     ))
 
   - Case Step-E-Return, $ehandle(epsilon, h, v) estepx v$.
-    #mp((
+    #derivation((
       ($type(dot, v, tau, eff: row(l, epsilon))$, rn("T-E-Handle")),
       ($type(dot, v, tau, eff: epsilon)$, [@values-any-effect]),
     ))
 
   - Case Step-E-Perform, $ehandle(epsilon, h, E[apply(eperform(epsilon_p, op, tau_0), v)]) estepx apply(apply(f[tau_0], v), k)$, where $op in.not bop(E)$, $(op -> f) in h$, $op : forall alpha. tau_1 -> tau_2 in Sigma(l)$ and $k = #kw("lambda")^epsilon x : tau_2[alpha:=tau_0]. ehandle(epsilon, h, E[x])$.
-    #mp((
+    #derivation((
       ($tec(dot, ehandle(epsilon, h, E), tau_3, tau, epsilon)$, [@effect-correspondence]),
       ($type(dot, apply(eperform(epsilon_p, op, tau_0), v), tau_3, eff: row(lbls(E), row(l, epsilon)))$, [@effect-correspondence]),
       ($tops(dot, h, tau, l, epsilon), tec(dot, E, tau_3, tau, row(l, epsilon))$, rn("CE-Handle")),
@@ -624,7 +615,7 @@ and likewise for every frame without a handler.
   By cases on the step.
 
   - Case Step-E, $e_1 = E[e_a]$, $e_2 = E[e_b]$ and $e_a estepx e_b$.
-    #mp((
+    #derivation((
       ($tec(dot, E, tau_1, tau, epsilon)$, [@effect-correspondence]),
       ($type(dot, e_a, tau_1, eff: row(lbls(E), epsilon))$, [@effect-correspondence]),
       ($type(dot, e_b, tau_1, eff: row(lbls(E), epsilon))$, [@small-step-preservation]),
@@ -632,7 +623,7 @@ and likewise for every frame without a handler.
     ))
 
   - Case Step-E-Error, $E[eblame(p)] estep eblame(p)$.
-    #mp((
+    #derivation((
       ($type(dot, eblame(p), tau, type: "val")$, rn("T-E-Error")),
       ($type(dot, eblame(p), tau, eff: epsilon)$, rn("T-E-Val")),
     ))

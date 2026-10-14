@@ -18,17 +18,6 @@
 #let ereq(a,b) = $"ER"(#a,#b)$
 #let activecheck(e) = $"ActiveCheck"(#e)$
 #let noblame(e) = $"NoBlame"(#e)$
-#let rn(r) = $mono(#r)$
-// like make-proof, but the rule column always gets its full width
-#let mp(rows) = {
-  block(width: 100%, grid(
-    columns: (1fr, auto),
-    column-gutter: 2em,
-    row-gutter: 0.8em,
-    align: (left, right),
-    ..rows.map(((a, b)) => (a, b)).flatten(),
-  ))
-}
 
 = #langc Erasure Theorem
 
@@ -169,7 +158,7 @@ By induction on $F ~ relate(F)$.
 
 - Case $square.stroked ~ square.stroked$
 
-  #mp((
+  #derivation((
     ($e ~ relate(e)$, [Given]),
     ($F[e] = e$, [Context Plug in]),
     ($relate(F)[relate(e)] = relate(e)$, [Context Plug in]),
@@ -178,7 +167,7 @@ By induction on $F ~ relate(F)$.
 
 - Case $apply(F_1,e_2) ~ apply(relate(F)_1,e_2)$
 
-  #mp((
+  #derivation((
     ($e ~ relate(e)$, [Given]),
     ($F_1[e] ~ relate(F)_1[relate(e)]$, [I.H.]),
     ($F[e] = apply(F_1[e],e_2)$, [Context Plug in]),
@@ -200,7 +189,7 @@ By I.H. on $e ~ relate(e)$.
 
 - Case $x ~ x$
 
-  #mp((
+  #derivation((
     ($v ~ relate(v)$, [Given]),
     ($e[x:=v] = v$, [Replacement]),
     ($relate(e)[x:=relate(v)] = relate(v)$, [Replacement]),
@@ -209,7 +198,7 @@ By I.H. on $e ~ relate(e)$.
 
 - Case $y ~ y$, where $y eq.not x$
 
-  #mp((
+  #derivation((
     ($v ~ relate(v)$, [Given]),
     ($e[x:=v] = y$, [Replacement]),
     ($relate(e)[x:=relate(v)] = y$, [Replacement]),
@@ -218,7 +207,7 @@ By I.H. on $e ~ relate(e)$.
 
 - Case $apply(e_1,e_2) ~ apply(relate(e)_1,relate(e)_2)$
 
-  #mp((
+  #derivation((
     ($e_1[x:=v] ~ relate(e)_1[x:=relate(v)]$,[I.H.]),
     ($e_2[x:=v] ~ relate(e)_2[x:=relate(v)]$,[I.H.]),
     ($e[x:=v] = apply(e_1[x:=v],e_2[x:=v])$,[Replacement]),
@@ -241,14 +230,14 @@ Forall context $E$, either:
 
 - Case $square.stroked$
 
-  #mp((
+  #derivation((
     ($F = square.stroked$,[Choose]),
     ($E = F$,[]),
   ))
 
 - Case $E=check(k,j,E_1,v)$
 
-  #mp((
+  #derivation((
     ($F = square.stroked$,[Choose]),
     ($E' = E_1$,[Choose]),
     ($E = F[check(k,j,E_1,v)]$,[])
@@ -261,7 +250,7 @@ Forall context $E$, either:
 
   - Case $E_1 = F_1$
 
-    #mp((
+    #derivation((
       ($E = apply(F_1,e)$, []),
       ($F = apply(F_1,e)$, [Choose]),
       ($E = F$, []),
@@ -269,7 +258,7 @@ Forall context $E$, either:
 
   - Case $E_1 = F_1[check(k,j,E'_1,v)]$
 
-    #mp((
+    #derivation((
       ($E = apply(F_1[check(k,j,E'_1,v)],v)$, []),
       ($F = apply(F_1,v)$, [Choose]),
       ($E' = E'_1$, [Choose]),
@@ -302,7 +291,7 @@ Because the compiler doesn't compile check (runtime expression), we never get th
 
 - Case $e' = erase(mon(k,l,j,kappa,e_1)) = erase(e_1) = e'_1$
 
-  #mp((
+  #derivation((
     ($ereq(e_1,e'_1)$,[I.H.]),
     ($e_1 ~ e'_1$, [First clause EQ]),
     ($mon(k,l,j,kappa,e_1) ~ relate(e)_1$,[Definition]),
@@ -314,7 +303,7 @@ Because the compiler doesn't compile check (runtime expression), we never get th
 
 - Case $e' = erase(apply(e_1,e_2)) = apply(erase(e_1),erase(e_2)) = apply(e'_1,e'_2)$
 
-  #mp((
+  #derivation((
     ($ereq(e_1,e'_1)$,[I.H.]),
     ($ereq(e_2,e'_2)$,[I.H.]),
     ($e_1 ~ e'_1$, [First clause EQ]),
@@ -384,7 +373,7 @@ Because the compiler doesn't compile check (runtime expression), we never get th
 
 #proof[
 
-#mp((
+#derivation((
   ($ereq(e,e')$, [@erasure-is-relation]),
   ($e' step1 b$, [@erasure-multistep-simulation]),
 ))
@@ -401,7 +390,7 @@ By induction on $e cstep1 b$.
 
 - Case $b cstep1 b$
 
-  #mp((
+  #derivation((
     ($ereq(e,e')$,[Given]),
     ($e ~ e'$, [First clause EQ]),
     ($e' = b$, [Relation inversion $b ~ e'$]),
@@ -414,7 +403,7 @@ By induction on $e cstep1 b$.
 
   - Case $e = E[blame(k,j)] cstep blame(k,j) = e_1$ for some $E eq.not square.stroked,k,j$
 
-    #mp((
+    #derivation((
       ($e_1 cstep1 blame(k,j)$, [Reflexivity]),
       ($e_1 cstep1 b$, [Given]),
       ($bot$, [Contradiction]),
@@ -422,7 +411,7 @@ By induction on $e cstep1 b$.
 
   - Case $e = E[e_2] cstep E[e_3] = e_1$ where $e_2 cstepx e_3$ is a redex, and $e_2 != blame(k,j)$.
 
-    #mp((
+    #derivation((
       ($ereq(e,e')$,[Given]),
       ($e cstep e_1$,[Given]),
       ($e eq.not E[blame(k,j)]$,[Case assumption]),
@@ -430,7 +419,7 @@ By induction on $e cstep1 b$.
 
     - Case $e_2 = check(k,j,falseb,v)$, and $e_3 = blame(k,j)$
 
-      #mp((
+      #derivation((
         ($e_1 cstep blame(k,j)$, [Step-C]),
         ($e_1 cstep1 blame(k,j)$, []),
         ($e_1 cstep1 b$, [Given]),
@@ -441,7 +430,7 @@ By induction on $e cstep1 b$.
 
       Relation is not local so we run simulation on $e cstep e_1$.
 
-      #mp((
+      #derivation((
         ($e eq.not E[check(k,j,falseb,v)]$, [Generalize]),
         ($e' step1 e'_1$, [@erasure-step-simulation]),
         ($ereq(e_1, e'_1)$, [@erasure-step-simulation]),
@@ -476,7 +465,7 @@ By case analysis of $ereq(e_1,e'_1)$:
 
 By case analysis of $e_1 cstep e_2$ with $e_1 != E_1[blame(k_1,j_1)]$.
 
-#mp((
+#derivation((
   ($e_1 = E[e_3]$, rn("C-Step")),
   ($e_2 = E[e_4]$, rn("C-Step")),
   ($e_3 cstepx e_4$, rn("C-Step")),
@@ -487,7 +476,7 @@ By cases on the redex reduction $e_3 cstepx e_4$.
 
 - Case $apply((lambda x. e_5),v_5) cstepx e_5[x:=v_5]$
 
-  #mp((
+  #derivation((
     ($relate(e)_3 = apply((lambda x. relate(e)_5),relate(v)_5)$, [definition of $tilde$]),
     ($apply((lambda x. relate(e)_5),relate(v)_5) stepx relate(e)_5[x:=relate(v)_5]$, rn("S-App")),
     ($e_4 ~ relate(e)_5[x:=relate(v)_5]$, [@relation-substitution]),
@@ -501,7 +490,7 @@ By cases on the redex reduction $e_3 cstepx e_4$.
 
 - Case $check(k,j,trueb,v) cstepx v$
 
-  #mp((
+  #derivation((
     ($relate(e)_3 = relate(v)$, [definition of $tilde$]),
     ($e_4 ~ relate(v)$, [definition of $tilde$]),
     ($e'_1 step1 relate(E)[relate(v)] = e'_2$, [reflexivity]),
@@ -510,7 +499,7 @@ By cases on the redex reduction $e_3 cstepx e_4$.
 
 - Case $check(k,j,falseb,v) cstepx blame(k,j)$
 
-  #mp((
+  #derivation((
     ($e_2 = E[blame(k,j)]$, rn("C-Step")),
     ($e_2 != E_2[blame(k_2,j_2)]$, "Given"),
     ($bot$, [impossible]),
@@ -518,7 +507,7 @@ By cases on the redex reduction $e_3 cstepx e_4$.
 
 - Case $mon(k,l,j,flat(e_3),v_3) cstepx check(k,j,apply(e_3,v_3),v_3)$
 
-  #mp((
+  #derivation((
     ($relate(e)_3 = relate(v)_3$, [definition of $tilde$]),
     ($e_4 ~ relate(v)_3$, [definition of $tilde$]),
     ($e'_1 step1 relate(E)[relate(v)_3] = e'_2$, [reflexivity]),
@@ -527,7 +516,7 @@ By cases on the redex reduction $e_3 cstepx e_4$.
 
 - Case $mon(k,l,j,kappa,v_3) cstepx guard(v_3,kappa,k,l,j)$
 
-  #mp((
+  #derivation((
     ($relate(e)_3 = relate(v)_3$, [definition of $tilde$]),
     ($e_4 ~ relate(v)_3$, [definition of $tilde$]),
     ($e'_1 step1 relate(E)[relate(v)_3] = e'_2$, [reflexivity]),
@@ -536,7 +525,7 @@ By cases on the redex reduction $e_3 cstepx e_4$.
 
 - Case $apply(guard(v_1,kappa_1 -> kappa_2,k,l,j),v_2) cstepx mon(k,l,j,kappa_2,apply(v_1,mon(l,k,j,kappa_1,v_2)))$
 
-  #mp((
+  #derivation((
     ($relate(e)_3 = apply(relate(v)_1,relate(v)_2)$, [definition of $tilde$]),
     ($relate(e)_4 ~ apply(relate(v)_1,relate(v)_2)$, [definition of $tilde$]),
     ($e'_1 step1 relate(E)[apply(relate(v)_1,relate(v)_2)] = e'_2$, [reflexivity]),

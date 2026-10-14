@@ -13,7 +13,7 @@
 #show: great-theorems-init
 #show link: text.with(fill: blue)
 
-#import "/proofs/setup.typ": appendix-theorem, appendix-lemma
+#import "/proofs/setup.typ": appendix-theorem, appendix-lemma, derivation, rn
 #let theorem = appendix-theorem
 #let lemma = appendix-lemma
 
@@ -50,15 +50,15 @@ Each binary operator $o in {+, -, and, or}$ has a signature $o : tau_a times tau
 
 
 #lemma(title: [#langb Preservation])[
-  If $type(dot, e_1, tau)$ and $e_1 step e_2$ then $type(dot, e_2, tau)$.
+  If $type(Gamma, e_1, tau)$ and $e_1 step e_2$ then $type(Gamma, e_2, tau)$.
 ] <langb-Preservation>
 
 #proof(of: <langb-Preservation>)[
   #derivation((
     ($e_1 = E[e'_1], e_2 = E[e'_2], e'_1 stepx e'_2$, rn("Step")),
-    ($type(dot, e'_1, tau_1)$, [@langb-decomposition]),
-    ($type(dot, e'_2, tau_1)$, [@langb-redex-preservation]),
-    ($type(dot, E[e'_2], tau)$, [@langb-decomposition]),
+    ($type(Gamma, e'_1, tau_1)$, [@langb-decomposition]),
+    ($type(Gamma, e'_2, tau_1)$, [@langb-redex-preservation]),
+    ($type(Gamma, E[e'_2], tau)$, [@langb-decomposition]),
   ))
 ]
 
@@ -74,8 +74,8 @@ Each binary operator $o in {+, -, and, or}$ has a signature $o : tau_a times tau
   - Case T-App, $e_1 = apply(e_3, e_4)$. By the I.H. $e_3$ is a value or steps, and then $e_4$ is a value or steps. If one of them steps then it steps, else if both are values:
     #derivation((
       ($type(dot, e_3, tau_2 -> tau)$, rn("T-App")),
-      ($e_3 = lambda x : tau_2. e$, [@langb-canonical]),
-      ($apply(e_3, e_4) step e[x:=e_4]$, rn("S-App")),
+      ($e_3 = lambda x : tau_2. e_5$, [@langb-canonical]),
+      ($apply(e_3, e_4) step e_5[x:=e_4]$, rn("S-App")),
     ))
 
   - Other cases are trivial: the expression is a value, or it takes a step by the matching rule of $stepx$ (using @langb-canonical for the shape of values).
@@ -90,12 +90,12 @@ Each binary operator $o in {+, -, and, or}$ has a signature $o : tau_a times tau
 // ]
 
 #lemma(title: [Canonical forms])[
-  If $type(dot, v, tau)$ then:
+  If $type(Gamma, v, tau)$ then:
   - If $tau = numt$ then $v = n$.
   - If $tau = boolt$ then $v = b$.
   - If $tau = unit$ then $v = unit$.
   - If $tau = tau_1 -> tau_2$ then $v = lambda x : tau_1. e$.
-  - If $tau = tuple(tau_1, tau_2)$ then $v = tuple(v_1, v_2)$ with $type(dot, v_1, tau_1)$ and $type(dot, v_2, tau_2)$.
+  - If $tau = tuple(tau_1, tau_2)$ then $v = tuple(v_1, v_2)$ with $type(Gamma, v_1, tau_1)$ and $type(Gamma, v_2, tau_2)$.
 ] <langb-canonical>
 
 #proof[
@@ -103,29 +103,29 @@ Each binary operator $o in {+, -, and, or}$ has a signature $o : tau_a times tau
 ]
 
 #lemma(title: [Decomposition])[
-  If $type(dot, E[e], tau)$ then there is $tau_1$ such that $type(dot, e, tau_1)$, and for every $e'$ with $type(dot, e', tau_1)$ we have $type(dot, E[e'], tau)$.
+  If $type(Gamma, E[e], tau)$ then there is $tau_1$ such that $type(Gamma, e, tau_1)$, and for every $e'$ with $type(Gamma, e', tau_1)$ we have $type(Gamma, E[e'], tau)$.
 ] <langb-decomposition>
 
 #proof[
   By induction on $E$.
 
-  - Case $E = square.stroked$. Take $tau_1 = tau$.
+  - Case $E = square.stroked$. Take $tau_1 = tau$. The premise is $type(Gamma, e, tau)$, and the conclusion follows immediately.
 
   - Case $E = apply(E_0, e_0)$.
     #derivation((
-      ($type(dot, apply(E_0[e], e_0), tau)$, "Given"),
-      ($type(dot, E_0[e], tau_2 -> tau)$, rn("T-App")),
-      ($type(dot, e_0, tau_2)$, rn("T-App")),
-      // ($type(dot, e, tau_1)$, "I.H."),
-      ($type(dot, E_0[e'], tau_2 -> tau)$, [I.H.]),
-      ($type(dot, apply(E_0[e'], e_0), tau)$, rn("T-App")),
+      ($type(Gamma, apply(E_0[e], e_0), tau)$, "Given"),
+      ($type(Gamma, E_0[e], tau_2 -> tau)$, rn("T-App")),
+      ($type(Gamma, e_0, tau_2)$, rn("T-App")),
+      ($type(Gamma, e, tau_1)$, "I.H."),
+      ($type(Gamma, E_0[e'], tau_2 -> tau)$, [I.H.]),
+      ($type(Gamma, apply(E_0[e'], e_0), tau)$, rn("T-App")),
     ))
 
-  - Other cases are trivial: invert the typing rule of the frame, apply the I.H. to $E_0$, and apply the same rule again.
+  - Other cases are trivial: invert the typing rule of the frame, apply the I.H. to $E_0$ under the same $Gamma$, and apply the same typing rule again.
 ]
 
 #lemma(title: [Redex preservation])[
-  If $type(dot, e_1, tau)$ and $e_1 stepx e_2$ then $type(dot, e_2, tau)$.
+  If $type(Gamma, e_1, tau)$ and $e_1 stepx e_2$ then $type(Gamma, e_2, tau)$.
 ] <langb-redex-preservation>
 
 #proof[
@@ -133,17 +133,17 @@ Each binary operator $o in {+, -, and, or}$ has a signature $o : tau_a times tau
 
   - Case S-App, $apply((lambda x : tau_1. e), v) stepx e[x:=v]$.
     #derivation((
-      ($type(dot, lambda x : tau_1. e, tau_1 -> tau)$, rn("T-App")),
-      ($type(dot, v, tau_1)$, rn("T-App")),
-      ($type(x : tau_1, e, tau)$, rn("T-Lambda")),
-      ($type(dot, e[x:=v], tau)$, [@langb-substitution]),
+      ($type(Gamma, lambda x : tau_1. e, tau_1 -> tau)$, rn("T-App")),
+      ($type(Gamma, v, tau_1)$, rn("T-App")),
+      ($type(Gamma\, x : tau_1, e, tau)$, rn("T-Lambda")),
+      ($type(Gamma, e[x:=v], tau)$, [@langb-substitution]),
     ))
 
   - Case S-Fix, $mu x : tau. e stepx e[x:=mu x : tau. e]$.
     #derivation((
-      ($type(x : tau, e, tau)$, rn("T-Fix")),
-      ($type(dot, mu x : tau. e, tau)$, "Given"),
-      ($type(dot, e[x:=mu x : tau. e], tau)$, [@langb-substitution]),
+      ($type(Gamma\, x : tau, e, tau)$, rn("T-Fix")),
+      ($type(Gamma, mu x : tau. e, tau)$, "Given"),
+      ($type(Gamma, e[x:=mu x : tau. e], tau)$, [@langb-substitution]),
     ))
 
   - Other cases are trivial.
@@ -186,7 +186,7 @@ Each binary operator $o in {+, -, and, or}$ has a signature $o : tau_a times tau
       ($type(Gamma\, x : tau_1, e_3, tau_2)$, rn("T-App")),
       ($type(Gamma, e_2[x:=e_1], tau_2 -> tau)$, "I.H."),
       ($type(Gamma, e_3[x:=e_1], tau_2)$, "I.H."),
-      ($type(Gamma, apply(e_2,e_3)[x:=e_1], tau)$, rn("T-App")),
+      ($type(Gamma, (apply(e_2,e_3))[x:=e_1], tau)$, rn("T-App")),
     ))
 
   - Other cases are trivial: the expression has no variables, or the I.H. applies to every premise and the same rule is used again.

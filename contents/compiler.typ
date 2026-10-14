@@ -2,12 +2,16 @@
 #show: setupdoc
 
 #import "/models/language.typ": *
-#import "/proofs/setup.typ": *
+#import "/proofs/setup.typ": appendix-theorem, appendix-lemma, appendix-number, proof
+#import "@preview/great-theorems:0.1.2": great-theorems-init
 #import "/utils.typ": load-bib, no-ref
 
 #show: no-ref
 
 #show: great-theorems-init
+
+#let theorem = appendix-theorem
+#let lemma = appendix-lemma
 
 = Formal Compiler
 

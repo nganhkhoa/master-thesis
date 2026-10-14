@@ -15,17 +15,6 @@
 
 #let tc(t) = $#t^*$
 #let hc = $effs(heffcheck)$
-#let rn(r) = $mono(#r)$
-// like make-proof, but the rule column always gets its full width
-#let mp(rows) = {
-  block(width: 100%, grid(
-    columns: (1fr, auto),
-    column-gutter: 2em,
-    row-gutter: 0.8em,
-    align: (left, right),
-    ..rows.map(((a, b)) => (a, b)).flatten(),
-  ))
-}
 
 = #langc to #lange Compiler Typesoundness
 
@@ -83,7 +72,7 @@ By induction on structure of $compile(type(Gamma,e,tau),e')$.
 
 - Case $e = x$, $e = n$, $e = b$, $e = unit$
 
-  #mp((
+  #derivation((
     ($e' = e$, "Given"),
     ($type(tc(Gamma), e', tc(tau), type: "val")$, [#rn("T-E-Var"), #rn("T-Num"), #rn("T-Bool"), #rn("T-Unit")]),
     ($type(tc(Gamma), e', tc(tau), eff: hc)$, rn("T-E-Val")),
@@ -94,7 +83,7 @@ By induction on structure of $compile(type(Gamma,e,tau),e')$.
     $compile(type(Gamma, lambda x : tau_1. e, tau_1 -> tau_2), lambda x : tc(tau_1). e'')$,
   ))
 
-  #mp((
+  #derivation((
     ($type(tc(Gamma)\, x : tc(tau_1), e'', tc(tau_2), eff: hc)$, "I.H."),
     ($type(tc(Gamma), lambda x : tc(tau_1). e'', teff(tc(tau_1),hc,tc(tau_2)), type: "val")$, rn("T-E-Abs")),
     ($type(tc(Gamma), lambda x : tc(tau_1). e'', tc((tau_1 -> tau_2)), type: "val")$, [Type compilation $tc(dot.op)$]),
@@ -107,7 +96,7 @@ By induction on structure of $compile(type(Gamma,e,tau),e')$.
     $compile(type(Gamma, apply(e_1,e_2), tau_2), apply(e'_1,e'_2))$,
   ))
 
-  #mp((
+  #derivation((
     ($type(tc(Gamma), e'_1, teff(tc(tau_1),hc,tc(tau_2)), eff: hc)$, "I.H."),
     ($type(tc(Gamma), e'_2, tc(tau_1), eff: hc)$, "I.H."),
     ($type(tc(Gamma), apply(e'_1,e'_2), tc(tau_2), eff: hc)$, rn("T-E-App")),
@@ -117,7 +106,7 @@ By induction on structure of $compile(type(Gamma,e,tau),e')$.
 
 - Case $mu x : tau. e$, $tuple(e_1,e_2)$, $injl(e)$, $injr(e)$, $ife(e_1,e_2,e_3)$, $o(e_1,...,e_n)$
 
-  #mp((
+  #derivation((
     ([$type(tc(Gamma), e'_i, tc(tau_i), eff: hc)$ for every sub-expression], "I.H."),
     ($type(tc(Gamma), e', tc(tau), eff: hc)$, [lifted rule of #langb]),
   ))
@@ -130,7 +119,7 @@ By induction on structure of $compile(type(Gamma,e,tau),e')$.
     $compile(type(Gamma,mon(k,l,j,flat(e_3),e_4),tau), apply(perform(effcheck, tau: tc(tau)), tuple(k, tuple(e_5, e_6))))$,
   ))
 
-  #mp((
+  #derivation((
     ($type(tc(Gamma), e_5, teff(tc(tau),hc,boolt), eff: hc)$, "I.H."),
     ($type(tc(Gamma), e_6, tc(tau), eff: hc)$, "I.H."),
     ($type(tc(Gamma), apply(perform(effcheck, tau: tc(tau)), tuple(k, tuple(e_5, e_6))), tc(tau), eff: hc)$, [@ts-perform]),
@@ -147,7 +136,7 @@ By induction on structure of $compile(type(Gamma,e,tau),e')$.
     $compile(type(Gamma,mon(k,l,j,kappa_1->kappa_2,e_1),tau_1 -> tau_2),apply(e_3, e_2))$,
   ))
 
-  #mp((
+  #derivation((
     ($type(tc(Gamma), e_2, tc((tau_1 -> tau_2)), eff: hc)$, "I.H."),
     ($type(tc(Gamma), e_3, tc(((tau_1 -> tau_2) -> (tau_1 -> tau_2))), eff: hc)$, "I.H."),
     ($type(tc(Gamma), e_3, teff(tc((tau_1 -> tau_2)),hc,tc((tau_1 -> tau_2))), eff: hc)$, [def. of $tc(dot.op)$]),
@@ -162,7 +151,7 @@ By induction on structure of $compile(type(Gamma,e,tau),e')$.
 
   where $e_w = lambda f : tau_1 -> tau_2. lambda x : tau_1. mon(k,l,j,{mon(l,j,j,kappa_1,x)\/y}kappa_2,apply(f, mon(l,k,j,kappa_1,x)))$
 
-  #mp((
+  #derivation((
     ($type(tc(Gamma), e_2, tc((tau_1 -> tau_2)), eff: hc)$, "I.H."),
     ($type(tc(Gamma), e_3, teff(tc((tau_1 -> tau_2)),hc,tc((tau_1 -> tau_2))), eff: hc)$, [I.H., def. of $tc(dot.op)$]),
     ($type(tc(Gamma), apply(e_3,e_2), tc((tau_1 -> tau_2)), eff: hc)$, rn("T-E-App")),
@@ -178,7 +167,7 @@ By induction on structure of $compile(type(Gamma,e,tau),e')$.
     $compile(type(Gamma,mon(k,l,j,tuple(kappa_1,kappa_2),e),tuple(tau_1,tau_2)), apply((lambda x : tc(tuple(tau_1,tau_2)). tuple(e_1,e_2)),e_3))$,
   ))
 
-  #mp((
+  #derivation((
     ($type(tc(Gamma)\, x : tc(tuple(tau_1,tau_2)), e_1, tc(tau_1), eff: hc)$, "I.H."),
     ($type(tc(Gamma)\, x : tc(tuple(tau_1,tau_2)), e_2, tc(tau_2), eff: hc)$, "I.H."),
     ($type(tc(Gamma)\, x : tc(tuple(tau_1,tau_2)), tuple(e_1,e_2), tc(tuple(tau_1,tau_2)), eff: hc)$, rn("T-Tuple")),
@@ -198,7 +187,7 @@ By induction on structure of $compile(type(Gamma,e,tau),e')$.
 ] <ts-perform>
 
 #proof[
-  #mp((
+  #derivation((
     ($type(Gamma, perform(effcheck, tau: tau), teff(tuple(blab, tuple(teff(tau,hc,boolt), tau)), hc, tau), type: "val")$,
       [#rn("T-E-Perform"), $alpha := tau, epsilon := mteff$]),
     ($type(Gamma, perform(effcheck, tau: tau), teff(tuple(blab, tuple(teff(tau,hc,boolt), tau)), hc, tau), eff: hc)$,
@@ -231,7 +220,7 @@ Note that $h_w$ signature matches $Sigma(heffcheck)$ if we replace $alpha$ with 
 ] <ts-effect-safety>
 
 #proof[
-  #mp((
+  #derivation((
     ($type(dot.op,e',tc(tau),eff: hc)$, [@ts-preservation]),
     ($type(dot.op, lambda \_ : unit. e', teff(unit,hc,tc(tau)), type: "val")$, rn("T-E-Abs")),
     ($type(dot.op, kw("wrap")[tc(tau)], teff((teff(unit,hc,tc(tau))),mteff,tc(tau)), eff: mteff)$, [@ts-wrap, #rn("T-E-Tapp")]),
@@ -251,7 +240,7 @@ Note that $h_w$ signature matches $Sigma(heffcheck)$ if we replace $alpha$ with 
 
   And $Delta = Gamma_w, l : blab, e : teff(beta,hc,boolt), v : beta, k : teff(beta,mteff,alpha)$.
 
-  #mp((
+  #derivation((
     ($type(Delta, apply(e,v), boolt, eff: hc)$, rn("T-E-App")),
     ($type(Delta, lambda \_ : unit. apply(e,v), teff(unit,hc,boolt), type: "val")$, rn("T-E-Abs")),
     ($type(Delta, w[boolt], teff((teff(unit,hc,boolt)),mteff,boolt), eff: mteff)$, rn("T-E-Tapp")),

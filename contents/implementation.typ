@@ -5,7 +5,7 @@
 #import "@preview/codly-languages:0.1.1": *
 
 #import "/models/language.typ": *
-#import "/proofs/setup.typ": *
+#import "/proofs/setup.typ": appendix-theorem, appendix-lemma, proof
 #import "/utils.typ": load-bib, no-ref
 
 #show: codly-init.with()
