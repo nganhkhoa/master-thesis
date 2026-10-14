@@ -1,3 +1,6 @@
+#import "/setup.typ": setupdoc
+#show: setupdoc
+
 #import "nuthesis.typ": nuthesis
 
 #import "proofs/setup.typ": *
@@ -98,21 +101,11 @@ Structure ...
 
 #include "proofs/core.typ"
 
-= Contract Erasure
+#include "proofs/contracts.typ"
+#include "proofs/contract-erasure.typ"
 
-// #include "proofs/contract-erasure/attemp7.typ"
+#include "proofs/effects.typ"
 
-
-= Effects Safety
-
-// #include "proofs/effects/context.typ"
-// #include "proofs/effects/progress.typ"
-// #include "proofs/effects/preservation.typ"
-
-= Compiler Equivalence for Effect (Deep handlers)
-
+#include "proofs/compiler-typesoundness.typ"
 #include "proofs/compiler.typ"
-
-= Compiler Equivalence for Effect (Shallow handlers)
-
 #include "proofs/compiler-shallow.typ"

@@ -1,3 +1,6 @@
+#import "/setup.typ": setupdoc
+#show: setupdoc
+
 #import "@preview/simplebnf:0.1.2": *
 #import "@preview/codly:1.3.0": *
 #import "@preview/codly-languages:0.1.1": *
@@ -6,6 +9,11 @@
 #import "@preview/rich-counters:0.2.1": *
 
 #import "language.typ": *
+
+#let lam = [lambda]
+#let hdl = [handler]
+#let hnd = [handle]
+#let prf = [perform]
 
 #figure(
   stack(
@@ -35,23 +43,26 @@
         }),
         Prod($e$, {
           Or[$...$][]
+          Or[$#kw("lambda")^epsilon x : tau. e$][]
           Or[$e[tau]$][]
-          Or[$handle(h, e)$][]
-          Or[$eblame(e)$][]
+          Or[$attach(handle(h, e), tr: epsilon)$][]
+          Or[$eblame(p)$][]
         }),
         Prod($h$, {
           Or[${op -> f, ..., }$][]
         }),
         Prod($f$, {
-          Or[$Lambda alpha. lambda x : tau. lambda k : tau. e$][]
+          Or[$Lambda alpha. #kw("lambda")^epsilon x : tau_1.
+              #kw("lambda")^epsilon k : (tau_2 attach(->, tr: epsilon) tau). e$][]
         }),
       ),
       bnf(
         Prod($v$, {
           Or[$...$][]
+          Or[$#kw("lambda")^epsilon x : tau. e$][]
           Or[$Lambda alpha^k. v$][]
-          Or[$handler(h)$][]
-          Or[$perform(op,tau: tau)$][]
+          Or[$attach(handler(h), tr: epsilon)$][]
+          Or[$perform(op, tau: tau, eff: epsilon)$][]
           Or[$eblame(p)$][]
         }),
         Prod($p$, {
@@ -60,7 +71,7 @@
         Prod($E$, {
           Or[$...$][]
           Or[$E[tau]$][]
-          Or[$handle(h, E)$][]
+          Or[$#ekw("handle")^epsilon(h, E)$][]
           Or[$eblame(E)$][]
         }),
         Prod($F$, {

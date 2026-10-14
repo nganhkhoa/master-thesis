@@ -1,3 +1,6 @@
+#import "/setup.typ": setupdoc
+#show: setupdoc
+
 #import "@preview/simplebnf:0.1.2": *
 #import "@preview/codly:1.3.0": *
 #import "@preview/codly-languages:0.1.1": *
@@ -6,6 +9,11 @@
 #import "@preview/rich-counters:0.2.1": *
 
 #import "language.typ": *
+
+#let lam = [lambda]
+#let hdl = [handler]
+#let hnd = [handle]
+#let prf = [perform]
 
 #figure(
   grid(
@@ -22,9 +30,9 @@
     )),
 
     prooftree(rule(
-      name: "T-E-App",
+      name: "T-E-Abs",
       type($Gamma\,x:tau_1$, $e$, $tau_2$, eff: $epsilon$),
-      type($Gamma$, $lambda x:tau_1 . e$, $tau_1 attach(->, tr: epsilon) tau_2$, type: "val"),
+      type($Gamma$, $#kw("lambda")^epsilon x:tau_1 . e$, $tau_1 attach(->, tr: epsilon) tau_2$, type: "val"),
     )),
 
     // Row 2
@@ -61,7 +69,7 @@
       name: "T-E-Perform",
       $op : forall alpha . tau_1 -> tau_2 in Sigma(l)$,
       $alpha in.not "ftv"(Gamma)$,
-      type($Gamma$, $ekw("perform") op tau$, $teff(tau_1[alpha:=tau],chevron.l l|epsilon chevron.r,tau_2[alpha:=tau])$, type: "val"),
+      type($Gamma$, $#ekw("perform")^epsilon op tau$, $teff(tau_1[alpha:=tau],chevron.l l|epsilon chevron.r,tau_2[alpha:=tau])$, type: "val"),
     ))),
 
     // Row 5
@@ -77,7 +85,7 @@
     grid.cell(colspan: 2, prooftree(rule(
       name: "T-E-Handler",
       type($Gamma$, $h$, $tau$, type: "ops", eff: $l | epsilon$),
-      type($Gamma$, $handler(h)$, $teff((teff(unit,chevron.l l|epsilon chevron.r,tau)),epsilon,tau)$, type: "val"),
+      type($Gamma$, $#ekw("handler")^epsilon(h)$, $teff((teff(unit,chevron.l l|epsilon chevron.r,tau)),epsilon,tau)$, type: "val"),
     ))),
 
     // Row 7
@@ -85,7 +93,7 @@
       name: "T-E-Handle",
       type($Gamma$, $h$, $tau$, type: "ops", eff: $l | epsilon$),
       type($Gamma$, $e$, $tau$, eff: $chevron.l l|epsilon chevron.r$),
-      type($Gamma$, $handle(h,e)$, $tau$, eff: $epsilon$),
+      type($Gamma$, $#ekw("handle")^epsilon(h,e)$, $tau$, eff: $epsilon$),
     )))
   ),
   caption: [Type Rules for #lange]

@@ -1,6 +1,3 @@
-#import "@preview/great-theorems:0.1.2": *
-#show: great-theorems-init
-
 #let no-ref(it) = {
   // Catch all @label references
   show ref: r => context {
@@ -59,3 +56,16 @@
     )
   ))
 }
+
+// A derivation as a two column table: the judgment on the left, the rule
+// used on the right. The rule column always gets its full width.
+#let derivation(rows) = block(width: 100%, grid(
+  columns: (1fr, auto),
+  column-gutter: 2em,
+  row-gutter: 0.8em,
+  align: (left, right),
+  ..rows.flatten(),
+))
+
+// rule names inside derivations
+#let rn(r) = $mono(#r)$

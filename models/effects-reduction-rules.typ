@@ -1,3 +1,6 @@
+#import "/setup.typ": setupdoc
+#show: setupdoc
+
 #import "@preview/simplebnf:0.1.2": *
 #import "@preview/codly:1.3.0": *
 #import "@preview/codly-languages:0.1.1": *
@@ -7,14 +10,19 @@
 
 #import "language.typ": *
 
+#let lam = [lambda]
+#let hdl = [handler]
+#let hnd = [handle]
+#let prf = [perform]
+
 #figure(
   stack(
     grid(
       columns: (auto,auto,auto, auto),
       gutter: 1.5em,
       [$(Lambda alpha^k. v)[tau]$], [$estepx$], [$v[alpha:=tau]$], [Step-E-TApp],
-      [$apply(handler(h), v)$],[$estepx$],[$handle(h,(apply(v,())))$], [Step-E-Handler],
-      [$handle(h,v)$],[$estepx$],[$v$], [Step-E-Return],
+      [$apply(#ekw("handler")^epsilon(h), v)$],[$estepx$],[$#ekw("handle")^epsilon(h,(apply(v,())))$], [Step-E-Handler],
+      [$#ekw("handle")^epsilon(h,v)$],[$estepx$],[$v$], [Step-E-Return],
     ),
     v(2em),
     rule-set(
@@ -22,8 +30,8 @@
         name: [Step-E-Perform],
         $op in.not bop(E) and (op -> f) in h$,
         $op : forall alpha. tau_1 -> tau_2 in Sigma(l)$,
-        $k = lambda x : tau_2[alpha:=tau] . handle(h, E[x])$,
-        $handle(h, E[apply(perform(op, tau: tau), v)]) quad estepx quad apply(apply(f[tau], v), k)$
+        $k = #kw("lambda")^epsilon x : tau_2[alpha:=tau] . #ekw("handle")^epsilon(h, E[x])$,
+        $#ekw("handle")^epsilon(h, E[apply(#ekw("perform")^epsilon_p(op, tau: tau), v)]) quad estepx quad apply(apply(f[tau], v), k)$
       )),
     ),
     v(2em),
@@ -48,7 +56,7 @@
       [$bop(square.stroked)$], [$=$], [$diameter$],
       [$bop(apply(E,e))$], [$=$], [$bop(E)$],
       [$colon.tri$], [$colon.tri$], [$colon.tri$],
-      [$bop(handle(h,E))$],[$=$], [$bop(E) union {op | (op -> f) in h}$],
+      [$bop(#ekw("handle")^epsilon(h,E))$],[$=$], [$bop(E) union {op | (op -> f) in h}$],
     ),
     v(1em),
   ),

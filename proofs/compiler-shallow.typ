@@ -1,3 +1,6 @@
+#import "/setup.typ": setupdoc
+#show: setupdoc
+
 #import "@preview/curryst:0.6.0": rule, prooftree, rule-set
 
 #import "/proofs/setup.typ": *
@@ -7,9 +10,14 @@
 #show: no-ref
 #show: great-theorems-init
 
-#let relate(e) = $accent(#e, tilde)$
+#let theorem = appendix-theorem
+#let lemma = appendix-lemma
+
+#let rel(e) = $accent(#e, tilde)$
 #let treq(a,b) = $"EQ"(#a,#b)$
 #let hcheck = $kw("H")$
+
+= #langc to #lange Compiler Correctness (Shallow Handler)
 
 == Overview
 
@@ -66,21 +74,21 @@ Let's first define these relations:
 
 - $R_e subset.eq langc e times "Untyped" lange e$
 
-  If $(e,e') in R_e$, we write $e attach(~, br: R_e) e'$ or $e ~ e'$. We define $relate(e)$ as shorthand for any expression $relate(e)$ satisfying $e ~ relate(e)$.
+  If $(e,e') in R_e$, we write $e attach(~, br: R_e) e'$ or $e ~ e'$. We define $rel(e)$ as shorthand for any expression $rel(e)$ satisfying $e ~ rel(e)$.
 
 - $R_E subset.eq langc E times "Untyped" lange E$
 
-  If $(E,E') in R_E$, we write $E attach(~, br: R_E) E'$ or $E ~ E'$. We define $relate(E)$ as shorthand for any context $relate(E)$ satisfying $E ~ relate(E)$.
+  If $(E,E') in R_E$, we write $E attach(~, br: R_E) E'$ or $E ~ E'$. We define $rel(E)$ as shorthand for any context $rel(E)$ satisfying $E ~ rel(E)$.
 
 In the shallow semantics, the innermost check captures everything outside of it as its continuation, so a check is related together with its whole context:
 
-$E[check(k,j,e,v)] ~ ife(relate(e), apply((lambda x. relate(E[x])), relate(v)), eblame(k))$
+$E[check(k,j,e,v)] ~ ife(rel(e), apply((lambda x. rel(E[x])), rel(v)), eblame(k))$
 
-where $e$ has no check in evaluation position. $E$ may contain other checks, $relate(E[x])$ is again related by this rule, and it has one less check.
+where $e$ has no check in evaluation position. $E$ may contain other checks, $rel(E[x])$ is again related by this rule, and it has one less check.
 
 $
 treq(e,e') = cases(
-  "true" "if" e' = handle(heffcheck,relate(e)),
+  "true" "if" e' = handle(heffcheck,rel(e)),
   "true" "if" e = E[blame(k,j)] "and" e' = handle(heffcheck,eblame(k)),
   "false" "otherwise",
 )
@@ -91,7 +99,7 @@ $
     $tilde.op subset.eq langc E times "Untyped" lange E$
   ]
 
-  Define $relate(E)$ such that $E ~ relate(E)$. If $E$ contains a check, only the last row applies, on the innermost check.
+  Define $rel(E)$ such that $E ~ rel(E)$. If $E$ contains a check, only the last row applies, on the innermost check.
 
   #v(1em)
   #grid(
@@ -106,29 +114,29 @@ $
 
     [$apply(E,e)$],
     [$tilde$],
-    [$apply(relate(E),relate(e))$],
+    [$apply(rel(E),rel(e))$],
 
     [$apply(v,E)$],
     [$tilde$],
-    [$apply(relate(v),relate(E))$],
+    [$apply(rel(v),rel(E))$],
 
     [$mon(k,l,j,flat(e),E)$],
     [$tilde$],
-    [$apply(perform(effcheck),tuple(k,tuple(relate(e),relate(E))))$],
+    [$apply(perform(effcheck),tuple(k,tuple(rel(e),rel(E))))$],
 
     [$mon(k,l,j,kappa_1 -> kappa_2,E)$],
     [$tilde$],
-    [$apply(relate(e)_1,relate(E))$],
+    [$apply(rel(e)_1,rel(E))$],
     [],[],grid.cell(align:left,colspan:1)[$e_1$ as in the $mon(k,l,j,kappa_1 -> kappa_2,e)$ row below],
 
     [$mon(k,l,j,dep(kappa_1, lambda y. kappa_2),E)$],
     [$tilde$],
-    [$apply(relate(e)_1,relate(E))$],
+    [$apply(rel(e)_1,rel(E))$],
     [],[],grid.cell(align:left,colspan:1)[$e_1$ as in the $mon(k,l,j,dep(kappa_1, lambda y. kappa_2),e)$ row below],
 
     [$E[check(k,j,E_1,v)]$],
     [$tilde$],
-    [$ife(relate(E)_1, apply((lambda x. relate(E[x])), relate(v)), eblame(k))$],
+    [$ife(rel(E)_1, apply((lambda x. rel(E[x])), rel(v)), eblame(k))$],
     [],[],grid.cell(align:left,colspan:1)[where $E_1$ has no check],
   )
 
@@ -149,35 +157,35 @@ $
 
     [$v$],
     [$tilde$],
-    [$relate(v)$],
+    [$rel(v)$],
 
     [$apply(e_1,e_2)$],
     [$tilde$],
-    [$apply(relate(e)_1,relate(e)_2)$],
+    [$apply(rel(e)_1,rel(e)_2)$],
 
     [$mon(k,l,j,flat(e_1),e_2)$],
     [$tilde$],
-    [$apply(perform(effcheck),tuple(k,tuple(relate(e)_1,relate(e)_2)))$],
+    [$apply(perform(effcheck),tuple(k,tuple(rel(e)_1,rel(e)_2)))$],
 
     [$mon(k,l,j,kappa_1 -> kappa_2,e)$],
     [$tilde$],
-    [$apply(relate(e)_1,relate(e))$],
+    [$apply(rel(e)_1,rel(e))$],
     [],[],grid.cell(align:left,colspan:1)[$e_1=lambda f. lambda x. mon(k,l,j,kappa_2,apply(f,mon(l,k,j,kappa_1,x)))$],
 
     [$mon(k,l,j,dep(kappa_1, lambda y. kappa_2),e)$],
     [$tilde$],
-    [$apply(relate(e)_1,relate(e))$],
+    [$apply(rel(e)_1,rel(e))$],
     [],[],grid.cell(align:left,colspan:1)[$e_1=lambda f. lambda x. apply((lambda y. mon(k,l,j,kappa_2,apply(f,mon(l,k,j,kappa_1,x)))), mon(l,j,j,kappa_1,x))$],
 
     [$E[check(k,j,e,v)]$],
     [$tilde$],
-    [$ife(relate(e), apply((lambda x. relate(E[x])), relate(v)), eblame(k))$],
+    [$ife(rel(e), apply((lambda x. rel(E[x])), rel(v)), eblame(k))$],
     [],[],grid.cell(align:left,colspan:1)[where $e$ has no check in evaluation position (innermost check)],
 
     [${e_y\/y}e$],
     [$tilde$],
-    [$relate(e)[y:=relate(v)_y]$],
-    [],[],grid.cell(align:left,colspan:1)[where $e_y = mon(l,j,j,kappa_1,v)$, $e_y cstep1 v_y$ and $v_y ~ relate(v)_y$ (indy argument)],
+    [$rel(e)[y:=rel(v)_y]$],
+    [],[],grid.cell(align:left,colspan:1)[where $e_y = mon(l,j,j,kappa_1,v)$, $e_y cstep1 v_y$ and $v_y ~ rel(v)_y$ (indy argument)],
 
     [$blame(k,j)$],[$tilde$],[$eblame(k)$],
   )
@@ -207,22 +215,22 @@ $
 
     [$lambda x. e$],
     [$tilde$],
-    [$lambda x. relate(e)$],
+    [$lambda x. rel(e)$],
 
     [$guard(v,kappa_1 -> kappa_2,k,l,j)$],
     [$tilde$],
-    [$relate(e)$],
-    [],[],grid.cell(align:left,colspan:1)[$e=lambda x. mon(k,l,j,kappa_2,apply(relate(v),mon(l,k,j,kappa_1,x)))$],
+    [$rel(e)$],
+    [],[],grid.cell(align:left,colspan:1)[$e=lambda x. mon(k,l,j,kappa_2,apply(rel(v),mon(l,k,j,kappa_1,x)))$],
 
     [$guard(v,dep(kappa_1, lambda y. kappa_2),k,l,j)$],
     [$tilde$],
-    [$relate(e)$],
-    [],[],grid.cell(align:left,colspan:1)[$e=lambda x. apply((lambda y. mon(k,l,j,kappa_2,apply(relate(v),mon(l,k,j,kappa_1,x)))), mon(l,j,j,kappa_1,x))$],
+    [$rel(e)$],
+    [],[],grid.cell(align:left,colspan:1)[$e=lambda x. apply((lambda y. mon(k,l,j,kappa_2,apply(rel(v),mon(l,k,j,kappa_1,x)))), mon(l,j,j,kappa_1,x))$],
   )
 ]
 
 #lemma(title: "Relation is correct")[
-  If $E ~ relate(E)$, $e ~ relate(e)$ and $e$ has no check in evaluation position, then $E[e] ~ relate(E)[relate(e)]$.
+  If $E ~ rel(E)$, $e ~ rel(e)$ and $e$ has no check in evaluation position, then $E[e] ~ rel(E)[rel(e)]$.
 ] <shallow-relation-context>
 
 #proof[
@@ -230,25 +238,25 @@ By case on $E$.
 
 - Case $E$ has no check
 
-  By induction on $E$, every row of $E ~ relate(E)$ matches a row of $e ~ relate(e)$ with the hole filled.
+  By induction on $E$, every row of $E ~ rel(E)$ matches a row of $e ~ rel(e)$ with the hole filled.
 
 - Case $E = E_0[check(k,j,E_1,v)]$ where $E_1$ has no check
 
   $E[e] = E_0[check(k,j,E_1[e],v)]$ and $E_1[e]$ has no check in evaluation position.
 
-  $E[e] ~ ife(relate(E_1[e]), apply((lambda x. relate(E_0[x])), relate(v)), eblame(k))$ by the check row.
+  $E[e] ~ ife(rel(E_1[e]), apply((lambda x. rel(E_0[x])), rel(v)), eblame(k))$ by the check row.
 
-  $relate(E_1[e]) = relate(E)_1[relate(e)]$ by the previous case.
+  $rel(E_1[e]) = rel(E)_1[rel(e)]$ by the previous case.
 
-  $= relate(E)[relate(e)]$ by the check row of $E ~ relate(E)$.
+  $= rel(E)[rel(e)]$ by the check row of $E ~ rel(E)$.
 ]
 
 #lemma(title: "Relation is closed under substitution")[
-  If $e ~ relate(e)$ and $v ~ relate(v)$ then $e[x:=v] ~ relate(e)[x:=relate(v)]$.
+  If $e ~ rel(e)$ and $v ~ rel(v)$ then $e[x:=v] ~ rel(e)[x:=rel(v)]$.
 ] <shallow-substitution>
 
 #proof[
-  By induction on $e ~ relate(e)$. Every row is homomorphic on $x$, and the bound variables $f$, $x$, $y$ in the rows are chosen fresh.
+  By induction on $e ~ rel(e)$. Every row is homomorphic on $x$, and the bound variables $f$, $x$, $y$ in the rows are chosen fresh.
 ]
 
 #lemma(title: "Compiler is subset of relation")[
@@ -308,7 +316,7 @@ By induction on structure of $compile(type(dot,e_1,tau),e_2)$.
 == Compiler Correctness
 
 #theorem()[
-  If $compile(type(dot,e,tau),e')$ and $e^* = "untyped"(apply(kw("wrap")[tau],(lambda \_. e')))$ and $e cstep1 r$ then $e^* estep1 relate(r)$.
+  If $compile(type(dot,e,tau),e')$ and $e^* = "untyped"(apply(kw("wrap")[tau],(lambda \_. e')))$ and $e cstep1 r$ then $e^* estep1 rel(r)$.
 
   Where $r$ is a value $v$ or $blame(k,j)$.
 ]
@@ -317,9 +325,9 @@ By induction on structure of $compile(type(dot,e_1,tau),e_2)$.
 
   $e^* estep1 e'_1$ and $treq(e,e'_1)$ by @shallow-wrap-step-eq.
 
-  $e'_1 estep1 relate(r)$ by @shallow-full-simulation.
+  $e'_1 estep1 rel(r)$ by @shallow-full-simulation.
 
-  $e^* estep1 relate(r)$ by combining steps.
+  $e^* estep1 rel(r)$ by combining steps.
 ]
 
 #lemma(title: "Wrapped compiled program steps to an equivalent state with source program")[
@@ -331,13 +339,13 @@ By induction on structure of $compile(type(dot,e_1,tau),e_2)$.
 
 By @shallow-compiler-is-relation, $e ~ e'^*$.
 
-$e^*_1 estep1 apply(hcheck,lambda \_. e'^*) estep1 apply(handler(heffcheck),lambda \_. e'^*) estep handle(heffcheck, e'^*) = e^*_2$
+$e^*_1 estep1 apply(hcheck,lambda \_. e'^*) estep1 apply(handler(heffcheck),lambda \_. e'^*) estep1 handle(heffcheck, e'^*) = e^*_2$
 
 By definition, $treq(e,e^*_2)$ (case 1).
 ]
 
 #lemma()[
-  If $e cstep1 r$ and $treq(e,e')$ then $e' estep1 relate(r)$.
+  If $e cstep1 r$ and $treq(e,e')$ then $e' estep1 rel(r)$.
 ] <shallow-full-simulation>
 
 #proof[
@@ -345,9 +353,9 @@ By definition, $treq(e,e^*_2)$ (case 1).
 
   - Case $r cstep1 r$ with $r = v$
 
-    $e' = handle(heffcheck,relate(v))$ because $treq(v,e')$ (case 2 is invalid).
+    $e' = handle(heffcheck,rel(v))$ because $treq(v,e')$ (case 2 is invalid).
 
-    $e' estep relate(v)$ by Step-E-Return.
+    $e' estepx rel(v)$ by Step-E-Return.
 
   - Case $r cstep1 r$ with $r = blame(k,j)$
 
@@ -359,28 +367,28 @@ By definition, $treq(e,e^*_2)$ (case 1).
 
     By simulation, we have $e' estep1 e'_1$ such that $treq(e_1,e'_1)$.
 
-    By IH, $e'_1 estep1 relate(r)$.
+    By IH, $e'_1 estep1 rel(r)$.
 
-    By chaining steps, $e' estep1 relate(r)$.
+    By chaining steps, $e' estep1 rel(r)$.
 ]
 
-We also need to make a claim that in no where in $relate(e)$ do we have $handle$ or $perform(eff)$ that $eff != effcheck$, so $effcheck in.not bop(E')$ for every target context $E'$ under the top handle.
+We also need to make a claim that in no where in $rel(e)$ do we have $handle$ or $perform(eff)$ that $eff != effcheck$, so $effcheck in.not bop(E')$ for every target context $E'$ under the top handle.
 
 #lemma(title: "Performing a check")[
   If $E'$ has no $handle$, then
 
   $
-  & handle(heffcheck, E'[apply(perform(effcheck),tuple(k,tuple(relate(e),relate(v))))]) \
-  estep1 & handle(heffcheck, ife(apply(relate(e),relate(v)), apply((lambda x. E'[x]),relate(v)), eblame(k)))
+  & handle(heffcheck, E'[apply(perform(effcheck),tuple(k,tuple(rel(e),rel(v))))]) \
+  estep1 & handle(heffcheck, ife(apply(rel(e),rel(v)), apply((lambda x. E'[x]),rel(v)), eblame(k)))
   $
 ] <shallow-perform-check>
 
 #proof[
   $
-  & handle(heffcheck, E'[apply(perform(effcheck),tuple(k,tuple(relate(e),relate(v))))]) \
-  estep& apply(apply((lambda tuple(l,tuple(e,v)). lambda k. apply(hcheck,(lambda \_. ife(apply(e,v),apply(k,v),eblame(l))))), tuple(k,tuple(relate(e),relate(v)))), (lambda x. E'[x])) "  (Step-E-Perform-Shallow)" \
-  estep1& apply(hcheck,(lambda \_. ife(apply(relate(e),relate(v)),apply((lambda x. E'[x]),relate(v)),eblame(k)))) \
-  estep1& handle(heffcheck, ife(apply(relate(e),relate(v)),apply((lambda x. E'[x]),relate(v)),eblame(k))) "  (unfold " mu", Step-E-Handler, " beta ")"
+  & handle(heffcheck, E'[apply(perform(effcheck),tuple(k,tuple(rel(e),rel(v))))]) \
+  estepx& apply(apply((lambda tuple(l,tuple(e,v)). lambda k. apply(hcheck,(lambda \_. ife(apply(e,v),apply(k,v),eblame(l))))), tuple(k,tuple(rel(e),rel(v)))), (lambda x. E'[x])) "  (Step-E-Perform-Shallow)" \
+  estep1& apply(hcheck,(lambda \_. ife(apply(rel(e),rel(v)),apply((lambda x. E'[x]),rel(v)),eblame(k)))) \
+  estep1& handle(heffcheck, ife(apply(rel(e),rel(v)),apply((lambda x. E'[x]),rel(v)),eblame(k))) "  (unfold " mu", Step-E-Handler, " beta ")"
   $
 ]
 
@@ -397,49 +405,49 @@ By case analysis on $e_1 cstep e_2$ with respect to $treq(e_1,e'_1)$.
 
     $e'_2 = e'_1$, and $treq(blame(k,j),e'_2)$ (case 2 with $E = square.stroked$).
 
-  - Case $treq(e_1,e'_1)$ is case 1, $e'_1 = handle(heffcheck,relate(E)[eblame(k)])$.
+  - Case $treq(e_1,e'_1)$ is case 1, $e'_1 = handle(heffcheck,rel(E)[eblame(k)])$.
 
     $e'_1 estep handle(heffcheck,eblame(k)) = e'_2$ by Step-E-Error.
 
     Obtain $treq(blame(k,j),e'_2)$ (case 2 with $E = square.stroked$).
 
-Otherwise, $e_1$ is not blamed and $treq(e_1,e'_1)$ is case 1. By decomposition lemma, $e_1 = E[e_3]$, $e_2 = E[e_4]$ and that $e_3 cstep e_4$ is a redex reduction.
+Otherwise, $e_1$ is not blamed and $treq(e_1,e'_1)$ is case 1. By decomposition lemma, $e_1 = E[e_3]$, $e_2 = E[e_4]$ and that $e_3 cstepx e_4$ is a redex reduction.
 
-If $e_3$ is not a check, $e'_1 = handle(heffcheck, relate(E)[relate(e)_3])$ by @shallow-relation-context.
+If $e_3$ is not a check, $e'_1 = handle(heffcheck, rel(E)[rel(e)_3])$ by @shallow-relation-context.
 
-Note that $relate(E)$ is an evaluation context of $lange$ without $handle$. Unlike the deep proof, there is no case split on the checks in $E$, the redex steps under the same top handle.
+Note that $rel(E)$ is an evaluation context of $lange$ without $handle$. Unlike the deep proof, there is no case split on the checks in $E$, the redex steps under the same top handle.
 
-- Case $e_3 = mon(k,l,j,flat(e),v) cstep check(k,j,apply(e,v),v) = e_4$
+- Case $e_3 = mon(k,l,j,flat(e),v) cstepx check(k,j,apply(e,v),v) = e_4$
 
-  $relate(e)_3 = apply(perform(effcheck),tuple(k,tuple(relate(e),relate(v))))$
+  $rel(e)_3 = apply(perform(effcheck),tuple(k,tuple(rel(e),rel(v))))$
 
-  $e'_1 estep1 handle(heffcheck, ife(apply(relate(e),relate(v)), apply((lambda x. relate(E)[x]), relate(v)), eblame(k))) = e'_2$ by @shallow-perform-check.
+  $e'_1 estep1 handle(heffcheck, ife(apply(rel(e),rel(v)), apply((lambda x. rel(E)[x]), rel(v)), eblame(k))) = e'_2$ by @shallow-perform-check.
 
   $e_2 = E[check(k,j,apply(e,v),v)]$, and $apply(e,v)$ has no check in evaluation position.
 
-  $e_2 ~ ife(apply(relate(e),relate(v)), apply((lambda x. relate(E[x])), relate(v)), eblame(k))$ by the check row.
+  $e_2 ~ ife(apply(rel(e),rel(v)), apply((lambda x. rel(E[x])), rel(v)), eblame(k))$ by the check row.
 
-  $relate(E[x]) = relate(E)[x]$ by @shallow-relation-context.
+  $rel(E[x]) = rel(E)[x]$ by @shallow-relation-context.
 
   Obtain $treq(e_2,e'_2)$ (case 1).
 
-- Case $e_3 = check(k,j,trueb,v) cstep v = e_4$
+- Case $e_3 = check(k,j,trueb,v) cstepx v = e_4$
 
   $e_1 = E[check(k,j,trueb,v)]$, the check is the innermost one.
 
-  $e'_1 = handle(heffcheck, ife(trueb, apply((lambda x. relate(E[x])), relate(v)), eblame(k)))$ by the check row.
+  $e'_1 = handle(heffcheck, ife(trueb, apply((lambda x. rel(E[x])), rel(v)), eblame(k)))$ by the check row.
 
-  $e'_1 estep1 handle(heffcheck, relate(E[x])[x:=relate(v)]) = e'_2$
+  $e'_1 estep1 handle(heffcheck, rel(E[x])[x:=rel(v)]) = e'_2$
 
-  $e_2 = E[v] = E[x][x:=v] ~ relate(E[x])[x:=relate(v)]$ by @shallow-substitution.
+  $e_2 = E[v] = E[x][x:=v] ~ rel(E[x])[x:=rel(v)]$ by @shallow-substitution.
 
   Obtain $treq(e_2,e'_2)$ (case 1).
 
-- Case $e_3 = check(k,j,falseb,v) cstep blame(k,j) = e_4$
+- Case $e_3 = check(k,j,falseb,v) cstepx blame(k,j) = e_4$
 
   $e_1 = E[check(k,j,falseb,v)]$, the check is the innermost one.
 
-  $e'_1 = handle(heffcheck, ife(falseb, apply((lambda x. relate(E[x])), relate(v)), eblame(k)))$ by the check row.
+  $e'_1 = handle(heffcheck, ife(falseb, apply((lambda x. rel(E[x])), rel(v)), eblame(k)))$ by the check row.
 
   $e'_1 estep handle(heffcheck, eblame(k)) = e'_2$
 
@@ -447,37 +455,37 @@ Note that $relate(E)$ is an evaluation context of $lange$ without $handle$. Unli
 
   Obtain $treq(e_2,e'_2)$ (case 2).
 
-- Case $e_3 = mon(k,l,j,kappa_1 -> kappa_2, v) cstep guard(v, kappa_1 -> kappa_2, k,l,j) = e_4$
+- Case $e_3 = mon(k,l,j,kappa_1 -> kappa_2, v) cstepx guard(v, kappa_1 -> kappa_2, k,l,j) = e_4$
 
   Let $e_5 = lambda f. lambda x. mon(k,l,j,kappa_2,apply(f,mon(l,k,j,kappa_1,x))) = lambda f. lambda x. e_(5a)$
 
-  $relate(e)_3 = apply(relate(e)_5,relate(v))$
+  $rel(e)_3 = apply(rel(e)_5,rel(v))$
 
-  $e'_1 estep handle(heffcheck, relate(E)[lambda x. relate(e)_(5a)[f:=relate(v)]]) = e'_2$ by $beta$.
+  $e'_1 estep handle(heffcheck, rel(E)[lambda x. rel(e)_(5a)[f:=rel(v)]]) = e'_2$ by $beta$.
 
-  $guard(v,kappa_1 -> kappa_2,k,l,j) ~ lambda x. relate(e)_(5a)[f:=relate(v)]$ by the relation on values.
+  $guard(v,kappa_1 -> kappa_2,k,l,j) ~ lambda x. rel(e)_(5a)[f:=rel(v)]$ by the relation on values.
 
   Obtain $treq(e_2,e'_2)$ (case 1) by @shallow-relation-context.
 
-- Case $e_3 = mon(k,l,j,dep(kappa_1, lambda y. kappa_2), v) cstep guard(v, dep(kappa_1, lambda y. kappa_2), k,l,j) = e_4$
+- Case $e_3 = mon(k,l,j,dep(kappa_1, lambda y. kappa_2), v) cstepx guard(v, dep(kappa_1, lambda y. kappa_2), k,l,j) = e_4$
 
   Same as the case $mon(k,l,j,kappa_1 -> kappa_2, v)$, with
 
   $e_5 = lambda f. lambda x. apply((lambda y. mon(k,l,j,kappa_2,apply(f,mon(l,k,j,kappa_1,x)))), mon(l,j,j,kappa_1,x)) = lambda f. lambda x. e_(5a)$
 
-- Case $e_3 = apply(guard(v_1,kappa_1 -> kappa_2,k,l,j),v_2) cstep mon(k,l,j,kappa_2,apply(v_1, mon(l,k,j,kappa_1,v_2))) = e_4$
+- Case $e_3 = apply(guard(v_1,kappa_1 -> kappa_2,k,l,j),v_2) cstepx mon(k,l,j,kappa_2,apply(v_1, mon(l,k,j,kappa_1,v_2))) = e_4$
 
-  $relate(e)_3 = apply(relate(e)_5, relate(v)_2)$ where $e_5 = lambda x. mon(k,l,j,kappa_2,apply(relate(v)_1,mon(l,k,j,kappa_1,x)))$
+  $rel(e)_3 = apply(rel(e)_5, rel(v)_2)$ where $e_5 = lambda x. mon(k,l,j,kappa_2,apply(rel(v)_1,mon(l,k,j,kappa_1,x)))$
 
-  $e'_1 estep handle(heffcheck, relate(E)[relate(e)_4]) = e'_2$ by $beta$ and @shallow-substitution.
+  $e'_1 estep handle(heffcheck, rel(E)[rel(e)_4]) = e'_2$ by $beta$ and @shallow-substitution.
 
   Obtain $treq(e_2,e'_2)$ (case 1) by @shallow-relation-context.
 
-- Case $e_3 = apply(guard(v_1,dep(kappa_1, lambda y. kappa_2),k,l,j),v_2) cstep mon(k,l,j, kappa_3, apply(v_1, mon(l,k,j,kappa_1,v_2))) = e_4$ where $kappa_3 = {mon(l,j,j,kappa_1,v_2)\/y}kappa_2$
+- Case $e_3 = apply(guard(v_1,dep(kappa_1, lambda y. kappa_2),k,l,j),v_2) cstepx mon(k,l,j, kappa_3, apply(v_1, mon(l,k,j,kappa_1,v_2))) = e_4$ where $kappa_3 = {mon(l,j,j,kappa_1,v_2)\/y}kappa_2$
 
-  $relate(e)_3 = apply(relate(e)_5, relate(v)_2)$ where $e_5 = lambda x. apply((lambda y. e_(5a)), mon(l,j,j,kappa_1,x))$ and $e_(5a) = mon(k,l,j,kappa_2,apply(relate(v)_1,mon(l,k,j,kappa_1,x)))$
+  $rel(e)_3 = apply(rel(e)_5, rel(v)_2)$ where $e_5 = lambda x. apply((lambda y. e_(5a)), mon(l,j,j,kappa_1,x))$ and $e_(5a) = mon(k,l,j,kappa_2,apply(rel(v)_1,mon(l,k,j,kappa_1,x)))$
 
-  $e'_1 estep handle(heffcheck, relate(E)[apply((lambda y. relate(e)_(5a)[x:=relate(v)_2]), relate(e)_7)])$ by $beta$, where $e_7 = mon(l,j,j,kappa_1,v_2)$
+  $e'_1 estep handle(heffcheck, rel(E)[apply((lambda y. rel(e)_(5a)[x:=rel(v)_2]), rel(e)_7)])$ by $beta$, where $e_7 = mon(l,j,j,kappa_1,v_2)$
 
   The target checks the indy argument $mon(l,j,j,kappa_1,v_2)$ first, the source checks the argument $mon(l,k,j,kappa_1,v_2)$ first. For $kappa_1 = flat(e_p)$ both become $check(l,j,apply(e_p,v_2),v_2)$, so we pair the two checks.
 
@@ -489,19 +497,19 @@ Note that $relate(E)$ is an evaluation context of $lange$ without $handle$. Unli
 
     Let $e_6 = mon(k,l,j,kappa_2,apply(v_1,mon(l,k,j,kappa_1,v_2)))$, then $e_2 = E[{mon(l,j,j,kappa_1,v_2)\/y}e_6]$.
 
-    $e'_1 estep1 handle(heffcheck, relate(E)[relate(e)_6[y:=relate(v)_y]]) = e'_2$
+    $e'_1 estep1 handle(heffcheck, rel(E)[rel(e)_6[y:=rel(v)_y]]) = e'_2$
 
-    By purity, the target's argument check $mon(l,k,j,kappa_1,relate(v)_2)$ succeeds again. Each later evaluation of $mon(l,j,j,kappa_1,v_2)$ inside $kappa_2$ in the source gives $v_y$ again and is matched by zero target steps.
+    By purity, the target's argument check $mon(l,k,j,kappa_1,rel(v)_2)$ succeeds again. Each later evaluation of $mon(l,j,j,kappa_1,v_2)$ inside $kappa_2$ in the source gives $v_y$ again and is matched by zero target steps.
 
-    ${mon(l,j,j,kappa_1,v_2)\/y}e_6 ~ relate(e)_6[y:=relate(v)_y]$ by the indy row.
+    ${mon(l,j,j,kappa_1,v_2)\/y}e_6 ~ rel(e)_6[y:=rel(v)_y]$ by the indy row.
 
     Obtain $treq(e_2,e'_2)$ (case 1).
 
 - Case $e_3$ is a base reduction ($beta$, $mu$, $injl$, $injr$, $ife$, $o$)
 
-  $relate(e)_3$ is the same redex in $lange$, and $relate(e)_3 estep relate(e)_4$ by the same rule, using @shallow-substitution for $beta$ and $mu$.
+  $rel(e)_3$ is the same redex in $lange$, and $rel(e)_3 estepx rel(e)_4$ by the same rule, using @shallow-substitution for $beta$ and $mu$.
 
-  $e'_1 estep handle(heffcheck, relate(E)[relate(e)_4]) = e'_2$
+  $e'_1 estep handle(heffcheck, rel(E)[rel(e)_4]) = e'_2$
 
   Obtain $treq(e_2,e'_2)$ (case 1) by @shallow-relation-context.
 ]
