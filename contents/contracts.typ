@@ -1,3 +1,6 @@
+#import "/setup.typ": setupdoc
+#show: setupdoc
+
 #import "/models/language.typ": *
 #import "/utils.typ": load-bib, no-ref
 

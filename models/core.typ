@@ -1,3 +1,6 @@
+#import "/setup.typ": setupdoc
+#show: setupdoc
+
 #import "@preview/simplebnf:0.1.2": *
 #import "@preview/codly:1.3.0": *
 #import "@preview/codly-languages:0.1.1": *
@@ -24,7 +27,6 @@
           Or[$o$][]
           Or[$tau -> tau$][]
           Or[$tuple(tau,tau)$][]
-          Or[$ref(tau)$][]
           Or[$unit$][]
         }),
         Prod($o$, {
@@ -32,13 +34,12 @@
           Or[bool][]
         }),
         Prod($e$, {
-          Or[$n | b | tuple(e,e) | x$][]
+          Or[$n | b | unit | tuple(e,e) | x$][]
           Or[$lambda x : tau . e | mu x : tau . e$][]
           Or[$e + e | e - e | e and e | e or e$][]
           Or[$apply(e, e) | ife(e, e, e)$][]
           Or[$iszero(e)$][]
           Or[$injl(e) | injr(e)$][]
-          Or[$newcell(e) | getcell(e) | setcell(e,e)$][]
         }),
       ),
       bnf(
@@ -49,8 +50,7 @@
           Or[$trueb | falseb$][]
         }),
         Prod($v$, {
-          Or[$unit | loc$][]
-          Or[$n | b | tuple(v,v) | x | lambda x. e$][]
+          Or[$n | b | unit | tuple(v,v) | x | lambda x : tau. e$][]
         }),
         Prod($E$, {
           Or[$square.stroked$][]
@@ -58,7 +58,6 @@
           Or[$E and e | v and E | E or e | v or E$][]
           Or[$apply(E, e) | apply(v, E) | ife(E, e, e) | iszero(E)$][]
           Or[$tuple(E, e) | tuple(v, E) , injl(E) | injr(E)$][]
-          Or[$newcell(E) | getcell(E) | setcell(E,e) | setcell(v,E)$][]
         }),
       ),
     ),

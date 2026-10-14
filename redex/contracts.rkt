@@ -71,6 +71,29 @@
 (define ->contracts*
   (compatible-closure ->contracts Contracts E))
 
+;; Experimental: (hijack e) marks a sub-expression whose compiled contract
+;; checks should be run under a user-supplied handler instead of the default
+;; one. Kept as a separate language so Contracts (and its figures) are unchanged.
+;; In the source semantics hijack is the identity: the source language has no
+;; notion of handlers, so it still blames.
+(define-extended-language ContractsHijack Contracts
+  (e ::= ....
+         (hijack e))
+  (E ::= ....
+         (hijack E)))
+
+(define ->contracts-hijack
+  (extend-reduction-relation ->contracts ContractsHijack
+    [==> (hijack v) v
+         HIJACK-VALUE]
+
+    [==> (hijack (blame k j)) (blame k j)
+         HIJACK-BLAME]
+
+    with
+    [(--> ((in-hole E before) σ) ((in-hole E after) σ))
+     (==> before after)]))
+
 (module+ test
   (test-match Contracts e (term (λ x num true)))
   (test-match Contracts κ (term (flat (λ x num true))))
@@ -97,6 +120,14 @@
                 ((flat (λ x num true)) ->i y (flat (λ x num (zero? (sub x y)))))
                 (λ x num (add x 1)))
            10) ()))
+    (term ((blame k j) ())))
+
+  (test-->> ->contracts-hijack
+    (term ((add (hijack (mon k l j (flat (λ x num true)) 1)) 2) ()))
+    (term (3 ())))
+
+  (test-->> ->contracts-hijack
+    (term ((hijack (mon k l j (flat (λ x num false)) 1)) ()))
     (term ((blame k j) ())))
 
   #;(let [(traces (dynamic-require 'redex/gui 'traces))

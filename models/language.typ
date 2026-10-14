@@ -1,3 +1,6 @@
+#import "/setup.typ": setupdoc
+#show: setupdoc
+
 #let contract-color = rgb("#0071BC")
 #let effect-color = rgb("#F26035")
 
@@ -71,8 +74,9 @@
 #let bop(E) = $ekw("bop")(#E)$
 
 #let step = $-->$
-#let step1 = $-->$
+#let step1 = $attach(step, tr: *)$
 #let stepx = $arrow.r.dashed$
+#let stepx1 = $attach(stepx, tr: *)$
 #let cstep = $arrow.r.open$
 #let cstep1 = $attach(cstep, tr: *)$
 #let cstepx = $arrow.r.dotted$

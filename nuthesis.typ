@@ -1,3 +1,5 @@
+#import "setup.typ": setupdoc
+
 #let nuthesis(
   title: "",
   author: "",
@@ -23,25 +25,7 @@
   }
 
   // --- Global Document Setup ---
-  set page(
-    paper: "us-letter",
-    margin: 1in,
-    numbering: "1",
-    number-align: top + right,
-  )
-
-  set text(size: 12pt, font: "New Computer Modern")
-
-  // Preliminary pages and main body text must be double spaced
-  // (In Typst, leading around 1.2em to 1.5em visually represents double-spacing depending on font)
-  set par(leading: 1.5em, justify: true, first-line-indent: 1.5em)
-
-  // Quotations, captions, lists, and tables may be single spaced
-  show quote: set par(leading: 0.65em)
-  show figure.caption: set par(leading: 0.65em)
-  show list: set par(leading: 0.65em)
-  show enum: set par(leading: 0.65em)
-  show table: set par(leading: 0.65em)
+  setupdoc[]
 
   // --- Title Page ---
   // The title page is counted (Page 1) but should not display a page number

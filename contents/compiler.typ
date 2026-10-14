@@ -1,3 +1,6 @@
+#import "/setup.typ": setupdoc
+#show: setupdoc
+
 #import "/models/language.typ": *
 #import "/proofs/setup.typ": *
 #import "/utils.typ": load-bib, no-ref
@@ -69,15 +72,15 @@ Careful readers may have noticed that the compiler does not annotate effects. Si
 
 The compiler should produce same type expression. However, this is problematic when effects are introduced. Recall that the type system separates between pure function, and effectful functions. And type judgement separates between non-effectful computations and effectful computations. Depending on the source, compiled program may have the same type with no effects (no monitors), or same type with some effects (monitors during computation), or purely produce a function wrapped by monitors, or effectfully produce a function wrapped by monitors (monitors during computation).
 
-#theorem(title: "Compiler Type Preservation")[
+#theorem(title: "Compiler Type Preservation", number: appendix-number(<ts-preservation>))[
 
 If $compile(type(dot.op,e_1,tau),e_2)$ then $type(dot.op,e_2,tau^*,eff: effs(heffcheck))$
-] <compiler-type-preservation>
+] <body-compiler-type-preservation>
 
-#theorem(title: [Compiler Effect Safety with $kw("wrap")$])[
+#theorem(title: [Compiler Effect Safety with $kw("wrap")$], number: appendix-number(<ts-effect-safety>))[
 
 If $compile(type(dot.op,e_1,tau),e_2)$ and $type(dot.op,e_2,tau^*,eff: effs(heffcheck))$ then $type(dot.op, apply(kw("wrap")[tau^*],(lambda \_: kw("unit"). e)), tau^*, eff: mteff)$
-] <compiled-wrapped-safe>
+] <body-compiled-wrapped-safe>
 
 #proof[
   True by type checking.
@@ -87,10 +90,10 @@ If $compile(type(dot.op,e_1,tau),e_2)$ and $type(dot.op,e_2,tau^*,eff: effs(heff
 
 The compiler should produce a program equivalent to the source program. If the source program produces a value, the target program should also produce (the same) value, and with an equivalent storage space.
 
-#theorem(title: "Compiler Correctness")[
+#theorem(title: "Compiler Correctness", number: appendix-number(<compiler-correctness>))[
 
 If $compile(type(dot,e,tau),e')$ and $e^* = "untyped"(apply(kw("wrap")[tau],(lambda \_. e')))$ and $e cstep1 b$ then $e^* estep1 b$.
-] <compiler-correctness>
+] <body-compiler-correctness>
 
 #v(1em)
 #include "/models/compiler.typ"
