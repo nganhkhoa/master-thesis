@@ -234,21 +234,46 @@ $
 ] <compiler-shallow-shallow-relation-context>
 
 #proof[
-By case on $E$.
+By induction on $E$.
 
-- Case $E$ has no check
+- Case $E = square.stroked$
 
-  By induction on $E$, every row of $E ~ rel(E)$ matches a row of $e ~ rel(e)$ with the hole filled.
+  #derivation((
+    ($E[e] = e$, [Context Plug in]),
+    ($rel(E) = square.stroked$, [Definition]),
+    ($rel(E)[rel(e)] = rel(e)$, [Context Plug in]),
+    ($E[e] ~ rel(E)[rel(e)]$, [Given]),
+  ))
 
-- Case $E = E_0[check(k,j,E_1,v)]$ where $E_1$ has no check
+- Case $E = apply(E_0,e_0)$
 
-  $E[e] = E_0[check(k,j,E_1[e],v)]$ and $E_1[e]$ has no check in evaluation position.
+  #derivation((
+    ($E_0[e] ~ rel(E_0)[rel(e)]$, [I.H.]),
+    ($E[e] = apply(E_0[e],e_0)$, [Context Plug in]),
+    ($rel(E)[rel(e)] = apply(rel(E_0)[rel(e)],rel(e)_0)$, [Definition]),
+    ($E[e] ~ rel(E)[rel(e)]$, [Definition]),
+  ))
 
-  $E[e] ~ ife(rel(E_1[e]), apply((lambda x. rel(E_0[x])), rel(v)), eblame(k))$ by the check row.
+- Case $E = apply(v,E_0)$
 
-  $rel(E_1[e]) = rel(E)_1[rel(e)]$ by the previous case.
+  #derivation((
+    ($E_0[e] ~ rel(E_0)[rel(e)]$, [I.H.]),
+    ($E[e] = apply(v,E_0[e])$, [Context Plug in]),
+    ($rel(E)[rel(e)] = apply(rel(v),rel(E_0)[rel(e)])$, [Definition]),
+    ($E[e] ~ rel(E)[rel(e)]$, [Definition]),
+  ))
 
-  $= rel(E)[rel(e)]$ by the check row of $E ~ rel(E)$.
+- Case $E = E_0[check(k,j,E_1,v)]$, where $E_1$ has no check in evaluation position
+
+  #derivation((
+    ($E_1[e] ~ rel(E_1)[rel(e)]$, [I.H.]),
+    ($E[e] = E_0[check(k,j,E_1[e],v)]$, [Context Plug in]),
+    ($E[e] ~ ife(rel(E_1)[rel(e)],apply((lambda x.rel(E_0[x])),rel(v)),eblame(k))$, [Check row]),
+    ($ife(rel(E_1)[rel(e)],apply((lambda x.rel(E_0[x])),rel(v)),eblame(k)) = rel(E)[rel(e)]$, [Definition]),
+    ($E[e] ~ rel(E)[rel(e)]$, []),
+  ))
+
+- Other context forms follow similarly.
 ]
 
 #lemma(title: "Relation is closed under substitution")[

@@ -281,32 +281,151 @@ All cases follow from the induction hypothesis and the compositional nature of t
 ] <compiler-relation-context-decomposition>
 
 #proof[
+By induction on the check-free context $E^*$.
+
+- Case $E^* = square.stroked$
+
+  #derivation((
+    ($E^*[e] = e ~ e'$, [Given]),
+    ($E'^* = square.stroked$, [Choose]),
+    ($e'_0 = e'$, [Choose]),
+    ($E^* ~ E'^*$, [Definition]),
+    ($e ~ e'_0$, [Given]),
+    ($e' = E'^*[e'_0]$, [Context Plug in]),
+  ))
+
+- Case $E^* = apply(E^*_0,e_1)$
+
+  #derivation((
+    ($apply(E^*_0[e],e_1) ~ e'$, [Given]),
+    ($E^*_0[e] ~ e'_0$, [Relation inversion]),
+    ($e_1 ~ e'_1$, [Relation inversion]),
+    ($e' = apply(e'_0,e'_1)$, [Relation inversion]),
+    ($E^*_0 ~ E'^*_0$, [I.H.]),
+    ($e ~ e'_2$, [I.H.]),
+    ($e'_0 = E'^*_0[e'_2]$, [I.H.]),
+    ($E'^* = apply(E'^*_0,e'_1)$, [Choose]),
+    ($E^* ~ E'^*$, [Definition]),
+    ($e' = E'^*[e'_2]$, [Context Plug in]),
+  ))
+
+- Case $E^* = apply(v,E^*_0)$
+
+  #derivation((
+    ($apply(v,E^*_0[e]) ~ e'$, [Given]),
+    ($v ~ v'$, [Relation inversion]),
+    ($E^*_0[e] ~ e'_0$, [Relation inversion]),
+    ($e' = apply(v',e'_0)$, [Relation inversion]),
+    ($E^*_0 ~ E'^*_0$, [I.H.]),
+    ($e ~ e'_1$, [I.H.]),
+    ($e'_0 = E'^*_0[e'_1]$, [I.H.]),
+    ($E'^* = apply(v',E'^*_0)$, [Choose]),
+    ($E^* ~ E'^*$, [Definition]),
+    ($e' = E'^*[e'_1]$, [Context Plug in]),
+  ))
+
+- Case $E^* = mon(k,l,j,flat(e_0),E^*_0)$
+
+  #derivation((
+    ($mon(k,l,j,flat(e_0),E^*_0[e]) ~ e'$, [Given]),
+    ($e_0 ~ e'_0$, [Relation inversion]),
+    ($E^*_0[e] ~ e'_1$, [Relation inversion]),
+    ($e' = apply(perform(effcheck),tuple(e'_0,e'_1))$, [Relation inversion]),
+    ($E^*_0 ~ E'^*_0$, [I.H.]),
+    ($e ~ e'_2$, [I.H.]),
+    ($e'_1 = E'^*_0[e'_2]$, [I.H.]),
+    ($E'^* = apply(perform(effcheck),tuple(e'_0,E'^*_0))$, [Choose]),
+    ($E^* ~ E'^*$, [Definition]),
+    ($e' = E'^*[e'_2]$, [Context Plug in]),
+  ))
+
+- Case $E^* = mon(k,l,j,kappa,E^*_0)$
+
+  #derivation((
+    ($mon(k,l,j,kappa,E^*_0[e]) ~ e'$, [Given]),
+    ($E^*_0[e] ~ e'_0$, [Relation inversion]),
+    ($e' = apply(e'_c,e'_0)$, [Relation inversion]),
+    ($E^*_0 ~ E'^*_0$, [I.H.]),
+    ($e ~ e'_1$, [I.H.]),
+    ($e'_0 = E'^*_0[e'_1]$, [I.H.]),
+    ($E'^* = apply(e'_c,E'^*_0)$, [Choose]),
+    ($E^* ~ E'^*$, [Definition]),
+    ($e' = E'^*[e'_1]$, [Context Plug in]),
+  ))
+
+- Other check-free context cases follow similarly.
 ]
 
 
 #lemma(title: "Relation is closed under substitution")[
+
   If $e ~ e'$ and $v ~ v'$ then $e[x:=v] ~ e'[x:=v']$.
 ] <compiler-relation-subst>
 
 #proof[
 By induction on the derivation of $e ~ e'$.
 
-- Case $x ~ x$.
-
-  #derivation((( $x[x:=v] = v ~ v' = x[x:=v']$, "Assumption"),))
-
-- Case $z ~ z$ with $z != x$.
-
-  #derivation((( $z[x:=v] = z ~ z = z[x:=v']$, "Both sides are unchanged"),))
-
-- Case $lambda z. e_1 ~ lambda z. e'_1$ with $e_1 ~ e'_1$. Choose $z != x$ and $z in.not "fv"(v, v')$ by renaming.
+- Case $x ~ x$
 
   #derivation((
-    ($e_1[x:=v] ~ e'_1[x:=v']$, "I.H."),
-    ($lambda z. e_1[x:=v] ~ lambda z. e'_1[x:=v']$, [The $lambda$ row]),
+    ($x[x:=v] = v$, [Replacement]),
+    ($x[x:=v'] = v'$, [Replacement]),
+    ($v ~ v'$, [Given]),
+    ($x[x:=v] ~ x[x:=v']$, []),
   ))
 
-- All other rows ($apply$, $mon$ with flat, arrow and dependent contracts, $guard$, $b$, $N$, $blame$) are compositional. The substitution goes into every related sub-expression, including the predicates inside contracts and the wrappers $e_1$, and each follows by I.H.
+- Case $z ~ z$, where $z != x$
+
+  #derivation((
+    ($z[x:=v] = z$, [Replacement]),
+    ($z[x:=v'] = z$, [Replacement]),
+    ($z[x:=v] ~ z[x:=v']$, [Definition]),
+  ))
+
+- Case $lambda z.e_1 ~ lambda z.e'_1$
+
+  #derivation((
+    ($e_1[x:=v] ~ e'_1[x:=v']$, [I.H.]),
+    ($lambda z.e_1[x:=v] ~ lambda z.e'_1[x:=v']$, [Definition]),
+    ($(lambda z.e_1)[x:=v] ~ (lambda z.e'_1)[x:=v']$, [Replacement]),
+  ))
+
+  Choose $z != x$ and $z in.not "fv"(v,v')$ by alpha-renaming.
+
+- Case $apply(e_1,e_2) ~ apply(e'_1,e'_2)$
+
+  #derivation((
+    ($e_1[x:=v] ~ e'_1[x:=v']$, [I.H.]),
+    ($e_2[x:=v] ~ e'_2[x:=v']$, [I.H.]),
+    ($apply(e_1,e_2)[x:=v] = apply(e_1[x:=v],e_2[x:=v])$, [Replacement]),
+    ($apply(e'_1,e'_2)[x:=v'] = apply(e'_1[x:=v'],e'_2[x:=v'])$, [Replacement]),
+    ($apply(e_1,e_2)[x:=v] ~ apply(e'_1,e'_2)[x:=v']$, [Definition]),
+  ))
+
+- Case $mon(k,l,j,flat(e_1),e_2) ~ apply(perform(effcheck),tuple(rel(e)_1,rel(e)_2))$
+
+  #derivation((
+    ($e_1[x:=v] ~ rel(e)_1[x:=rel(v)]$, [I.H.]),
+    ($e_2[x:=v] ~ rel(e)_2[x:=rel(v)]$, [I.H.]),
+    ($mon(k,l,j,flat(e_1),e_2)[x:=v] ~ apply(perform(effcheck),tuple(rel(e)_1,rel(e)_2))[x:=rel(v)]$, [Definition]),
+  ))
+
+- Case $mon(k,l,j,kappa_1 -> kappa_2,e_1) ~ apply(e_c,e'_1)$
+
+  Apply the I.H. to the predicates and to $e_1$.  Choose the bound variables
+  of $e_c$ fresh for $x$, $v$, and $v'$.  The arrow-monitor row reconstructs
+  the relation after substitution.  The dependent-monitor case is similar.
+
+- Case a $guard$ value
+
+  The generated function body is an arrow or dependent monitor case above;
+  apply that case and then the guard row.
+
+- Cases $b ~ b$, $N ~ N$, and $blame(k,j) ~ eblame(j)$
+
+  Substitution leaves both sides unchanged, so the same relation row applies.
+
+- All other homomorphic rows follow similarly from the I.H.
 ]
 
 #lemma(title: "Breaking down Context E")[
