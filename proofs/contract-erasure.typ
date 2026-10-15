@@ -23,7 +23,6 @@
 
 Define erasure compiler $E$ as a homomorphic function over expressions of #langc with a single transformation:
 
-
 $compile(type(Gamma,mon(k,l,j,kappa,e),tau), e)$
 
 #let erase(e) = $"erase"(#e)$
@@ -49,6 +48,9 @@ Define these relations:
 // - $R_kappa subset.eq langc kappa times "Untyped" lange e$
 
 //   If $(kappa,e) in R_kappa$, we write $kappa attach(~, br: R_kappa) e$ or $kappa ~ e$. We define $relate(kappa)$ as shorthand for any expression $relate(e)$ satisfying $kappa ~ relate(e)$.
+
+
+We define context $F$ that is contexts without $check(k,j,E,v)$.
 
 #block(width: 100%)[
   #rect(stroke: 0.5pt, inset: 5pt)[
@@ -178,6 +180,14 @@ By induction on $F ~ relate(F)$.
 - Similarly for other cases
 ]
 
+#lemma(title: "Relation Decomposition Through Contexts")[
+
+  If $e_1 ~ e'_1$, $e_1 = E[e_2]$, and $e_2$ is a redex, then there are $relate(E)$ and $relate(e)_2$ such that $E ~ relate(E)$ and $e_2 ~ relate(e)_2$ and $e'_1 = relate(E)[relate(e)_2]$.
+] <context-decomposition-relation>
+
+#proof[
+]
+
 #lemma(title: "Relation is closed under substitution")[
 
   If $e ~ relate(e)$ and $v ~ relate(v)$, then $e[x:=v] ~ relate(e)[x:=relate(v)]$ for every $x$.
@@ -268,6 +278,7 @@ Forall context $E$, either:
 - Other cases follows similarly
 ]
 
+We define the predicate that will be used for simulation. The beauty of the predicate $ereq(e,e')$ is that $e = E[blame(k,j)]$ returns false, so we can skip this case in simulation proof.
 
 #block(width: 100%)[
   #align(center)[
@@ -318,8 +329,6 @@ Because the compiler doesn't compile check (runtime expression), we never get th
 
 == Main Theorem Proof
 
-@erasure-proof-strategy shows the structure of the proof. Erasure initializes the state predicate $ereq(e,e')$ by @erasure-is-relation. Each non-blaming source step $e_i cstep e_(i+1)$ is matched by zero or more target steps $e'_i step1 e'_(i+1)$ while preserving $ereq(e_(i+1),e'_(i+1))$ (@erasure-step-simulation). Chaining these simulations with @erasure-multistep-simulation shows that whenever the source reaches $b$, the erased target reaches the same $b$.
-
 #figure(caption: [Structure of the contract erasure proof. Dashed vertical lines denote ER.])[
   #diagram(
     spacing: (2.9em, 3em),
@@ -352,17 +361,27 @@ Because the compiler doesn't compile check (runtime expression), we never get th
 
     // Initialization and the chained conclusion label their ER witnesses.
     edge((0, 0), (0, 2), "--",
-      text(size: 0.54em)[#link(<erasure-is-relation>)[@erasure-is-relation]],
-      label-side: left, label-pos: 48%, label-fill: white),
+      // text(size: 0.54em)[#link(<erasure-is-relation>)[@erasure-is-relation]],
+      // label-side: right, label-pos: 48%, label-fill: white
+    ),
     edge((1, 0), (1, 2), "--",
-      text(size: 0.54em)[#link(<erasure-step-simulation>)[@erasure-step-simulation]],
-      label-side: right, label-pos: 50%, label-fill: white),
+      // text(size: 0.54em)[#link(<erasure-step-simulation>)[@erasure-step-simulation]],
+      // label-side: right, label-pos: 50%, label-fill: white
+    ),
     edge((2, 0), (2, 2), "--",
-      text(size: 0.54em)[#link(<erasure-step-simulation>)[]],
-      label-side: left, label-pos: 50%, label-fill: white),
+      // text(size: 0.54em)[#link(<erasure-step-simulation>)[@erasure-step-simulation]],
+      // label-side: left, label-pos: 50%, label-fill: white
+    ),
+
     edge((4, 0), (4, 2), "--",
-      text(size: 0.54em)[#link(<erasure-multistep-simulation>)[@erasure-multistep-simulation]],
-      label-side: left, label-pos: 50%, label-fill: white),
+      // text(size: 0.54em)[#link(<erasure-multistep-simulation>)[@erasure-multistep-simulation]],
+      // label-side: left, label-pos: 50%, label-fill: white
+    ),
+
+    node((0.3, 1), text(size: 0.6em)[@erasure-is-relation]),
+    node((1.3, 1), text(size: 0.6em)[@erasure-step-simulation]),
+    node((2.4, 1), text(size: 0.6em)[@erasure-step-simulation]),
+    node((1.5, 2.6), text(size: 0.6em)[chained by @erasure-multistep-simulation]),
   )
 ] <erasure-proof-strategy>
 
@@ -383,6 +402,10 @@ Because the compiler doesn't compile check (runtime expression), we never get th
 
   If $ereq(e,e')$ and $e cstep1 b$ then $e' step1 b$.
 ] <erasure-multistep-simulation>
+
+${(e,e') | e cstep1 b "and" (e,e') in "EQ"}$. This active filter prevents $e cstep1 blame(k,j)$ as well as anything not $b$. Mainly we worry about $E[blame(k,j)] cstep blame(k,j)$ and $E[check(k,j,falseb,v)] cstep E[blame(k,j)]$. It's a strong claim here that $e cstep1 b$ so we can ignore these states. But the single step simulation must be reworded correctly.
+
+Now if we check the argument for $"EQ"$, we can actually filter out $E[blame(k,j)]$ because it doesn't fit two clauses. So we only care about the check expression.
 
 #proof[
 
@@ -431,7 +454,8 @@ By induction on $e cstep1 b$.
       Relation is not local so we run simulation on $e cstep e_1$.
 
       #derivation((
-        ($e eq.not E[check(k,j,falseb,v)]$, [Generalize]),
+        ($e_1 eq.not E[blame(k,j)]$, []),
+        // ($e eq.not E[check(k,j,falseb,v)]$, [Generalize]),
         ($e' step1 e'_1$, [@erasure-step-simulation]),
         ($ereq(e_1, e'_1)$, [@erasure-step-simulation]),
         ($e'_1 step1 b$, "I.H."),
@@ -442,120 +466,124 @@ By induction on $e cstep1 b$.
 
 #lemma(title: "Erasure Step Simulation")[
 
-  If $ereq(e_1,e'_1)$, $e_1 cstep e_2$, and $e_1 eq.not E_(1a)[blame(k_(1a),j_(1a))]$ and $e_1 eq.not E_(1b)[check(k_(1b),j_(1b),falseb,v)]$, then there is $e'_2$ such that $e'_1 step1 e'_2$ and $ereq(e_2,e'_2)$.
+  If $ereq(e_1,e'_1)$, $e_1 cstep e_2$, and $e_2 eq.not E_2[blame(k,j)]$, then there is $e'_2$ such that $e'_1 step1 e'_2$ and $ereq(e_2,e'_2)$.
 ] <erasure-step-simulation>
 
 #proof[
 
 By case analysis of $ereq(e_1,e'_1)$:
 
-- Case $e_1 ~ e'_1$ and $e_1 eq.not F[check(k_1,j_1,e_(1a),v)]$
-
 - Case $e_1 eq F[check(k_1,j_1,e_(1a),v)]$ and $e'_1 = relate(F)[relate(v)]$
 
   - Case $e_(1a) = trueb$
 
-    $e_1 cstep F[v]$
+    #derivation((
+      ($e_1 cstep F[v]$, [Step-C]),
+      ($e_2 = F[v]$,[]),
+      ($e_2 ~ relate(F)[relate(v)]$,[Definition]),
+      ($e'_1 step1 relate(F)[relate(v)]$, [Reflexivity]),
+      ($e'_2 = relate(F)[relate(v)]$, [Choose]),
+    ))
+
 
   - Case $e_(1a) = falseb$
 
-  - Case $e_(1a) = v$, and $v eq.not b$. Impossible, no rule.
-
   - Case $e_(1a) cstepx e_(1b)$
 
-By case analysis of $e_1 cstep e_2$ with $e_1 != E_1[blame(k_1,j_1)]$.
+    #derivation((
+      ($e_1 cstep F[check(k_1,j_1,e_(1b),v)]$, [Step-C]),
+      ($e_2 = F[check(k_1,j_1,e_(1b),v)]$,[]),
+      ($e_2 ~ relate(F)[relate(v)]$,[Definition]),
+      ($e'_1 step1 relate(F)[relate(v)]$, [Reflexivity]),
+      ($e'_2 = relate(F)[relate(v)]$, [Choose]),
+    ))
 
-#derivation((
-  ($e_1 = E[e_3]$, rn("C-Step")),
-  ($e_2 = E[e_4]$, rn("C-Step")),
-  ($e_3 cstepx e_4$, rn("C-Step")),
-  ($e'_1 = relate(E)[relate(e)_3]$, [@context-decomposition-relation]),
-))
+- Case $e_1 ~ e'_1$ and $e_1 eq.not F[check(k_1,j_1,e_(1a),v)]$
 
-By cases on the redex reduction $e_3 cstepx e_4$.
+  Casing on $e_1 cstep e_2$:
 
-- Case $apply((lambda x. e_5),v_5) cstepx e_5[x:=v_5]$
+  - Case $E[blame(k_2,j_2)] cstep blame(k_2,j_2)$ contradiction.
 
-  #derivation((
-    ($relate(e)_3 = apply((lambda x. relate(e)_5),relate(v)_5)$, [definition of $tilde$]),
-    ($apply((lambda x. relate(e)_5),relate(v)_5) stepx relate(e)_5[x:=relate(v)_5]$, rn("S-App")),
-    ($e_4 ~ relate(e)_5[x:=relate(v)_5]$, [@relation-substitution]),
-    ($e'_1 step1 relate(E)[relate(e)_4] = e'_2$, [reflexivity]),
-    ($e_2 ~ e'_2$, [@relation-is-correct]),
-  ))
+  - Case $E[e_3] cstep E[e_4]$ where $e_3 cstepx e_4$ is a redex.
 
-- Case $mu x : tau. e_3 cstepx e_3[x:=mu x : tau. e_3]$
+    By @erasure-context-decomposition,
 
-  Similar to the preceding case.
+    - Case $E = F[check(k_3,j_3,E_3,v_3)]$
 
-- Case $check(k,j,trueb,v) cstepx v$
+      $e_1 = F[check(k_3,j_3,E_3[e_3],v_3)]$ contradiction.
 
-  #derivation((
-    ($relate(e)_3 = relate(v)$, [definition of $tilde$]),
-    ($e_4 ~ relate(v)$, [definition of $tilde$]),
-    ($e'_1 step1 relate(E)[relate(v)] = e'_2$, [reflexivity]),
-    ($e_2 ~ e'_2$, [@relation-is-correct]),
-  ))
+    - Case $E = F$ with $F$ a non-check context. Without confusion, we use $E$ below:
 
-- Case $check(k,j,falseb,v) cstepx blame(k,j)$
+      For all cases, we have $E ~ relate(E),e_3 ~ relate(e)_3,e_4 ~ relate(e)_4$ by @context-decomposition-relation.
 
-  #derivation((
-    ($e_2 = E[blame(k,j)]$, rn("C-Step")),
-    ($e_2 != E_2[blame(k_2,j_2)]$, "Given"),
-    ($bot$, [impossible]),
-  ))
+      By cases on the redex reduction $e_3 cstepx e_4$:
 
-- Case $mon(k,l,j,flat(e_3),v_3) cstepx check(k,j,apply(e_3,v_3),v_3)$
+      - Case $apply((lambda x. e_5),v_5) cstepx e_5[x:=v_5]$
 
-  #derivation((
-    ($relate(e)_3 = relate(v)_3$, [definition of $tilde$]),
-    ($e_4 ~ relate(v)_3$, [definition of $tilde$]),
-    ($e'_1 step1 relate(E)[relate(v)_3] = e'_2$, [reflexivity]),
-    ($e_2 ~ e'_2$, [@relation-is-correct]),
-  ))
+        #derivation((
+          ($e_3 ~ apply((lambda x. relate(e)_5),relate(v)_5)$, [Definition]),
+          ($relate(e)_3 = apply((lambda x. relate(e)_5),relate(v)_5)$, [$e_3 ~ relate(e)_3$]),
+          ($apply((lambda x. relate(e)_5),relate(v)_5) stepx relate(e)_5[x:=relate(v)_5]$, rn("S-App")),
+          ($e_4 ~ relate(e)_5[x:=relate(v)_5]$, [@relation-substitution]),
+          ($relate(e)_4 = relate(e)_5[x:=relate(v)_5]$, [@relation-substitution]),
+          ($E[e_3] ~ relate(E)[relate(e)_3]$,[@relation-is-correct]),
+          ($e'_1 = relate(E)[relate(e)_3] step1 relate(E)[relate(e)_4] = e'_2$, [Step and Closure]),
+          ($e_2 = E[e_4] ~ relate(E)[relate(e)_4] = e'_2$,[@relation-is-correct]),
+        ))
 
-- Case $mon(k,l,j,kappa,v_3) cstepx guard(v_3,kappa,k,l,j)$
+      - Case $mu x : tau. e_3 cstepx e_3[x:=mu x : tau. e_3]$
 
-  #derivation((
-    ($relate(e)_3 = relate(v)_3$, [definition of $tilde$]),
-    ($e_4 ~ relate(v)_3$, [definition of $tilde$]),
-    ($e'_1 step1 relate(E)[relate(v)_3] = e'_2$, [reflexivity]),
-    ($e_2 ~ e'_2$, [@relation-is-correct]),
-  ))
+        Similar to the preceding case.
 
-- Case $apply(guard(v_1,kappa_1 -> kappa_2,k,l,j),v_2) cstepx mon(k,l,j,kappa_2,apply(v_1,mon(l,k,j,kappa_1,v_2)))$
+      For below cases, we left out obvious rules about relation.
 
-  #derivation((
-    ($relate(e)_3 = apply(relate(v)_1,relate(v)_2)$, [definition of $tilde$]),
-    ($relate(e)_4 ~ apply(relate(v)_1,relate(v)_2)$, [definition of $tilde$]),
-    ($e'_1 step1 relate(E)[apply(relate(v)_1,relate(v)_2)] = e'_2$, [reflexivity]),
-    ($e_2 ~ e'_2$, [@relation-is-correct]),
-  ))
+      - Case $check(k,j,trueb,v) cstepx v$
 
-- Case $apply(guard(v_1,dep(kappa_1,lambda x. kappa_2),k,l,j),v_2) cstepx mon(k,l,j,kappa_3,apply(v_1,mon(l,k,j,kappa_1,v_2)))$, where $kappa_3 = kappa_2[x:=mon(l,j,j,kappa_1,v_2)]$
+        #derivation((
+          ($relate(e)_3 = relate(v)$, [Definition]),
+          ($e_4 ~ relate(v)$, [Definition]),
+          ($e'_1 step1 relate(E)[relate(v)] = e'_2$, [Reflexivity]),
+          ($e_2 ~ e'_2$, [@relation-is-correct]),
+        ))
 
-  Similar to the preceding case.
+      - Case $check(k,j,falseb,v) cstepx blame(k,j)$
+
+        #derivation((
+          ($e_2 = E[blame(k,j)]$, rn("C-Step")),
+          ($e_2 != E_2[blame(k_2,j_2)]$, "Given"),
+          ($bot$, [Contradiction]),
+        ))
+
+      - Case $mon(k,l,j,flat(e_3),v_3) cstepx check(k,j,apply(e_3,v_3),v_3)$
+
+        #derivation((
+          ($relate(e)_3 = relate(v)_3$, [Definition]),
+          ($e_4 ~ relate(v)_3$, [Definition]),
+          ($e'_1 step1 relate(E)[relate(v)_3] = e'_2$, [Reflexivity]),
+          ($e_2 ~ e'_2$, [@relation-is-correct]),
+        ))
+
+      - Case $mon(k,l,j,kappa,v_3) cstepx guard(v_3,kappa,k,l,j)$
+
+        #derivation((
+          ($relate(e)_3 = relate(v)_3$, [Definition]),
+          ($e_4 ~ relate(v)_3$, [Definition]),
+          ($e'_1 step1 relate(E)[relate(v)_3] = e'_2$, [Reflexivity]),
+          ($e_2 ~ e'_2$, [@relation-is-correct]),
+        ))
+
+      - Case $apply(guard(v_1,kappa_1 -> kappa_2,k,l,j),v_2) cstepx mon(k,l,j,kappa_2,apply(v_1,mon(l,k,j,kappa_1,v_2)))$
+
+        #derivation((
+          ($relate(e)_3 = apply(relate(v)_1,relate(v)_2)$, [Definition]),
+          ($relate(e)_4 ~ apply(relate(v)_1,relate(v)_2)$, [Definition]),
+          ($e'_1 step1 relate(E)[apply(relate(v)_1,relate(v)_2)] = e'_2$, [Reflexivity]),
+          ($e_2 ~ e'_2$, [@relation-is-correct]),
+        ))
+
+      - Case $apply(guard(v_1,dep(kappa_1,lambda x. kappa_2),k,l,j),v_2) cstepx mon(k,l,j,kappa_3,apply(v_1,mon(l,k,j,kappa_1,v_2)))$, where $kappa_3 = kappa_2[x:=mon(l,j,j,kappa_1,v_2)]$
+
+        Similar to the preceding case.
+
+      - Other cases (#langb) follows similarly.
 ]
-
-#lemma(title: "Relation Decomposition Through Contexts")[
-
-  If $e_1 ~ e'_1$, $e_1 = E[e_2]$, and $e_2$ is a redex, then there are $relate(E)$ and $relate(e)_2$ such that $E ~ relate(E)$ and $e_2 ~ relate(e)_2$ and $e'_1 = relate(E)[relate(e)_2]$.
-] <context-decomposition-relation>
-
-#proof[
-]
-
-#line(length: 100%)
-
-#lemma(title: "Successful Erasure Simulation")[
-
-  If $ereq(e_1,e'_1)$ and $e_1 cstep e_2$, where $e_2$ is not a blaming expression, then there exists an $e'_2$ such that
-  $e'_1 estep^* e'_2$ and $ereq(e_2,e'_2)$.
-
-  The target may take zero, one, or more steps. In particular, successful check reductions are stuttering steps: they may be simulated by zero target steps. The $ereq$ relation is preserved even when the source contains a pending or nested check whose erased target has already reduced to the related value.
-] <successful-erasure-simulation>
-
-#lemma(title: "Successful Evaluation Is Preserved by Erasure")[
-
-  If $ereq(e,e')$ and $e cstep^* v$ without reaching $blame(k,j)$, then there exists a target value $v'$ such that $e' estep^* v'$ and $ereq(v,v')$.
-] <successful-erasure-preservation>
