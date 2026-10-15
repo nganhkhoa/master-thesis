@@ -231,7 +231,7 @@ $
 
 #lemma(title: "Relation is correct")[
   If $E ~ rel(E)$, $e ~ rel(e)$ and $e$ has no check in evaluation position, then $E[e] ~ rel(E)[rel(e)]$.
-] <shallow-relation-context>
+] <compiler-shallow-shallow-relation-context>
 
 #proof[
 By case on $E$.
@@ -253,7 +253,7 @@ By case on $E$.
 
 #lemma(title: "Relation is closed under substitution")[
   If $e ~ rel(e)$ and $v ~ rel(v)$ then $e[x:=v] ~ rel(e)[x:=rel(v)]$.
-] <shallow-substitution>
+] <compiler-shallow-shallow-substitution>
 
 #proof[
   By induction on $e ~ rel(e)$. Every row is homomorphic on $x$, and the bound variables $f$, $x$, $y$ in the rows are chosen fresh.
@@ -262,7 +262,7 @@ By case on $E$.
 #lemma(title: "Compiler is subset of relation")[
 
   If $compile(type(dot,e_1,tau),e_2)$ then $e_1 ~ e^*_2$.
-] <shallow-compiler-is-relation>
+] <compiler-shallow-shallow-compiler-is-relation>
 
 #proof[
 
@@ -323,9 +323,9 @@ By induction on structure of $compile(type(dot,e_1,tau),e_2)$.
 
 #proof[
 
-  $e^* estep1 e'_1$ and $treq(e,e'_1)$ by @shallow-wrap-step-eq.
+  $e^* estep1 e'_1$ and $treq(e,e'_1)$ by @compiler-shallow-shallow-wrap-step-eq.
 
-  $e'_1 estep1 rel(r)$ by @shallow-full-simulation.
+  $e'_1 estep1 rel(r)$ by @compiler-shallow-shallow-full-simulation.
 
   $e^* estep1 rel(r)$ by combining steps.
 ]
@@ -333,11 +333,11 @@ By induction on structure of $compile(type(dot,e_1,tau),e_2)$.
 #lemma(title: "Wrapped compiled program steps to an equivalent state with source program")[
 
   If $compile(type(dot,e,tau),e')$ and $e^*_1 = "untyped"(apply(kw("wrap")[tau],(lambda \_. e')))$ then it exists $e^*_2$ such that $e^*_1 estep1 e^*_2$ and $treq(e,e^*_2)$.
-] <shallow-wrap-step-eq>
+] <compiler-shallow-shallow-wrap-step-eq>
 
 #proof[
 
-By @shallow-compiler-is-relation, $e ~ e'^*$.
+By @compiler-shallow-shallow-compiler-is-relation, $e ~ e'^*$.
 
 $e^*_1 estep1 apply(hcheck,lambda \_. e'^*) estep1 apply(handler(heffcheck),lambda \_. e'^*) estep1 handle(heffcheck, e'^*) = e^*_2$
 
@@ -346,7 +346,7 @@ By definition, $treq(e,e^*_2)$ (case 1).
 
 #lemma()[
   If $e cstep1 r$ and $treq(e,e')$ then $e' estep1 rel(r)$.
-] <shallow-full-simulation>
+] <compiler-shallow-shallow-full-simulation>
 
 #proof[
   By breaking down the $cstep1$, and induction on it.
@@ -381,7 +381,7 @@ We also need to make a claim that in no where in $rel(e)$ do we have $handle$ or
   & handle(heffcheck, E'[apply(perform(effcheck),tuple(k,tuple(rel(e),rel(v))))]) \
   estep1 & handle(heffcheck, ife(apply(rel(e),rel(v)), apply((lambda x. E'[x]),rel(v)), eblame(k)))
   $
-] <shallow-perform-check>
+] <compiler-shallow-shallow-perform-check>
 
 #proof[
   $
@@ -394,9 +394,9 @@ We also need to make a claim that in no where in $rel(e)$ do we have $handle$ or
 
 #lemma()[
   If $e_1 cstep e_2$ and $treq(e_1,e'_1)$ then there exists $e'_2$ such that $e'_1 estep1 e'_2$ and $treq(e_2,e'_2)$.
-] <shallow-simulation>
+] <compiler-shallow-shallow-simulation>
 
-#proof(of: <shallow-simulation>)[
+#proof(of: <compiler-shallow-shallow-simulation>)[
 By case analysis on $e_1 cstep e_2$ with respect to $treq(e_1,e'_1)$.
 
 - Case $e_1 = E[blame(k,j)] cstep blame(k,j) = e_2$ (Step-C-Blame)
@@ -413,7 +413,7 @@ By case analysis on $e_1 cstep e_2$ with respect to $treq(e_1,e'_1)$.
 
 Otherwise, $e_1$ is not blamed and $treq(e_1,e'_1)$ is case 1. By decomposition lemma, $e_1 = E[e_3]$, $e_2 = E[e_4]$ and that $e_3 cstepx e_4$ is a redex reduction.
 
-If $e_3$ is not a check, $e'_1 = handle(heffcheck, rel(E)[rel(e)_3])$ by @shallow-relation-context.
+If $e_3$ is not a check, $e'_1 = handle(heffcheck, rel(E)[rel(e)_3])$ by @compiler-shallow-shallow-relation-context.
 
 Note that $rel(E)$ is an evaluation context of $lange$ without $handle$. Unlike the deep proof, there is no case split on the checks in $E$, the redex steps under the same top handle.
 
@@ -421,13 +421,13 @@ Note that $rel(E)$ is an evaluation context of $lange$ without $handle$. Unlike 
 
   $rel(e)_3 = apply(perform(effcheck),tuple(k,tuple(rel(e),rel(v))))$
 
-  $e'_1 estep1 handle(heffcheck, ife(apply(rel(e),rel(v)), apply((lambda x. rel(E)[x]), rel(v)), eblame(k))) = e'_2$ by @shallow-perform-check.
+  $e'_1 estep1 handle(heffcheck, ife(apply(rel(e),rel(v)), apply((lambda x. rel(E)[x]), rel(v)), eblame(k))) = e'_2$ by @compiler-shallow-shallow-perform-check.
 
   $e_2 = E[check(k,j,apply(e,v),v)]$, and $apply(e,v)$ has no check in evaluation position.
 
   $e_2 ~ ife(apply(rel(e),rel(v)), apply((lambda x. rel(E[x])), rel(v)), eblame(k))$ by the check row.
 
-  $rel(E[x]) = rel(E)[x]$ by @shallow-relation-context.
+  $rel(E[x]) = rel(E)[x]$ by @compiler-shallow-shallow-relation-context.
 
   Obtain $treq(e_2,e'_2)$ (case 1).
 
@@ -439,7 +439,7 @@ Note that $rel(E)$ is an evaluation context of $lange$ without $handle$. Unlike 
 
   $e'_1 estep1 handle(heffcheck, rel(E[x])[x:=rel(v)]) = e'_2$
 
-  $e_2 = E[v] = E[x][x:=v] ~ rel(E[x])[x:=rel(v)]$ by @shallow-substitution.
+  $e_2 = E[v] = E[x][x:=v] ~ rel(E[x])[x:=rel(v)]$ by @compiler-shallow-shallow-substitution.
 
   Obtain $treq(e_2,e'_2)$ (case 1).
 
@@ -465,7 +465,7 @@ Note that $rel(E)$ is an evaluation context of $lange$ without $handle$. Unlike 
 
   $guard(v,kappa_1 -> kappa_2,k,l,j) ~ lambda x. rel(e)_(5a)[f:=rel(v)]$ by the relation on values.
 
-  Obtain $treq(e_2,e'_2)$ (case 1) by @shallow-relation-context.
+  Obtain $treq(e_2,e'_2)$ (case 1) by @compiler-shallow-shallow-relation-context.
 
 - Case $e_3 = mon(k,l,j,dep(kappa_1, lambda y. kappa_2), v) cstepx guard(v, dep(kappa_1, lambda y. kappa_2), k,l,j) = e_4$
 
@@ -477,9 +477,9 @@ Note that $rel(E)$ is an evaluation context of $lange$ without $handle$. Unlike 
 
   $rel(e)_3 = apply(rel(e)_5, rel(v)_2)$ where $e_5 = lambda x. mon(k,l,j,kappa_2,apply(rel(v)_1,mon(l,k,j,kappa_1,x)))$
 
-  $e'_1 estep handle(heffcheck, rel(E)[rel(e)_4]) = e'_2$ by $beta$ and @shallow-substitution.
+  $e'_1 estep handle(heffcheck, rel(E)[rel(e)_4]) = e'_2$ by $beta$ and @compiler-shallow-shallow-substitution.
 
-  Obtain $treq(e_2,e'_2)$ (case 1) by @shallow-relation-context.
+  Obtain $treq(e_2,e'_2)$ (case 1) by @compiler-shallow-shallow-relation-context.
 
 - Case $e_3 = apply(guard(v_1,dep(kappa_1, lambda y. kappa_2),k,l,j),v_2) cstepx mon(k,l,j, kappa_3, apply(v_1, mon(l,k,j,kappa_1,v_2))) = e_4$ where $kappa_3 = {mon(l,j,j,kappa_1,v_2)\/y}kappa_2$
 
@@ -507,9 +507,9 @@ Note that $rel(E)$ is an evaluation context of $lange$ without $handle$. Unlike 
 
 - Case $e_3$ is a base reduction ($beta$, $mu$, $injl$, $injr$, $ife$, $o$)
 
-  $rel(e)_3$ is the same redex in $lange$, and $rel(e)_3 estepx rel(e)_4$ by the same rule, using @shallow-substitution for $beta$ and $mu$.
+  $rel(e)_3$ is the same redex in $lange$, and $rel(e)_3 estepx rel(e)_4$ by the same rule, using @compiler-shallow-shallow-substitution for $beta$ and $mu$.
 
   $e'_1 estep handle(heffcheck, rel(E)[rel(e)_4]) = e'_2$
 
-  Obtain $treq(e_2,e'_2)$ (case 1) by @shallow-relation-context.
+  Obtain $treq(e_2,e'_2)$ (case 1) by @compiler-shallow-shallow-relation-context.
 ]

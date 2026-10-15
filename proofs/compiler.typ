@@ -278,7 +278,7 @@ All cases follow from the induction hypothesis and the compositional nature of t
 
   If $E^*[e] ~ e'$, then there exist $E'^*$ and $e'_0$ such that
   $E^* ~ E'^*$ and $e ~ e'_0$ and $e' = E'^*[e'_0]$.
-] <relation-context-decomposition>
+] <compiler-relation-context-decomposition>
 
 #proof[
 ]
@@ -286,7 +286,7 @@ All cases follow from the induction hypothesis and the compositional nature of t
 
 #lemma(title: "Relation is closed under substitution")[
   If $e ~ e'$ and $v ~ v'$ then $e[x:=v] ~ e'[x:=v']$.
-] <relation-subst>
+] <compiler-relation-subst>
 
 #proof[
 By induction on the derivation of $e ~ e'$.
@@ -361,7 +361,7 @@ By induction on $E$.
 
     #derivation((
       ($E = check(k,j,E^+_2[E^*_2[check(k_1,j_1,square.stroked,v_1)]],v)[E^*_1]$, "By the case assumption"),
-      ($E^+ = check(k,j,E^+_2[E^*_2[check(k_1,j_1,square.stroked,v_1)]],v), E^* = E^*_1$, [Let; [@context-composition-preservation]]),
+      ($E^+ = check(k,j,E^+_2[E^*_2[check(k_1,j_1,square.stroked,v_1)]],v), E^* = E^*_1$, [Let; [@compiler-context-composition-preservation]]),
     ))
 
 ]
@@ -369,7 +369,7 @@ By induction on $E$.
 #lemma(title: "Context composition preserves check structure")[
 
   If $E^+ = E^+_0[E^*_0[check(k,j,square.stroked,v)]]$ and $E$ is any evaluation context, then $E[E^+] = E^+_1$ for some $E^+_1$ of the form $E^+_1 = E^+_2[E^*_2[check(k',j',square.stroked,v')]]$.
-] <context-composition-preservation>
+] <compiler-context-composition-preservation>
 
 #proof[
 By induction on the structure of $E$.
@@ -489,7 +489,7 @@ By induction on structure of $compile(type(Gamma,e_1,tau),e_2)$.
 
 == Compiler Correctness
 
-@proof-strategy shows the structure of the proof. The source program $e$ compiles to $e'$, and the target program runs $e'$ under $kw("wrap")$. After the handler is installed, the target reaches a state $e''_0$ with $treq(e,e''_0)$ (@wrap-step-eq). From then on, every source step $e_i cstep e_(i+1)$ is matched by zero or more target steps $e''_i estep1 e''_(i+1)$ that keep $treq(e_(i+1),e''_(i+1))$ (@simulation). Chaining the squares (@full-simulation), the source result $r$ and the target result $rel(r)$ are related: a value goes to its related value, and $blame(k,j)$ goes to $eblame(j)$.
+@compiler-proof-strategy shows the structure of the proof. The source program $e$ compiles to $e'$, and the target program runs $e'$ under $kw("wrap")$. After the handler is installed, the target reaches a state $e''_0$ with $treq(e,e''_0)$ (@compiler-wrap-step-eq). From then on, every source step $e_i cstep e_(i+1)$ is matched by zero or more target steps $e''_i estep1 e''_(i+1)$ that keep $treq(e_(i+1),e''_(i+1))$ (@compiler-simulation). Chaining the squares (@compiler-full-simulation), the source result $r$ and the target result $rel(r)$ are related: a value goes to its related value, and $blame(k,j)$ goes to $eblame(j)$.
 
 #figure(caption: [Structure of the compiler correctness proof. Dashed lines rel states by EQ.])[
   #diagram(
@@ -531,13 +531,13 @@ By induction on structure of $compile(type(Gamma,e_1,tau),e_2)$.
     edge((5, 0), (5, 2), "--", [EQ], label-side: left),
 
     // which lemma closes which part
-    node((0.55, 1.45), text(size: 0.8em)[@wrap-step-eq]),
-    node((1.5, 1), text(size: 0.8em)[@simulation]),
-    node((2.5, 1), text(size: 0.8em)[@simulation]),
-    node((3.5, 1), text(size: 0.8em)[@simulation]),
-    node((3, 2.6), text(size: 0.8em)[chained by @full-simulation]),
+    node((0.55, 1.45), text(size: 0.8em)[@compiler-wrap-step-eq]),
+    node((1.5, 1), text(size: 0.8em)[@compiler-simulation]),
+    node((2.5, 1), text(size: 0.8em)[@compiler-simulation]),
+    node((3.5, 1), text(size: 0.8em)[@compiler-simulation]),
+    node((3, 2.6), text(size: 0.8em)[chained by @compiler-full-simulation]),
   )
-] <proof-strategy>
+] <compiler-proof-strategy>
 
 Define a predicate between $langc e$ and $"Untyped" lange e'$.
 
@@ -562,9 +562,9 @@ $
 #proof[
 
   #derivation((
-    ($e^* estep1 e'_1$, [@wrap-step-eq]),
-    ($treq(e,e'_1)$, [@wrap-step-eq]),
-    ($e'_1 estep1 b$, [@full-simulation]),
+    ($e^* estep1 e'_1$, [@compiler-wrap-step-eq]),
+    ($treq(e,e'_1)$, [@compiler-wrap-step-eq]),
+    ($e'_1 estep1 b$, [@compiler-full-simulation]),
     ($e^* estep1 b$, "Combining steps"),
   ))
 ]
@@ -574,7 +574,7 @@ $
   If $compile(type(dot,e,tau),e')$ and $e^*_1 = "untyped"(apply(kw("wrap")[tau],(lambda \_. e')))$ then it exists $e^*_2$ such that $e^*_1 estep1 e^*_2$ and $treq(e,e^*_2)$.
 
   In this lemma, we use $e^*$ as shorthand to denote $e$ untyped.
-] <wrap-step-eq>
+] <compiler-wrap-step-eq>
 
 #proof[
 
@@ -625,7 +625,7 @@ $
 
 #lemma()[
   If $e cstep1 r$ and $treq(e,e')$ then $e' estep1 rel(r)$.
-] <full-simulation>
+] <compiler-full-simulation>
 
 #proof[
   By breaking down the $cstep1$, and induction on it.
@@ -649,8 +649,8 @@ $
   - Case $e cstep e_1$ and $e_1 cstep1 r$
 
     #derivation((
-      ($e' estep1 e'_1$, [@simulation]),
-      ($treq(e_1,e'_1)$, [@simulation]),
+      ($e' estep1 e'_1$, [@compiler-simulation]),
+      ($treq(e_1,e'_1)$, [@compiler-simulation]),
       ($e'_1 estep1 rel(r)$, "I.H."),
       ($e' estep1 rel(r)$, "Chaining steps"),
     ))
@@ -661,9 +661,9 @@ We also need to make a claim that in no where in $e'_1$ do we have $perform(eff)
 
 #lemma()[
   If $e_1 cstep e_2$ and $treq(e_1,e'_1)$ then there exists $e'_2$ such that $e'_1 estep1 e'_2$ and $treq(e_2,e'_2)$.
-] <simulation>
+] <compiler-simulation>
 
-#proof(of: <simulation>)[
+#proof(of: <compiler-simulation>)[
 By case analysis on $e_1 cstep e_2$ with respect to $treq(e_1,e'_1)$. By decomposition lemma, we know that the program can be rewritten into:
 
 #derivation((
@@ -672,7 +672,7 @@ By case analysis on $e_1 cstep e_2$ with respect to $treq(e_1,e'_1)$. By decompo
   ($e_3 cstepx e_4$, "Redex reduction"),
 ))
 
-When $treq(e_1,e'_1)$ holds by case 2, @relation-context-decomposition supplies the related check-free context $rel(E)^*$ occurring in $e'_1$. When it holds by case 3, the related contexts $rel(E)^+$ and $rel(E)^*$ are witnesses carried by the definition of $"EQ"$; we obtain them by inversion of that case.
+When $treq(e_1,e'_1)$ holds by case 2, @compiler-relation-context-decomposition supplies the related check-free context $rel(E)^*$ occurring in $e'_1$. When it holds by case 3, the related contexts $rel(E)^+$ and $rel(E)^*$ are witnesses carried by the definition of $"EQ"$; we obtain them by inversion of that case.
 
 - Case $e_3 = mon(k,l,j,flat(e),v) cstepx check(k,j,apply(e,v),v) = e_4$
 
@@ -685,12 +685,12 @@ When $treq(e_1,e'_1)$ holds by case 2, @relation-context-decomposition supplies 
 
   - Case $E^+ = square.stroked$
 
-    By inversion of case 2 of $treq(e_1,e'_1)$, $e_1 ~ rel(e_1)$. Since $e_1 = E^*[e_3]$, @relation-context-decomposition gives contexts and expressions that we name $rel(E)^*$ and $rel(e)_3$.
+    By inversion of case 2 of $treq(e_1,e'_1)$, $e_1 ~ rel(e_1)$. Since $e_1 = E^*[e_3]$, @compiler-relation-context-decomposition gives contexts and expressions that we name $rel(E)^*$ and $rel(e)_3$.
 
     #derivation((
-      ($E^* ~ rel(E)^*$, [@relation-context-decomposition]),
-      ($e_3 ~ rel(e)_3$, [@relation-context-decomposition]),
-      ($rel(e_1) = rel(E)^*[rel(e)_3]$, [@relation-context-decomposition]),
+      ($E^* ~ rel(E)^*$, [@compiler-relation-context-decomposition]),
+      ($e_3 ~ rel(e)_3$, [@compiler-relation-context-decomposition]),
+      ($rel(e_1) = rel(E)^*[rel(e)_3]$, [@compiler-relation-context-decomposition]),
       ($e_1 = E^*[e_3] ~ rel(E)^*[apply(perform(effcheck),tuple(rel(e),rel(v)))]$, "Relation"),
       ($e'_1 = handle(heffcheck,rel(E)^*[apply(perform(effcheck),tuple(rel(e),rel(v)))])$, [$treq(e_1,e'_1)$, case 2]),
       ($e'_1 estep1 ife(handle(heffcheck,apply(rel(e),rel(v))),apply((lambda x. handle(heffcheck,rel(E)^*[x])),rel(v)),eblame(j)) = e'_2$, "Reduction"),
@@ -760,12 +760,12 @@ When $treq(e_1,e'_1)$ holds by case 2, @relation-context-decomposition supplies 
 
     Let $e_5 = lambda f. lambda x. mon(k,l,j,kappa_2,apply(f,mon(l,k,j,kappa_1,x))) = lambda f. lambda x. e_(5a)$
 
-    By inversion of case 2 of $treq(e_1,e'_1)$, $e_1 ~ rel(e_1)$. Since $e_1 = E^*[e_3]$, @relation-context-decomposition gives contexts and expressions that we name $rel(E)^*$ and $rel(e)_3$.
+    By inversion of case 2 of $treq(e_1,e'_1)$, $e_1 ~ rel(e_1)$. Since $e_1 = E^*[e_3]$, @compiler-relation-context-decomposition gives contexts and expressions that we name $rel(E)^*$ and $rel(e)_3$.
 
     #derivation((
-      ($E^* ~ rel(E)^*$, [@relation-context-decomposition]),
-      ($e_3 ~ rel(e)_3$, [@relation-context-decomposition]),
-      ($rel(e_1) = rel(E)^*[rel(e)_3]$, [@relation-context-decomposition]),
+      ($E^* ~ rel(E)^*$, [@compiler-relation-context-decomposition]),
+      ($e_3 ~ rel(e)_3$, [@compiler-relation-context-decomposition]),
+      ($rel(e_1) = rel(E)^*[rel(e)_3]$, [@compiler-relation-context-decomposition]),
       ($e_1 = E^*[e_3] ~ rel(E)^*[apply((lambda f. lambda x. rel(e)_(5a)),rel(v))]$, "Relation"),
       ($e'_1 = handle(heffcheck,rel(E)^*[apply((lambda f. lambda x. rel(e)_(5a)),rel(v))])$, [$treq(e_1,e'_1)$, case 2]),
       ($e'_1 estep1 handle(heffcheck,rel(E)^*[lambda x. rel(e)_(5a)[f:=rel(v)]]) = e'_2$, "Reduction"),
@@ -801,12 +801,12 @@ When $treq(e_1,e'_1)$ holds by case 2, @relation-context-decomposition supplies 
 
     where $e_5 = lambda x. mon(k,l,j,kappa_2,apply(rel(v)_1,mon(l,k,j,kappa_1,x)))$.
 
-    By inversion of case 2 of $treq(e_1,e'_1)$, $e_1 ~ rel(e_1)$. Since $e_1 = E^*[e_3]$, @relation-context-decomposition gives contexts and expressions that we name $rel(E)^*$ and $rel(e)_3$.
+    By inversion of case 2 of $treq(e_1,e'_1)$, $e_1 ~ rel(e_1)$. Since $e_1 = E^*[e_3]$, @compiler-relation-context-decomposition gives contexts and expressions that we name $rel(E)^*$ and $rel(e)_3$.
 
     #derivation((
-      ($E^* ~ rel(E)^*$, [@relation-context-decomposition]),
-      ($e_3 ~ rel(e)_3$, [@relation-context-decomposition]),
-      ($rel(e_1) = rel(E)^*[rel(e)_3]$, [@relation-context-decomposition]),
+      ($E^* ~ rel(E)^*$, [@compiler-relation-context-decomposition]),
+      ($e_3 ~ rel(e)_3$, [@compiler-relation-context-decomposition]),
+      ($rel(e_1) = rel(E)^*[rel(e)_3]$, [@compiler-relation-context-decomposition]),
       ($rel(e)_3 = apply(rel(e)_5, rel(v)_2)$, "Relation"),
       ($e'_1 = handle(heffcheck, rel(E)^*[rel(e)_3])$, [$treq(e_1,e'_1)$, case 2]),
       ($e'_1 estep1 handle(heffcheck, rel(E)^*[rel(e)_4]) = e'_2$, $beta$),
@@ -837,17 +837,17 @@ When $treq(e_1,e'_1)$ holds by case 2, @relation-context-decomposition supplies 
 
   - Case $E^+ = square.stroked$
 
-    By inversion of case 2 of $treq(e_1,e'_1)$, $e_1 ~ rel(e_1)$. Since $e_1 = E^*[e_3]$, @relation-context-decomposition gives contexts and expressions that we name $rel(E)^*$ and $rel(e)_3$.
+    By inversion of case 2 of $treq(e_1,e'_1)$, $e_1 ~ rel(e_1)$. Since $e_1 = E^*[e_3]$, @compiler-relation-context-decomposition gives contexts and expressions that we name $rel(E)^*$ and $rel(e)_3$.
 
     #derivation((
-      ($E^* ~ rel(E)^*$, [@relation-context-decomposition]),
-      ($e_3 ~ rel(e)_3$, [@relation-context-decomposition]),
-      ($rel(e_1) = rel(E)^*[rel(e)_3]$, [@relation-context-decomposition]),
+      ($E^* ~ rel(E)^*$, [@compiler-relation-context-decomposition]),
+      ($e_3 ~ rel(e)_3$, [@compiler-relation-context-decomposition]),
+      ($rel(e_1) = rel(E)^*[rel(e)_3]$, [@compiler-relation-context-decomposition]),
       ($rel(e)_3 = apply((lambda x. rel(e)_6), rel(v)_2)$, [The $guard$ row of the relation on values]),
       ($e'_1 = handle(heffcheck, rel(E)^*[apply((lambda x. rel(e)_6), rel(v)_2)])$, [$treq(e_1,e'_1)$, case 2]),
       ($e'_1 estep1 handle(heffcheck, rel(E)^*[rel(e)_6[x:=rel(v)_2]]) = e'_2$, $beta$),
       ($e_2 = E^*[e_6[x:=v_2]]$, "Source reduction"),
-      ($e_6[x:=v_2] ~ rel(e)_6[x:=rel(v)_2]$, [@relation-subst]),
+      ($e_6[x:=v_2] ~ rel(e)_6[x:=rel(v)_2]$, [@compiler-relation-subst]),
       ($treq(e_2,e'_2)$, "Case 2"),
     ))
 

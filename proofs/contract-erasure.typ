@@ -152,7 +152,7 @@ We define context $F$ that is contexts without $check(k,j,E,v)$.
 #lemma(title: "Relation is closed under check-free contexts")[
 
   If $e ~ relate(e)$ and $F ~ relate(F)$, then $F[e] ~ relate(F)[relate(e)]$.
-] <relation-is-correct>
+] <langc-relation-is-correct>
 
 #proof[
 
@@ -183,7 +183,7 @@ By induction on $F ~ relate(F)$.
 #lemma(title: "Relation Decomposition Through Contexts")[
 
   If $e_1 ~ e'_1$, $e_1 = E[e_2]$, and $e_2$ is a redex, then there are $relate(E)$ and $relate(e)_2$ such that $E ~ relate(E)$ and $e_2 ~ relate(e)_2$ and $e'_1 = relate(E)[relate(e)_2]$.
-] <context-decomposition-relation>
+] <langc-context-decomposition-relation>
 
 #proof[
 ]
@@ -191,7 +191,7 @@ By induction on $F ~ relate(F)$.
 #lemma(title: "Relation is closed under substitution")[
 
   If $e ~ relate(e)$ and $v ~ relate(v)$, then $e[x:=v] ~ relate(e)[x:=relate(v)]$ for every $x$.
-] <relation-substitution>
+] <langc-relation-substitution>
 
 #proof[
 
@@ -233,7 +233,7 @@ By I.H. on $e ~ relate(e)$.
 Forall context $E$, either:
 - $E = F$ or
 - $E = F[check(k,j,E',v)]$
-] <erasure-context-decomposition>
+] <langc-erasure-context-decomposition>
 
 #proof[
   By induction on $E$.
@@ -293,7 +293,7 @@ We define the predicate that will be used for simulation. The beauty of the pred
 #lemma(title: "Erasure satisfies the state predicate")[
 
   If $e' = erase(e)$, then $ereq(e,e')$.
-] <erasure-is-relation>
+] <langc-erasure-is-relation>
 
 #proof[
 I.H on $e' = erase(e)$.
@@ -361,47 +361,47 @@ Because the compiler doesn't compile check (runtime expression), we never get th
 
     // Initialization and the chained conclusion label their ER witnesses.
     edge((0, 0), (0, 2), "--",
-      // text(size: 0.54em)[#link(<erasure-is-relation>)[@erasure-is-relation]],
+      // text(size: 0.54em)[#link(<langc-erasure-is-relation>)[@langc-erasure-is-relation]],
       // label-side: right, label-pos: 48%, label-fill: white
     ),
     edge((1, 0), (1, 2), "--",
-      // text(size: 0.54em)[#link(<erasure-step-simulation>)[@erasure-step-simulation]],
+      // text(size: 0.54em)[#link(<langc-erasure-step-simulation>)[@langc-erasure-step-simulation]],
       // label-side: right, label-pos: 50%, label-fill: white
     ),
     edge((2, 0), (2, 2), "--",
-      // text(size: 0.54em)[#link(<erasure-step-simulation>)[@erasure-step-simulation]],
+      // text(size: 0.54em)[#link(<langc-erasure-step-simulation>)[@langc-erasure-step-simulation]],
       // label-side: left, label-pos: 50%, label-fill: white
     ),
 
     edge((4, 0), (4, 2), "--",
-      // text(size: 0.54em)[#link(<erasure-multistep-simulation>)[@erasure-multistep-simulation]],
+      // text(size: 0.54em)[#link(<langc-erasure-multistep-simulation>)[@langc-erasure-multistep-simulation]],
       // label-side: left, label-pos: 50%, label-fill: white
     ),
 
-    node((0.3, 1), text(size: 0.6em)[@erasure-is-relation]),
-    node((1.3, 1), text(size: 0.6em)[@erasure-step-simulation]),
-    node((2.4, 1), text(size: 0.6em)[@erasure-step-simulation]),
-    node((1.5, 2.6), text(size: 0.6em)[chained by @erasure-multistep-simulation]),
+    node((0.3, 1), text(size: 0.6em)[@langc-erasure-is-relation]),
+    node((1.3, 1), text(size: 0.6em)[@langc-erasure-step-simulation]),
+    node((2.4, 1), text(size: 0.6em)[@langc-erasure-step-simulation]),
+    node((1.5, 2.6), text(size: 0.6em)[chained by @langc-erasure-multistep-simulation]),
   )
-] <erasure-proof-strategy>
+] <langc-erasure-proof-strategy>
 
 #theorem(title: "Contract Erasure Theorem")[
 
   If $e' = erase(e)$ and $e cstep1 b$, then $e' step1 b$.
-] <contract-erasure>
+] <langc-contract-erasure>
 
 #proof[
 
 #derivation((
-  ($ereq(e,e')$, [@erasure-is-relation]),
-  ($e' step1 b$, [@erasure-multistep-simulation]),
+  ($ereq(e,e')$, [@langc-erasure-is-relation]),
+  ($e' step1 b$, [@langc-erasure-multistep-simulation]),
 ))
 ]
 
 #lemma(title: "Erasure Multistep Simulation")[
 
   If $ereq(e,e')$ and $e cstep1 b$ then $e' step1 b$.
-] <erasure-multistep-simulation>
+] <langc-erasure-multistep-simulation>
 
 ${(e,e') | e cstep1 b "and" (e,e') in "EQ"}$. This active filter prevents $e cstep1 blame(k,j)$ as well as anything not $b$. Mainly we worry about $E[blame(k,j)] cstep blame(k,j)$ and $E[check(k,j,falseb,v)] cstep E[blame(k,j)]$. It's a strong claim here that $e cstep1 b$ so we can ignore these states. But the single step simulation must be reworded correctly.
 
@@ -456,8 +456,8 @@ By induction on $e cstep1 b$.
       #derivation((
         ($e_1 eq.not E[blame(k,j)]$, []),
         // ($e eq.not E[check(k,j,falseb,v)]$, [Generalize]),
-        ($e' step1 e'_1$, [@erasure-step-simulation]),
-        ($ereq(e_1, e'_1)$, [@erasure-step-simulation]),
+        ($e' step1 e'_1$, [@langc-erasure-step-simulation]),
+        ($ereq(e_1, e'_1)$, [@langc-erasure-step-simulation]),
         ($e'_1 step1 b$, "I.H."),
         ($e' step1 b$, [Transitive]),
       ))
@@ -467,7 +467,7 @@ By induction on $e cstep1 b$.
 #lemma(title: "Erasure Step Simulation")[
 
   If $ereq(e_1,e'_1)$, $e_1 cstep e_2$, and $e_2 eq.not E_2[blame(k,j)]$, then there is $e'_2$ such that $e'_1 step1 e'_2$ and $ereq(e_2,e'_2)$.
-] <erasure-step-simulation>
+] <langc-erasure-step-simulation>
 
 #proof[
 
@@ -506,7 +506,7 @@ By case analysis of $ereq(e_1,e'_1)$:
 
   - Case $E[e_3] cstep E[e_4]$ where $e_3 cstepx e_4$ is a redex.
 
-    By @erasure-context-decomposition,
+    By @langc-erasure-context-decomposition,
 
     - Case $E = F[check(k_3,j_3,E_3,v_3)]$
 
@@ -514,7 +514,7 @@ By case analysis of $ereq(e_1,e'_1)$:
 
     - Case $E = F$ with $F$ a non-check context. Without confusion, we use $E$ below:
 
-      For all cases, we have $E ~ relate(E),e_3 ~ relate(e)_3,e_4 ~ relate(e)_4$ by @context-decomposition-relation.
+      For all cases, we have $E ~ relate(E),e_3 ~ relate(e)_3,e_4 ~ relate(e)_4$ by @langc-context-decomposition-relation.
 
       By cases on the redex reduction $e_3 cstepx e_4$:
 
@@ -524,11 +524,11 @@ By case analysis of $ereq(e_1,e'_1)$:
           ($e_3 ~ apply((lambda x. relate(e)_5),relate(v)_5)$, [Definition]),
           ($relate(e)_3 = apply((lambda x. relate(e)_5),relate(v)_5)$, [$e_3 ~ relate(e)_3$]),
           ($apply((lambda x. relate(e)_5),relate(v)_5) stepx relate(e)_5[x:=relate(v)_5]$, rn("S-App")),
-          ($e_4 ~ relate(e)_5[x:=relate(v)_5]$, [@relation-substitution]),
-          ($relate(e)_4 = relate(e)_5[x:=relate(v)_5]$, [@relation-substitution]),
-          ($E[e_3] ~ relate(E)[relate(e)_3]$,[@relation-is-correct]),
+          ($e_4 ~ relate(e)_5[x:=relate(v)_5]$, [@langc-relation-substitution]),
+          ($relate(e)_4 = relate(e)_5[x:=relate(v)_5]$, [@langc-relation-substitution]),
+          ($E[e_3] ~ relate(E)[relate(e)_3]$,[@langc-relation-is-correct]),
           ($e'_1 = relate(E)[relate(e)_3] step1 relate(E)[relate(e)_4] = e'_2$, [Step and Closure]),
-          ($e_2 = E[e_4] ~ relate(E)[relate(e)_4] = e'_2$,[@relation-is-correct]),
+          ($e_2 = E[e_4] ~ relate(E)[relate(e)_4] = e'_2$,[@langc-relation-is-correct]),
         ))
 
       - Case $mu x : tau. e_3 cstepx e_3[x:=mu x : tau. e_3]$
@@ -543,7 +543,7 @@ By case analysis of $ereq(e_1,e'_1)$:
           ($relate(e)_3 = relate(v)$, [Definition]),
           ($e_4 ~ relate(v)$, [Definition]),
           ($e'_1 step1 relate(E)[relate(v)] = e'_2$, [Reflexivity]),
-          ($e_2 ~ e'_2$, [@relation-is-correct]),
+          ($e_2 ~ e'_2$, [@langc-relation-is-correct]),
         ))
 
       - Case $check(k,j,falseb,v) cstepx blame(k,j)$
@@ -560,7 +560,7 @@ By case analysis of $ereq(e_1,e'_1)$:
           ($relate(e)_3 = relate(v)_3$, [Definition]),
           ($e_4 ~ relate(v)_3$, [Definition]),
           ($e'_1 step1 relate(E)[relate(v)_3] = e'_2$, [Reflexivity]),
-          ($e_2 ~ e'_2$, [@relation-is-correct]),
+          ($e_2 ~ e'_2$, [@langc-relation-is-correct]),
         ))
 
       - Case $mon(k,l,j,kappa,v_3) cstepx guard(v_3,kappa,k,l,j)$
@@ -569,7 +569,7 @@ By case analysis of $ereq(e_1,e'_1)$:
           ($relate(e)_3 = relate(v)_3$, [Definition]),
           ($e_4 ~ relate(v)_3$, [Definition]),
           ($e'_1 step1 relate(E)[relate(v)_3] = e'_2$, [Reflexivity]),
-          ($e_2 ~ e'_2$, [@relation-is-correct]),
+          ($e_2 ~ e'_2$, [@langc-relation-is-correct]),
         ))
 
       - Case $apply(guard(v_1,kappa_1 -> kappa_2,k,l,j),v_2) cstepx mon(k,l,j,kappa_2,apply(v_1,mon(l,k,j,kappa_1,v_2)))$
@@ -578,7 +578,7 @@ By case analysis of $ereq(e_1,e'_1)$:
           ($relate(e)_3 = apply(relate(v)_1,relate(v)_2)$, [Definition]),
           ($relate(e)_4 ~ apply(relate(v)_1,relate(v)_2)$, [Definition]),
           ($e'_1 step1 relate(E)[apply(relate(v)_1,relate(v)_2)] = e'_2$, [Reflexivity]),
-          ($e_2 ~ e'_2$, [@relation-is-correct]),
+          ($e_2 ~ e'_2$, [@langc-relation-is-correct]),
         ))
 
       - Case $apply(guard(v_1,dep(kappa_1,lambda x. kappa_2),k,l,j),v_2) cstepx mon(k,l,j,kappa_3,apply(v_1,mon(l,k,j,kappa_1,v_2)))$, where $kappa_3 = kappa_2[x:=mon(l,j,j,kappa_1,v_2)]$

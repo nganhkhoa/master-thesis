@@ -64,7 +64,7 @@ $
 #theorem(title: "Compiler Type Preservation")[
 
   If $compile(type(Gamma,e,tau),e')$ then $type(tc(Gamma),e',tc(tau),eff: hc)$.
-] <ts-preservation>
+] <compiler-type-ts-preservation>
 
 #proof[
 
@@ -122,7 +122,7 @@ By induction on structure of $compile(type(Gamma,e,tau),e')$.
   #derivation((
     ($type(tc(Gamma), e_5, teff(tc(tau),hc,boolt), eff: hc)$, "I.H."),
     ($type(tc(Gamma), e_6, tc(tau), eff: hc)$, "I.H."),
-    ($type(tc(Gamma), apply(perform(effcheck, tau: tc(tau)), tuple(k, tuple(e_5, e_6))), tc(tau), eff: hc)$, [@ts-perform]),
+    ($type(tc(Gamma), apply(perform(effcheck, tau: tc(tau)), tuple(k, tuple(e_5, e_6))), tc(tau), eff: hc)$, [@compiler-type-ts-perform]),
   ))
 
   This is the only rule that introduces $heffcheck$.
@@ -184,7 +184,7 @@ By induction on structure of $compile(type(Gamma,e,tau),e')$.
   If $type(Gamma, e_1, teff(tau,hc,boolt), eff: hc)$ and $type(Gamma, e_2, tau, eff: hc)$ then
 
   $type(Gamma, apply(perform(effcheck, tau: tau), tuple(k, tuple(e_1, e_2))), tau, eff: hc)$.
-] <ts-perform>
+] <compiler-type-ts-perform>
 
 #proof[
   #derivation((
@@ -217,13 +217,13 @@ Note that $h_w$ signature matches $Sigma(heffcheck)$ if we replace $alpha$ with 
 #theorem(title: "Compiler Effect Safety")[
 
   If $compile(type(dot.op,e,tau),e')$ then $type(dot.op, apply(kw("wrap")[tc(tau)],(lambda \_ : unit. e')), tc(tau), eff: mteff)$.
-] <ts-effect-safety>
+] <compiler-type-ts-effect-safety>
 
 #proof[
   #derivation((
-    ($type(dot.op,e',tc(tau),eff: hc)$, [@ts-preservation]),
+    ($type(dot.op,e',tc(tau),eff: hc)$, [@compiler-type-ts-preservation]),
     ($type(dot.op, lambda \_ : unit. e', teff(unit,hc,tc(tau)), type: "val")$, rn("T-E-Abs")),
-    ($type(dot.op, kw("wrap")[tc(tau)], teff((teff(unit,hc,tc(tau))),mteff,tc(tau)), eff: mteff)$, [@ts-wrap, #rn("T-E-Tapp")]),
+    ($type(dot.op, kw("wrap")[tc(tau)], teff((teff(unit,hc,tc(tau))),mteff,tc(tau)), eff: mteff)$, [@compiler-type-ts-wrap, #rn("T-E-Tapp")]),
     ($type(dot.op, apply(kw("wrap")[tc(tau)],(lambda \_ : unit. e')), tc(tau), eff: mteff)$, rn("T-E-App")),
   ))
 ]
@@ -232,7 +232,7 @@ Note that $h_w$ signature matches $Sigma(heffcheck)$ if we replace $alpha$ with 
 #lemma(title: "Type of wrap")[
 
   $type(dot.op, kw("wrap"), forall alpha. teff((teff(unit,hc,alpha)),mteff,alpha), type: "val")$
-] <ts-wrap>
+] <compiler-type-ts-wrap>
 
 #proof[
 

@@ -148,7 +148,7 @@ The judgment $tec(Gamma, E, tau_1, tau_2, epsilon)$ types a context as a functio
     )),
   ),
   caption: [Typing of evaluation contexts. The frames $iszero(E)$, $tuple(E, e)$, $tuple(v, E)$, $injl(E)$, $injr(E)$ have rules CE-Zero, CE-Tuple1, CE-Tuple2, CE-Inj-Left, CE-Inj-Right of the same form, following the type rule of the frame.]
-) <effects-context-rules>
+) <lange-effects-context-rules>
 
 Only CE-Handle changes the effect: the hole of $ehandle(epsilon, h, E)$ is typed under $row(l, epsilon)$. Following the definitions, for every context
 
@@ -164,7 +164,7 @@ and likewise for every frame without a handler.
 
 #lemma(title: [Evaluation context typing])[
   If $tec(dot, E, tau_1, tau, epsilon)$ and $type(dot, e, tau_1, eff: row(lbls(E), epsilon))$ then $type(dot, E[e], tau, eff: epsilon)$.
-] <evaluation-context-typing>
+] <lange-evaluation-context-typing>
 
 #proof[
   By induction on the derivation of $tec(dot, E, tau_1, tau, epsilon)$.
@@ -218,7 +218,7 @@ and likewise for every frame without a handler.
 
 #lemma(title: [Effect corresponds to the evaluation context])[
   If $type(dot, E[e], tau, eff: epsilon)$ then there is $tau_1$ such that $tec(dot, E, tau_1, tau, epsilon)$ and $type(dot, e, tau_1, eff: row(lbls(E), epsilon))$.
-] <effect-correspondence>
+] <lange-effect-correspondence>
 
 #proof[
   By induction on $E$.
@@ -279,12 +279,12 @@ and likewise for every frame without a handler.
 
 #lemma(title: [Well typed operations are handled])[
   If $type(dot, E[apply(eperform(epsilon_p, op, tau_s), v)], tau, eff: mteff)$ then $E = E_1[ehandle(epsilon, h, E_2)]$ with $op in.not bop(E_2)$ and $(op -> f) in h$.
-] <operations-handled>
+] <lange-operations-handled>
 
 #proof[
   Let $op : forall alpha. tau_1 -> tau_2 in Sigma(l)$.
   #derivation((
-    ($type(dot, apply(eperform(epsilon_p, op, tau_s), v), tau_3, eff: row(lbls(E), mteff))$, [@effect-correspondence]),
+    ($type(dot, apply(eperform(epsilon_p, op, tau_s), v), tau_3, eff: row(lbls(E), mteff))$, [@lange-effect-correspondence]),
     ($type(dot, eperform(epsilon_p, op, tau_s), teff(tau_4, row(lbls(E), mteff), tau_3), eff: row(lbls(E), mteff))$, rn("T-E-App")),
     ($type(dot, eperform(epsilon_p, op, tau_s), teff(tau_4, row(lbls(E), mteff), tau_3), type: "val")$, rn("T-E-Val")),
     ($row(l, epsilon_0) = row(lbls(E), mteff)$, [#rn("T-E-Perform"), where $epsilon_0$ is the explicit annotation of $eperform(epsilon_p, op, tau_s)$]),
@@ -296,11 +296,11 @@ and likewise for every frame without a handler.
 
 #lemma(title: [Effect types are meaningful])[
   If $type(dot, E[apply(eperform(epsilon_p, op, tau_s), v)], tau, eff: epsilon)$ with $op in.not bop(E)$ and $op in Sigma(l)$, then $l in epsilon$.
-] <meaningful-effect-type>
+] <lange-meaningful-effect-type>
 
 #proof[
   #derivation((
-    ($type(dot, apply(eperform(epsilon_p, op, tau_s), v), tau_3, eff: row(lbls(E), epsilon))$, [@effect-correspondence]),
+    ($type(dot, apply(eperform(epsilon_p, op, tau_s), v), tau_3, eff: row(lbls(E), epsilon))$, [@lange-effect-correspondence]),
     ($type(dot, eperform(epsilon_p, op, tau_s), teff(tau_4, row(lbls(E), epsilon), tau_3), type: "val")$, [#rn("T-E-App"), #rn("T-E-Val")]),
     ($row(l, epsilon_0) = row(lbls(E), epsilon)$, rn("T-E-Perform")),
     ($l in.not lbls(E)$, [$op in.not bop(E)$]),
@@ -311,7 +311,7 @@ and likewise for every frame without a handler.
 
 #lemma(title: [Value typing])[
   If $type(Gamma, v, tau, eff: epsilon)$ then $type(Gamma, v, tau, type: "val")$. Hence $type(Gamma, v, tau, eff: epsilon_0)$ for every $epsilon_0$.
-] <values-any-effect>
+] <lange-values-any-effect>
 
 #proof[
   By induction on $v$. The second part follows from the first by T-E-Val.
@@ -328,7 +328,7 @@ and likewise for every frame without a handler.
 
 #lemma(title: [Weakening])[
   If $type(Gamma, e, tau, eff: epsilon)$ and $x in.not "dom"(Gamma)$ then $type(Gamma\, x : tau_s, e, tau, eff: epsilon)$, and likewise for $attach(tack.r.short, br: "val")$, $attach(tack.r.short, br: "ops")$ and $attach(tack.r.short, br: "ec")$.
-] <weakening>
+] <lange-weakening>
 
 #proof[
   By induction on the derivation. Only T-E-Abs and T-E-Fix extend $Gamma$, with a bound variable that we choose different from $x$. The side condition $alpha in.not "ftv"(Gamma\, x : tau_s)$ of T-E-Perform holds by choosing the quantified $alpha$ of the signature fresh.
@@ -339,7 +339,7 @@ and likewise for every frame without a handler.
   1. If $type(Gamma_1\, x : tau_1\, Gamma_2, e, tau, eff: epsilon)$ then $type(Gamma_1\, Gamma_2, e[x:=v], tau, eff: epsilon)$.
   2. If $type(Gamma_1\, x : tau_1\, Gamma_2, v_0, tau, type: "val")$ then $type(Gamma_1\, Gamma_2, v_0[x:=v], tau, type: "val")$.
   3. If $tops(Gamma_1\, x : tau_1\, Gamma_2, h, tau, l, epsilon)$ then $tops(Gamma_1\, Gamma_2, h[x:=v], tau, l, epsilon)$.
-] <var-substitution>
+] <lange-var-substitution>
 
 #proof[
   By mutual induction on the derivations. Let $Gamma = Gamma_1, x : tau_1, Gamma_2$ and $Gamma_0 = Gamma_1, Gamma_2$. Since $v$ is a value, $v_0[x:=v]$ is again a value, so the value rules still apply after substitution.
@@ -357,7 +357,7 @@ and likewise for every frame without a handler.
   - Case T-E-Abs with $v_0 = #kw("lambda")^epsilon_0 y : tau_2. e$, $y in.not {x} union "fv"(v)$.
     #derivation((
       ($type(Gamma\, y : tau_2, e, tau_3, eff: epsilon_0)$, rn("T-E-Abs")),
-      ($type(Gamma_0\, y : tau_2, v, tau_1, type: "val")$, [@weakening]),
+      ($type(Gamma_0\, y : tau_2, v, tau_1, type: "val")$, [@lange-weakening]),
       ($type(Gamma_0\, y : tau_2, e[x:=v], tau_3, eff: epsilon_0)$, "I.H. 1"),
       ($type(Gamma_0, #kw("lambda")^epsilon_0 y : tau_2. e[x:=v], teff(tau_2, epsilon_0, tau_3), type: "val")$, rn("T-E-Abs")),
     ))
@@ -421,7 +421,7 @@ and likewise for every frame without a handler.
 
 #lemma(title: [Type variable substitution])[
   If $type(Gamma, e, tau, eff: epsilon)$ and $attach(tack.r.short, br: "wf") tau_0 : k$ then $type(Gamma[alpha^k:=tau_0], e[alpha^k:=tau_0], tau[alpha^k:=tau_0], eff: epsilon[alpha^k:=tau_0])$, and likewise for $attach(tack.r.short, br: "val")$ and $attach(tack.r.short, br: "ops")$.
-] <type-var-substitution>
+] <lange-type-var-substitution>
 
 #proof[
   By induction on the derivation, as Lemma 20 of @ningning2020effect without the evidence translation. Bound type variables are renamed away from $alpha$ and from $"ftv"(tau_0)$, so substitution commutes with them:
@@ -452,15 +452,15 @@ and likewise for every frame without a handler.
   - if $tau = teff(tau_1, epsilon_0, tau_2)$, $v$ is $eabs(epsilon_0, x, tau_1, e)$, an operation form $eperform(epsilon_p, op, tau_s)$ whose operation row is $epsilon_0$, a handler form $ehandler(epsilon_0, h)$, or $mu x : tau. v_0$;
   - if $tau = forall alpha. tau_s$, $v$ is $Lambda alpha. v_0$ or $mu x : tau. v_0$;
   - if $tau$ is $numt$, $boolt$, $unit$ or $tuple(tau_1, tau_2)$, $v$ is $n$, $b$, $unit$ or $tuple(v_1, v_2)$ respectively.
-] <effects-canonical>
+] <lange-effects-canonical>
 
 #proof[
-  A variable is not typed in the empty context. By @values-any-effect, $type(dot, v, tau, type: "val")$. Every other value form has exactly one value rule, and the conclusion of that rule fixes the shape of the type. T-E-Error types $eblame(p)$ at any type, and T-E-Fix only gives a function or polymorphic type.
+  A variable is not typed in the empty context. By @lange-values-any-effect, $type(dot, v, tau, type: "val")$. Every other value form has exactly one value rule, and the conclusion of that rule fixes the shape of the type. T-E-Error types $eblame(p)$ at any type, and T-E-Fix only gives a function or polymorphic type.
 ]
 
 #lemma(title: [Steps under contexts])[
   If $e estep e_0$ then $E[e] estep e_0$ for some $e_0$.
-] <effects-step-context>
+] <lange-effects-step-context>
 
 #proof[
   If the step is Step-E, $e = E_1[e_1]$ with $e_1 estepx e_2$, and $E[e] = (E[E_1])[e_1] estep (E[E_1])[e_2]$ by Step-E. If it is Step-E-Error, $e = E_1[eblame(p)]$ with $E_1 != square.stroked$, so $E[E_1] != square.stroked$ and $E[e] estep eblame(p)$ by Step-E-Error.
@@ -468,7 +468,7 @@ and likewise for every frame without a handler.
 
 #lemma(title: [Progress with effects])[
   If $type(dot, e_1, tau, eff: epsilon)$ then $e_1$ is a value, or $e_1 estep e_2$, or $e_1 = E[apply(eperform(epsilon_p, op, tau_s), v)]$ with $op in.not bop(E)$.
-] <progress-with-effect>
+] <lange-progress-with-effect>
 
 #proof[
   By induction on the typing derivation. Call the last form _stuck on op_.
@@ -482,12 +482,12 @@ and likewise for every frame without a handler.
     ))
 
     By the I.H. on $e_3$:
-    - $e_3 estep e_5$. Then $e_1$ steps by @effects-step-context.
+    - $e_3 estep e_5$. Then $e_1$ steps by @lange-effects-step-context.
     - $e_3 = E_0[apply(eperform(epsilon_p, op, tau_s), v)]$. Take $E = apply(E_0, e_4)$. Then $bop(E) = bop(E_0)$, so $e_1$ is stuck on $op$.
     - $e_3$ is a value. By the I.H. on $e_4$:
-      - $e_4 estep e_6$. Then $e_1$ steps by @effects-step-context.
+      - $e_4 estep e_6$. Then $e_1$ steps by @lange-effects-step-context.
       - $e_4 = E_0[apply(eperform(epsilon_p, op, tau_s), v)]$. Take $E = apply(e_3, E_0)$.
-      - $e_4$ is a value. By @effects-canonical on $e_3$:
+      - $e_4$ is a value. By @lange-effects-canonical on $e_3$:
         - $e_3 = #kw("lambda")^epsilon x : tau_1. e$. Then $e_1 estep e[x:=e_4]$ (S-App).
         - $e_3 = ehandler(epsilon, h)$. Then $e_1 estep ehandle(epsilon, h, apply(e_4, unit))$ (Step-E-Handler).
         - $e_3 = eperform(epsilon_p, op, tau_s)$. Take $E = square.stroked$; $e_1$ is stuck on $op$.
@@ -496,13 +496,13 @@ and likewise for every frame without a handler.
 
   - Case T-E-Tapp, $e_1 = e_3[tau_1]$ and $type(dot, e_3, forall alpha. tau_2, eff: epsilon)$. By the I.H. on $e_3$:
     - $e_3$ steps, or is stuck on $op$ with context $E_0$. Then $e_1$ steps, or is stuck on $op$ with context $E_0[tau_1]$.
-    - $e_3$ is a value. By @effects-canonical:
+    - $e_3$ is a value. By @lange-effects-canonical:
       - $e_3 = Lambda alpha. v_0$. Then $e_1 estep v_0[alpha:=tau_1]$ (Step-E-TApp).
       - $e_3 = mu x : tau_f. v_0$. Then $e_1 estep v_0[x:=e_3][tau_1]$ (Step-E-Fix-TApp).
       - $e_3 = eblame(p)$. Error subcase.
 
   - Case T-E-Handle, $e_1 = ehandle(epsilon, h, e_3)$ with $h : Sigma(l)$ and $type(dot, e_3, tau, eff: row(l, epsilon))$. By the I.H. on $e_3$:
-    - $e_3$ steps. Then $e_1$ steps by @effects-step-context.
+    - $e_3$ steps. Then $e_1$ steps by @lange-effects-step-context.
     - $e_3$ is a value. Then $e_1 estep e_3$ (Step-E-Return).
     - $e_3 = E_0[apply(eperform(epsilon_p, op, tau_s), v)]$ with $op in.not bop(E_0)$.
       - If $(op -> f) in h$, then $e_1 estep apply(apply(f[tau_s], v), k)$ with $k = #kw("lambda")^epsilon x : tau_2[alpha:=tau_s]. ehandle(epsilon, h, E_0[x])$ (Step-E-Perform).
@@ -510,27 +510,27 @@ and likewise for every frame without a handler.
 
   - Case T-If, $e_1 = ife(e_3, e_4, e_5)$. If $e_3$ steps or is stuck, so is $e_1$, with the context $ife(E_0, e_4, e_5)$. If $e_3$ is a value of type $boolt$, it is $trueb$ or $falseb$ and S-If-True or S-If-False applies, or it is $eblame(p)$ (error subcase).
 
-  - Cases T-Op and T-Zero. As T-E-App: evaluate the operands from left to right; if all are values they are numbers or booleans by @effects-canonical and S-Op or S-Zero applies, or one of them is $eblame(p)$ (error subcase).
+  - Cases T-Op and T-Zero. As T-E-App: evaluate the operands from left to right; if all are values they are numbers or booleans by @lange-effects-canonical and S-Op or S-Zero applies, or one of them is $eblame(p)$ (error subcase).
 
   - Cases T-Tuple, T-Inj-Left and T-Inj-Right. If the operands are values, a tuple is a value; $injl(tuple(v_1, v_2))$ and $injr(tuple(v_1, v_2))$ step by S-Inj-Left and S-Inj-Right; an operand $eblame(p)$ is the error subcase.
 ]
 
 #theorem(title: [#lange Progress])[
   If $type(dot, e_1, tau, eff: mteff)$ then $e_1$ is a value or $e_1 estep e_2$.
-] <effects-progress>
+] <lange-effects-progress>
 
 #proof[
-  By @progress-with-effect, $e_1$ is a value, or steps, or $e_1 = E[apply(eperform(epsilon_p, op, tau_s), v)]$ with $op in.not bop(E)$ and $op in Sigma(l)$. The last case is impossible:
+  By @lange-progress-with-effect, $e_1$ is a value, or steps, or $e_1 = E[apply(eperform(epsilon_p, op, tau_s), v)]$ with $op in.not bop(E)$ and $op in Sigma(l)$. The last case is impossible:
   #derivation((
     ($type(dot, E[apply(eperform(epsilon_p, op, tau_s), v)], tau, eff: mteff)$, "Given"),
-    ($l in mteff$, [@meaningful-effect-type]),
+    ($l in mteff$, [@lange-meaningful-effect-type]),
     ("Contradiction", [$mteff$ is empty]),
   ))
 ]
 
 #lemma(title: [Redex preservation])[
   If $type(dot, e_1, tau, eff: epsilon)$ and $e_1 estepx e_2$ then $type(dot, e_2, tau, eff: epsilon)$.
-] <small-step-preservation>
+] <lange-small-step-preservation>
 
 #proof[
   By cases on $e_1 estepx e_2$.
@@ -541,15 +541,15 @@ and likewise for every frame without a handler.
       ([The $lambda$ annotation is the body effect $epsilon$.], rn("T-E-Abs")),
       ($type(dot, v, tau_1, eff: epsilon)$, rn("T-E-App")),
       ($type(x : tau_1, e, tau, eff: epsilon)$, [#rn("T-E-Val"), #rn("T-E-Abs")]),
-      ($type(dot, v, tau_1, type: "val")$, [@values-any-effect]),
-      ($type(dot, e[x:=v], tau, eff: epsilon)$, [@var-substitution]),
+      ($type(dot, v, tau_1, type: "val")$, [@lange-values-any-effect]),
+      ($type(dot, e[x:=v], tau, eff: epsilon)$, [@lange-var-substitution]),
     ))
 
   - Case Step-E-TApp, $(Lambda alpha^k. v)[tau_0] estepx v[alpha:=tau_0]$, with $tau = tau_1[alpha:=tau_0]$.
     #derivation((
       ($type(dot, Lambda alpha^k. v, forall alpha^k. tau_1, eff: epsilon), attach(tack.r.short, br: "wf") tau_0 : k$, rn("T-E-Tapp")),
       ($type(dot, v, tau_1, type: "val")$, [#rn("T-E-Val"), #rn("T-E-TAbs")]),
-      ($type(dot, v[alpha:=tau_0], tau_1[alpha:=tau_0], type: "val")$, [@type-var-substitution]),
+      ($type(dot, v[alpha:=tau_0], tau_1[alpha:=tau_0], type: "val")$, [@lange-type-var-substitution]),
       ($type(dot, v[alpha:=tau_0], tau, eff: epsilon)$, rn("T-E-Val")),
     ))
 
@@ -560,7 +560,7 @@ and likewise for every frame without a handler.
       ($type(dot, mu x : tau_f. v, tau_f, type: "val")$, [#rn("T-E-App"), #rn("T-E-Val")]),
       ($type(dot, v_0, tau_1, eff: epsilon)$, rn("T-E-App")),
       ($type(x : tau_f, v, tau_f, type: "val")$, rn("T-E-Fix")),
-      ($type(dot, v[x:=mu x : tau_f. v], tau_f, type: "val")$, [@var-substitution]),
+      ($type(dot, v[x:=mu x : tau_f. v], tau_f, type: "val")$, [@lange-var-substitution]),
       ($type(dot, apply(v[x:=mu x : tau_f. v], v_0), tau, eff: epsilon)$, [#rn("T-E-Val"), #rn("T-E-App")]),
     ))
 
@@ -572,7 +572,7 @@ and likewise for every frame without a handler.
       ($type(dot, v, tau_1, eff: epsilon)$, rn("T-E-App")),
       ($type(dot, ehandler(epsilon, h), teff((teff(unit, row(l, epsilon), tau)), epsilon, tau), type: "val")$, rn("T-E-Val")),
       ($tops(dot, h, tau, l, epsilon), tau_1 = teff(unit, row(l, epsilon), tau)$, rn("T-E-Handler")),
-      ($type(dot, v, teff(unit, row(l, epsilon), tau), eff: row(l, epsilon))$, [@values-any-effect]),
+      ($type(dot, v, teff(unit, row(l, epsilon), tau), eff: row(l, epsilon))$, [@lange-values-any-effect]),
       ($type(dot, apply(v, unit), tau, eff: row(l, epsilon))$, [#rn("T-Unit"), #rn("T-E-App")]),
       ($type(dot, ehandle(epsilon, h, apply(v, unit)), tau, eff: epsilon)$, rn("T-E-Handle")),
     ))
@@ -580,24 +580,24 @@ and likewise for every frame without a handler.
   - Case Step-E-Return, $ehandle(epsilon, h, v) estepx v$.
     #derivation((
       ($type(dot, v, tau, eff: row(l, epsilon))$, rn("T-E-Handle")),
-      ($type(dot, v, tau, eff: epsilon)$, [@values-any-effect]),
+      ($type(dot, v, tau, eff: epsilon)$, [@lange-values-any-effect]),
     ))
 
   - Case Step-E-Perform, $ehandle(epsilon, h, E[apply(eperform(epsilon_p, op, tau_0), v)]) estepx apply(apply(f[tau_0], v), k)$, where $op in.not bop(E)$, $(op -> f) in h$, $op : forall alpha. tau_1 -> tau_2 in Sigma(l)$ and $k = #kw("lambda")^epsilon x : tau_2[alpha:=tau_0]. ehandle(epsilon, h, E[x])$.
     #derivation((
-      ($tec(dot, ehandle(epsilon, h, E), tau_3, tau, epsilon)$, [@effect-correspondence]),
-      ($type(dot, apply(eperform(epsilon_p, op, tau_0), v), tau_3, eff: row(lbls(E), row(l, epsilon)))$, [@effect-correspondence]),
+      ($tec(dot, ehandle(epsilon, h, E), tau_3, tau, epsilon)$, [@lange-effect-correspondence]),
+      ($type(dot, apply(eperform(epsilon_p, op, tau_0), v), tau_3, eff: row(lbls(E), row(l, epsilon)))$, [@lange-effect-correspondence]),
       ($tops(dot, h, tau, l, epsilon), tec(dot, E, tau_3, tau, row(l, epsilon))$, rn("CE-Handle")),
       ($type(dot, f, forall alpha. teff(tau_1, epsilon, (teff((teff(tau_2, epsilon, tau)), epsilon, tau))), type: "val")$, rn("T-E-Ops")),
       ($alpha in.not "ftv"(epsilon, tau)$, rn("T-E-Ops")),
       ($type(dot, f[tau_0], teff(tau_1[alpha:=tau_0], epsilon, (teff((teff(tau_2[alpha:=tau_0], epsilon, tau)), epsilon, tau))), eff: epsilon)$, [#rn("T-E-Val"), #rn("T-E-Tapp")]),
       ($type(dot, eperform(epsilon_p, op, tau_0), teff(tau_4, row(lbls(E), row(l, epsilon)), tau_3), type: "val")$, [#rn("T-E-App"), #rn("T-E-Val")]),
       ($tau_4 = tau_1[alpha:=tau_0], tau_3 = tau_2[alpha:=tau_0]$, rn("T-E-Perform")),
-      ($type(dot, v, tau_1[alpha:=tau_0], eff: epsilon)$, [#rn("T-E-App"), @values-any-effect]),
+      ($type(dot, v, tau_1[alpha:=tau_0], eff: epsilon)$, [#rn("T-E-App"), @lange-values-any-effect]),
       ($type(dot, apply(f[tau_0], v), teff((teff(tau_2[alpha:=tau_0], epsilon, tau)), epsilon, tau), eff: epsilon)$, rn("T-E-App")),
       ($type(x : tau_2[alpha:=tau_0], x, tau_2[alpha:=tau_0], eff: row(lbls(E), row(l, epsilon)))$, [#rn("T-E-Var"), #rn("T-E-Val")]),
-      ($tec(x : tau_2[alpha:=tau_0], ehandle(epsilon, h, E), tau_2[alpha:=tau_0], tau, epsilon)$, [@weakening]),
-      ($type(x : tau_2[alpha:=tau_0], ehandle(epsilon, h, E[x]), tau, eff: epsilon)$, [@evaluation-context-typing]),
+      ($tec(x : tau_2[alpha:=tau_0], ehandle(epsilon, h, E), tau_2[alpha:=tau_0], tau, epsilon)$, [@lange-weakening]),
+      ($type(x : tau_2[alpha:=tau_0], ehandle(epsilon, h, E[x]), tau, eff: epsilon)$, [@lange-evaluation-context-typing]),
       ($type(dot, k, teff(tau_2[alpha:=tau_0], epsilon, tau), eff: epsilon)$, [#rn("T-E-Abs"), #rn("T-E-Val")]),
       ($type(dot, apply(apply(f[tau_0], v), k), tau, eff: epsilon)$, rn("T-E-App")),
     ))
@@ -609,17 +609,17 @@ and likewise for every frame without a handler.
 
 #theorem(title: [#lange Preservation])[
   If $type(dot, e_1, tau, eff: epsilon)$ and $e_1 estep e_2$ then $type(dot, e_2, tau, eff: epsilon)$.
-] <effects-preservation>
+] <lange-effects-preservation>
 
 #proof[
   By cases on the step.
 
   - Case Step-E, $e_1 = E[e_a]$, $e_2 = E[e_b]$ and $e_a estepx e_b$.
     #derivation((
-      ($tec(dot, E, tau_1, tau, epsilon)$, [@effect-correspondence]),
-      ($type(dot, e_a, tau_1, eff: row(lbls(E), epsilon))$, [@effect-correspondence]),
-      ($type(dot, e_b, tau_1, eff: row(lbls(E), epsilon))$, [@small-step-preservation]),
-      ($type(dot, E[e_b], tau, eff: epsilon)$, [@evaluation-context-typing]),
+      ($tec(dot, E, tau_1, tau, epsilon)$, [@lange-effect-correspondence]),
+      ($type(dot, e_a, tau_1, eff: row(lbls(E), epsilon))$, [@lange-effect-correspondence]),
+      ($type(dot, e_b, tau_1, eff: row(lbls(E), epsilon))$, [@lange-small-step-preservation]),
+      ($type(dot, E[e_b], tau, eff: epsilon)$, [@lange-evaluation-context-typing]),
     ))
 
   - Case Step-E-Error, $E[eblame(p)] estep eblame(p)$.
@@ -631,8 +631,8 @@ and likewise for every frame without a handler.
 
 #theorem(title: [#lange Type Safety])[
   If $type(dot, e, tau, eff: mteff)$ and $e estep1 e_0$ then $e_0$ is a value or $e_0 estep e_0$ for some $e_0$.
-] <effects-type-safety>
+] <lange-effects-type-safety>
 
 #proof[
-  By @effects-preservation on each step, $type(dot, e_0, tau, eff: mteff)$. Then by @effects-progress.
+  By @lange-effects-preservation on each step, $type(dot, e_0, tau, eff: mteff)$. Then by @lange-effects-progress.
 ]
