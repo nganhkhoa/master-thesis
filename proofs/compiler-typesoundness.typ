@@ -15,6 +15,7 @@
 
 #let tc(t) = $#t^*$
 #let hc = $effs(heffcheck)$
+#let wrap(tau, e) = $apply(kw("wrap")[#tau], (lambda \_ : unit. #e))$
 
 = #langc to #lange Compiler Typesoundness
 
@@ -216,7 +217,7 @@ Note that $h_w$ signature matches $Sigma(heffcheck)$ if we replace $alpha$ with 
 
 #theorem(title: "Compiler Effect Safety")[
 
-  If $compile(type(dot.op,e,tau),e')$ then $type(dot.op, apply(kw("wrap")[tc(tau)],(lambda \_ : unit. e')), tc(tau), eff: mteff)$.
+  If $compile(type(dot.op,e,tau),e')$ then $type(dot.op, wrap(tc(tau),e'), tc(tau), eff: mteff)$.
 ] <compiler-type-ts-effect-safety>
 
 #proof[
@@ -224,7 +225,7 @@ Note that $h_w$ signature matches $Sigma(heffcheck)$ if we replace $alpha$ with 
     ($type(dot.op,e',tc(tau),eff: hc)$, [@compiler-type-ts-preservation]),
     ($type(dot.op, lambda \_ : unit. e', teff(unit,hc,tc(tau)), type: "val")$, rn("T-E-Abs")),
     ($type(dot.op, kw("wrap")[tc(tau)], teff((teff(unit,hc,tc(tau))),mteff,tc(tau)), eff: mteff)$, [@compiler-type-ts-wrap, #rn("T-E-Tapp")]),
-    ($type(dot.op, apply(kw("wrap")[tc(tau)],(lambda \_ : unit. e')), tc(tau), eff: mteff)$, rn("T-E-App")),
+    ($type(dot.op, wrap(tc(tau),e'), tc(tau), eff: mteff)$, rn("T-E-App")),
   ))
 ]
 

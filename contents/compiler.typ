@@ -76,12 +76,12 @@ Careful readers may have noticed that the compiler does not annotate effects. Si
 
 The compiler should produce same type expression. However, this is problematic when effects are introduced. Recall that the type system separates between pure function, and effectful functions. And type judgement separates between non-effectful computations and effectful computations. Depending on the source, compiled program may have the same type with no effects (no monitors), or same type with some effects (monitors during computation), or purely produce a function wrapped by monitors, or effectfully produce a function wrapped by monitors (monitors during computation).
 
-#theorem(title: "Compiler Type Preservation", number: appendix-number(<ts-preservation>))[
+#theorem(title: "Compiler Type Preservation", number: appendix-number(<compiler-type-ts-preservation>))[
 
 If $compile(type(dot.op,e_1,tau),e_2)$ then $type(dot.op,e_2,tau^*,eff: effs(heffcheck))$
 ] <body-compiler-type-preservation>
 
-#theorem(title: [Compiler Effect Safety with $kw("wrap")$], number: appendix-number(<ts-effect-safety>))[
+#theorem(title: [Compiler Effect Safety with $kw("wrap")$], number: appendix-number(<compiler-type-ts-effect-safety>))[
 
 If $compile(type(dot.op,e_1,tau),e_2)$ and $type(dot.op,e_2,tau^*,eff: effs(heffcheck))$ then $type(dot.op, apply(kw("wrap")[tau^*],(lambda \_: kw("unit"). e)), tau^*, eff: mteff)$
 ] <body-compiled-wrapped-safe>

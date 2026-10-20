@@ -16,8 +16,9 @@
 #let rel(e) = $accent(#e, tilde)$
 #let treq(a,b) = $"EQ"(#a,#b)$
 #let hcheck = $kw("H")$
+#let wrap(tau, e) = $apply(kw("wrap")[#tau], (lambda \_. #e))$
 
-= #langc to #lange Compiler Correctness (Shallow Handler)
+= #langc to #lange Compiler Correctness \ (Shallow Handler)
 
 == Overview
 
@@ -341,7 +342,7 @@ By induction on structure of $compile(type(dot,e_1,tau),e_2)$.
 == Compiler Correctness
 
 #theorem()[
-  If $compile(type(dot,e,tau),e')$ and $e^* = "untyped"(apply(kw("wrap")[tau],(lambda \_. e')))$ and $e cstep1 r$ then $e^* estep1 rel(r)$.
+  If $compile(type(dot,e,tau),e')$ and $e^* = "untyped"(wrap(tau,e'))$ and $e cstep1 r$ then $e^* estep1 rel(r)$.
 
   Where $r$ is a value $v$ or $blame(k,j)$.
 ]
@@ -357,7 +358,7 @@ By induction on structure of $compile(type(dot,e_1,tau),e_2)$.
 
 #lemma(title: "Wrapped compiled program steps to an equivalent state with source program")[
 
-  If $compile(type(dot,e,tau),e')$ and $e^*_1 = "untyped"(apply(kw("wrap")[tau],(lambda \_. e')))$ then it exists $e^*_2$ such that $e^*_1 estep1 e^*_2$ and $treq(e,e^*_2)$.
+  If $compile(type(dot,e,tau),e')$ and $e^*_1 = "untyped"(wrap(tau,e'))$ then it exists $e^*_2$ such that $e^*_1 estep1 e^*_2$ and $treq(e,e^*_2)$.
 ] <compiler-shallow-shallow-wrap-step-eq>
 
 #proof[
