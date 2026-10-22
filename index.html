@@ -1,0 +1,97 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Thesis Models &amp; Proofs</title>
+  <style>
+    :root { color-scheme: light; --ink: #182230; --muted: #637083; --line: #dbe2ea; --surface: #fff; --canvas: #f5f7fa; --accent: #2457a6; --accent-soft: #eaf1ff; }
+    * { box-sizing: border-box; }
+    body { margin: 0; min-height: 100vh; background: var(--canvas); color: var(--ink); font: 15px/1.4 Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; }
+    header { height: 64px; display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 0 22px; border-bottom: 1px solid var(--line); background: var(--surface); }
+    h1 { margin: 0; font-size: 18px; letter-spacing: -.015em; }
+    header p { margin: 0; color: var(--muted); font-size: 13px; }
+    main { display: grid; grid-template-columns: 270px minmax(0, 1fr); height: calc(100vh - 64px); }
+    aside { overflow-y: auto; padding: 20px 14px; border-right: 1px solid var(--line); background: var(--surface); }
+    .section-title { margin: 0 8px 8px; color: var(--muted); font-size: 11px; font-weight: 750; letter-spacing: .08em; text-transform: uppercase; }
+    .file-list { margin: 0 0 24px; padding: 0; list-style: none; }
+    .file-button { width: 100%; display: flex; align-items: center; gap: 8px; padding: 8px; border: 0; border-radius: 6px; background: transparent; color: inherit; cursor: pointer; font: inherit; text-align: left; }
+    .file-button:hover, .file-button:focus-visible { background: #f0f3f7; outline: none; }
+    .file-button.active { background: var(--accent-soft); color: #123d81; font-weight: 650; }
+    .file-button::before { content: "PDF"; flex: 0 0 auto; color: var(--muted); font-size: 9px; font-weight: 750; letter-spacing: .04em; }
+    .file-button.active::before { color: var(--accent); }
+    .file-button span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .empty { margin: 0 8px 24px; color: var(--muted); font-size: 13px; }
+    .readers { min-width: 0; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1px; background: var(--line); }
+    .reader { min-width: 0; display: grid; grid-template-rows: 48px minmax(0, 1fr); background: var(--canvas); }
+    .reader-header { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 0 16px; background: var(--surface); }
+    .reader-title { overflow: hidden; font-size: 13px; font-weight: 700; text-overflow: ellipsis; white-space: nowrap; }
+    .open-link { flex: 0 0 auto; color: var(--accent); font-size: 12px; font-weight: 650; text-decoration: none; }
+    .open-link:hover { text-decoration: underline; }
+    iframe { width: 100%; height: 100%; border: 0; background: #858585; }
+    .message { display: grid; place-content: center; min-height: 0; padding: 32px; color: var(--muted); text-align: center; }
+    @media (max-width: 820px) { header p { display: none; } main { grid-template-columns: 205px minmax(0, 1fr); } .readers { grid-template-columns: 1fr; grid-template-rows: repeat(2, minmax(360px, 1fr)); overflow-y: auto; } }
+    @media (max-width: 560px) { header { height: 52px; padding: 0 14px; } main { height: calc(100vh - 52px); grid-template-columns: 1fr; grid-template-rows: auto minmax(0, 1fr); } aside { max-height: 180px; border-right: 0; border-bottom: 1px solid var(--line); padding: 12px; } .file-list { display: flex; gap: 4px; overflow-x: auto; margin-bottom: 12px; } .section-title { margin-left: 0; } .file-button { width: auto; } .readers { grid-template-rows: repeat(2, minmax(300px, 1fr)); } }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Thesis Models &amp; Proofs</h1>
+    <p>Compare formal rules and their proofs side by side.</p>
+  </header>
+  <main>
+    <aside aria-label="Available documents">
+      <h2 class="section-title">Models / rules</h2>
+      <ul id="models" class="file-list"></ul>
+      <h2 class="section-title">Proofs</h2>
+      <ul id="proofs" class="file-list"></ul>
+    </aside>
+    <section class="readers" aria-label="Document readers">
+      <article class="reader">
+        <div class="reader-header"><span id="model-title" class="reader-title">Model</span><a id="model-open" class="open-link" target="_blank" rel="noopener">Open ↗</a></div>
+        <iframe id="model-frame" title="Selected model PDF"></iframe>
+      </article>
+      <article class="reader">
+        <div class="reader-header"><span id="proof-title" class="reader-title">Proof</span><a id="proof-open" class="open-link" target="_blank" rel="noopener">Open ↗</a></div>
+        <iframe id="proof-frame" title="Selected proof PDF"></iframe>
+      </article>
+    </section>
+  </main>
+  <script>
+    const readers = {
+      models: { frame: document.querySelector('#model-frame'), title: document.querySelector('#model-title'), link: document.querySelector('#model-open') },
+      proofs: { frame: document.querySelector('#proof-frame'), title: document.querySelector('#proof-title'), link: document.querySelector('#proof-open') }
+    };
+    const labels = path => path.replace(/^.*\//, '').replace(/\.pdf$/i, '').replace(/[-_]/g, ' ');
+    const setDocument = (kind, path, updateUrl = true) => {
+      if (!path) return;
+      const reader = readers[kind];
+      reader.frame.src = path;
+      reader.title.textContent = labels(path);
+      reader.link.href = path;
+      document.querySelectorAll(`[data-kind="${kind}"]`).forEach(button => button.classList.toggle('active', button.dataset.path === path));
+      if (updateUrl) { const url = new URL(window.location); url.searchParams.set(kind === 'models' ? 'model' : 'proof', path); history.replaceState(null, '', url); }
+    };
+    const renderList = (kind, paths, selected) => {
+      const list = document.querySelector(`#${kind}`);
+      if (!paths.length) { list.outerHTML = '<p class="empty">No documents were built.</p>'; return; }
+      paths.forEach(path => {
+        const item = document.createElement('li');
+        const button = document.createElement('button');
+        button.className = 'file-button'; button.type = 'button'; button.dataset.kind = kind; button.dataset.path = path;
+        button.innerHTML = `<span title="${path}">${labels(path)}</span>`;
+        button.addEventListener('click', () => setDocument(kind, path));
+        item.append(button); list.append(item);
+      });
+      setDocument(kind, selected || paths[0], false);
+    };
+    fetch('manifest.json').then(response => { if (!response.ok) throw new Error('manifest unavailable'); return response.json(); }).then(files => {
+      const params = new URLSearchParams(window.location.search);
+      renderList('models', files.models || [], params.get('model'));
+      renderList('proofs', files.proofs || [], params.get('proof'));
+    }).catch(() => {
+      document.querySelector('.readers').innerHTML = '<p class="message">The document manifest could not be loaded. Please try again after the site has been deployed.</p>';
+    });
+  </script>
+</body>
+</html>
