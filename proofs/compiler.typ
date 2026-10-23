@@ -54,7 +54,7 @@ The proof get into the way a lot because it switch back and forth between states
 Before we define relations that will be used in the simulation proof below. We define:
 
   - Context $E^*$ is any context without $check(k,j,e,v)$ in $langc$.
-  - Context $E^+  =& square.stroked | E^+[E^*[check(k,j,square.stroked,v)]]$
+  - Context $E^+  =& square.stroked | E^+[E^*[check(k,j,square.stroked,v)]]$ // | apply(E^+,e) | apply(v,E^+) | mon(k,l,j,kappa,E^+)$
 
 
 #block(width: 100%)[
@@ -97,7 +97,7 @@ Before we define relations that will be used in the simulation proof below. We d
     [$tilde$],
     [$rel(e)$],
     [],[],grid.cell(align:left,colspan:1)[$e=lambda x: tau. mon(k,l,j,kappa_3,apply(v,mon(l,k,j,kappa_1,x)))$],
-    [],[],grid.cell(align:left,colspan:1)[$kappa_3={mon(l,j,j,kappa_1,x)\/y}kappa_2$],
+    [],[],grid.cell(align:left,colspan:1)[$kappa_3=kappa_2[y:=mon(l,j,j,kappa_1,x)]$],
     [],[],grid.cell(align:left,colspan:1)[With $type(dot,tau,v)$],
   )
 ]
@@ -138,7 +138,7 @@ Before we define relations that will be used in the simulation proof below. We d
     [$tilde$],
     [$apply(rel(e)_1,rel(e))$],
     [],[],grid.cell(align:left,colspan:1)[$e_1=lambda f. lambda x. mon(k,l,j,kappa_3,apply(f,mon(l,k,j,kappa_1,x)))$],
-    [],[],grid.cell(align:left,colspan:1)[$kappa_3={mon(l,j,j,kappa_1,x)\/y}kappa_2$],
+    [],[],grid.cell(align:left,colspan:1)[$kappa_3=kappa_2[y:=mon(l,j,j,kappa_1,x)]$],
 
     [$blame(k,j)$],[$tilde$],[$eblame(k)$],
   )
@@ -183,7 +183,7 @@ Before we define relations that will be used in the simulation proof below. We d
     [$tilde$],
     [$apply(rel(e)_1,rel(E)^*)$],
     [],[],grid.cell(align:left,colspan:1)[$e_1=lambda f. lambda x. mon(k,l,j,kappa_3,apply(f,mon(l,k,j,kappa_1,x)))$],
-    [],[],grid.cell(align:left,colspan:1)[$kappa_3={mon(l,j,j,kappa_1,x)\/y}kappa_2$],
+    [],[],grid.cell(align:left,colspan:1)[$kappa_3=kappa_2[y:=mon(l,j,j,kappa_1,x)]$],
   )
 ]
 
@@ -209,6 +209,18 @@ Before we define relations that will be used in the simulation proof below. We d
     [$E^+[E^*[check(k,j,square.stroked,v)]]$],
     [$tilde$],
     [$rel(E)^+[ife(square.stroked, apply((lambda x. handle(heffcheck,rel(E)^*[x])),rel(v)), eblame(j))]$],
+
+    [$apply(E^+,e)$],
+    [$tilde$],
+    [$apply(rel(E)^+,e)$],
+
+    [$apply(v,E^+)$],
+    [$tilde$],
+    [$apply(v,rel(E)^+)$],
+
+    [$mon(k,l,j,kappa,E^+)$],
+    [$tilde$],
+    [$mon(k,l,j,kappa,rel(E)^+)$],
   )
 ]
 
@@ -258,7 +270,7 @@ By induction on the structure of $E^* ~ E'^*$.
     ($E^*[e] ~ E'^*[e']$, []),
   ))
 
-- Case $mon(k,l,j,dep(kappa_1, lambda y. kappa_2),rel(E)_1) ~ apply(rel(e)_1,rel(E)^*_1)$, with $e_1 = lambda f. lambda x. mon(k,l,j,kappa_3,apply(f,mon(l,k,j,kappa_1,x)))$ and $kappa_3={mon(l,j,j,kappa_1,x)\/y}kappa_2$
+- Case $mon(k,l,j,dep(kappa_1, lambda y. kappa_2),rel(E)_1) ~ apply(rel(e)_1,rel(E)^*_1)$, with $e_1 = lambda f. lambda x. mon(k,l,j,kappa_3,apply(f,mon(l,k,j,kappa_1,x)))$ and $kappa_3=kappa_2[y:=mon(l,j,j,kappa_1,x)]$
 
   Similarly to the above case
 
@@ -382,8 +394,6 @@ By induction on the derivation of $e ~ e'$.
     ($(lambda z.e_1)[x:=v] ~ (lambda z.e'_1)[x:=v']$, [Replacement]),
   ))
 
-  Choose $z != x$ and $z in.not "fv"(v,v')$ by alpha-renaming.
-
 - Case $apply(e_1,e_2) ~ apply(e'_1,e'_2)$
 
   #derivation((
@@ -397,43 +407,113 @@ By induction on the derivation of $e ~ e'$.
 - Case $mon(k,l,j,flat(e_1),e_2) ~ apply(perform(effcheck),tuple(k,tuple(rel(e)_1,rel(e)_2)))$
 
   #derivation((
-    ($e_1[x:=v] ~ rel(e)_1[x:=rel(v)]$, [I.H.]),
-    ($e_2[x:=v] ~ rel(e)_2[x:=rel(v)]$, [I.H.]),
-    ($mon(k,l,j,flat(e_1),e_2)[x:=v] ~ apply(perform(effcheck),tuple(k,tuple(rel(e)_1,rel(e)_2)))[x:=rel(v)]$, [Definition]),
+    ($e_1[x:=v] ~ rel(e)_1[x:=v']$, [I.H.]),
+    ($e_2[x:=v] ~ rel(e)_2[x:=v']$, [I.H.]),
+    ($mon(k,l,j,flat(e_1),e_2)[x:=v] ~ apply(perform(effcheck),tuple(k,tuple(rel(e)_1,rel(e)_2)))[x:=v']$, [Definition]),
   ))
 
-- Case $mon(k,l,j,kappa_1 -> kappa_2,e_1) ~ apply(rel(e)_2,rel(e)_1)$, with $e_2 = lambda f. lambda x. mon(k,l,j,kappa_2,apply(f,mon(l,k,j,kappa_1,x)))$
+- Case $mon(k,l,j,kappa_1 -> kappa_2,e_1) ~ apply(rel(e)_2,rel(e)_1)$, with $e_2 = lambda f. lambda y. mon(k,l,j,kappa_2,apply(f,mon(l,k,j,kappa_1,y)))$
 
   #derivation((
     ($e_1 ~ rel(e)_1$, [Given]),
     ($e_2 ~ rel(e)_2$, [Given]),
-    ($e_1[x:=v] ~ rel(e)_1[x:=rel(v)]$, [I.H.]),
-    ($e_2[x:=v] ~ rel(e)_2[x:=rel(v)]$, [I.H.]),
-    ($mon(k,l,j,kappa_1 -> kappa_2,e_1)[x:=v] ~ (apply(rel(e)_2,rel(e)_1))[x:=rel(v)]$, [Definition]),
+    ($e_1[x:=v] ~ rel(e)_1[x:=v']$, [I.H.]),
+    ($e_2[x:=v] ~ rel(e)_2[x:=v']$, [I.H.]),
+    ($mon(k,l,j,kappa_1 -> kappa_2,e_1)[x:=v] = mon(k,l,j,kappa_1[x:=v] -> kappa_2[x:=v],e_1[x:=v]) $, []),
+    ($e_2[x:=v] =  lambda f. lambda y. mon(k,l,j,kappa_2[x:=v],apply(f,mon(l,k,j,kappa_1[x:=v],y)))$, []),
+    ($mon(k,l,j,kappa_1 -> kappa_2,e_1)[x:=v] ~ apply(rel(e)_2[x:=v'],rel(e)_1[x:=v'])$, [Relation]),
+    ($mon(k,l,j,kappa_1 -> kappa_2,e_1)[x:=v] ~ (apply(rel(e)_2,rel(e)_1))[x:=v']$, []),
   ))
 
-- Case $mon(k,l,j,dep(kappa_1, lambda y. kappa_2),rel(e)_2) ~ apply(rel(e)_1,rel(e)_1)$, with $e_1 = lambda f. lambda x. mon(k,l,j,kappa_3,apply(f,mon(l,k,j,kappa_1,x)))$ and $kappa_3={mon(l,j,j,kappa_1,x)\/y}kappa_2$
+  Choose variables, $f,y != x$ and $f,y in.not "fv"(v,v')$ by alpha-renaming.
 
-  Similarly to the above case.
-
-- Case $guard(v_1,kappa_1 -> kappa_2,k,l,j) ~ rel(e)$, with $e=lambda x: tau. mon(k,l,j,kappa_2,apply(v_1,mon(l,k,j,kappa_1,x)))$
+- Case $mon(k,l,j,dep(kappa_1, lambda y. kappa_2),rel(e)_1) ~ apply(rel(e)_2,rel(e)_1)$, with $e_2 = lambda f. lambda z. mon(k,l,j,kappa_3,apply(f,mon(l,k,j,kappa_1,z)))$ and $kappa_3=kappa_2[y:=mon(l,j,j,kappa_1,z)]$ and $y != x$
 
   #derivation((
-    ($e ~ rel(e)$, [Given]),
-    ($e[x:=v] ~ rel(e)[x:=rel(v)]$, [I.H.]),
-    ($e[x:=v]=lambda x. mon(k,l,j,kappa_2,apply(v_1[x:=v],mon(l,k,j,kappa_1,x)))$, []),
-    ($guard(v_1[x:=v],kappa_1 -> kappa_2,k,l,j) ~ rel(e)[x:=v]$, [Definition]),
+    ($e_1 ~ rel(e)_1$, [Given]),
+    ($e_2 ~ rel(e)_2$, [Given]),
+    ($e_1[x:=v] ~ rel(e)_1[x:=v']$, [I.H.]),
+    ($e_2[x:=v] ~ rel(e)_2[x:=v']$, [I.H.]),
+    ($mon(k,l,j,dep(kappa_1, lambda y. kappa_2),e_1)[x:=v] = \ quad mon(k,l,j,dep(kappa_1[x:=v], lambda y. kappa_2[x:=v]),e_1[x:=v]) $, [Substitution]),
+    ($e_2[x:=v] =  lambda f. lambda z. mon(k,l,j,kappa_3[x:=v],apply(f,mon(l,k,j,kappa_1[x:=v],z)))$, []),
+    ($kappa_3[x:=v] = (kappa_2[y:=mon(l,j,j,kappa_1,z)])[x:=v]$,[]),
+    ($kappa_3[x:=v] = (kappa_2[x:=v])[y:=mon(l,j,j,kappa_1[x:=v],z)]$,[Substitution?]),
+    ($mon(k,l,j,dep(kappa_1, lambda y. kappa_2),e_1)[x:=v] ~ apply(rel(e)_2[x:=v'],rel(e)_1[x:=v'])$, [Relation]),
+    ($mon(k,l,j,dep(kappa_1, lambda y. kappa_2),e_1)[x:=v] ~ (apply(rel(e)_2,rel(e)_1))[x:=v']$, [Definition]),
   ))
 
-- Case $guard(v,dep(kappa_1, lambda y. kappa_2),k,l,j) ~ rel(e)$, with $e=lambda x: tau. mon(k,l,j,kappa_3,apply(v,mon(l,k,j,kappa_1,x)))$ and $kappa_3={mon(l,j,j,kappa_1,x)\/y}kappa_2$
+  Choose variables, $f,z != x$ and $f,y,z in.not "fv"(v,v')$ by alpha-renaming.
 
-  Similarly to the above case.
+- Case $mon(k,l,j,dep(kappa_1, lambda x. kappa_2),rel(e)_1) ~ apply(rel(e)_2,rel(e)_1)$, with $e_2 = lambda f. lambda z. mon(k,l,j,kappa_3,apply(f,mon(l,k,j,kappa_1,z)))$ and $kappa_3=kappa_2[x:=mon(l,j,j,kappa_1,z)]$
+
+  // Observe that $x in.not "fv"(kappa_3)$ because of replacement into $kappa_2$. Follows immediately with the above case.
+
+  #derivation((
+    ($e_1 ~ rel(e)_1$, [Given]),
+    ($e_2 ~ rel(e)_2$, [Given]),
+    ($e_1[x:=v] ~ rel(e)_1[x:=v']$, [I.H.]),
+    ($e_2[x:=v] ~ rel(e)_2[x:=v']$, [I.H.]),
+    ($mon(k,l,j,dep(kappa_1, lambda x. kappa_2),e_1)[x:=v] = \ quad mon(k,l,j,dep(kappa_1[x:=v], lambda x. kappa_2),e_1[x:=v]) $, [Substitution]),
+    ($e_2[x:=v] =  lambda f. lambda z. mon(k,l,j,kappa_3[x:=v],apply(f,mon(l,k,j,kappa_1[x:=v],y)))$, []),
+    ($kappa_3[x:=v] = (kappa_2[x:=mon(l,j,j,kappa_1,z)])[x:=v]$,[]),
+    ($kappa_3[x:=v] = (kappa_2[x:=mon(l,j,j,kappa_1[x:=v],z)])$,[]),
+    ($mon(k,l,j,dep(kappa_1, lambda x. kappa_2),e_1)[x:=v] ~ apply(rel(e)_2[x:=v'],rel(e)_1[x:=v'])$, [Relation]),
+    ($mon(k,l,j,dep(kappa_1, lambda x. kappa_2),e_1)[x:=v] ~ (apply(rel(e)_2,rel(e)_1))[x:=v']$, [Definition]),
+  ))
+
+  Choose variables, $f,z != x$ and $f,y,z in.not "fv"(v,v')$ by alpha-renaming.
+
+- Case $guard(v_1,kappa_1 -> kappa_2,k,l,j) ~ rel(e)_1$, with $e_1=lambda y. mon(k,l,j,kappa_2,apply(v_1,mon(l,k,j,kappa_1,y)))$
+
+  #derivation((
+    ($e_1 ~ rel(e)_1$, [Given]),
+    ($e_1[x:=v] ~ rel(e)_1[x:=v']$, [I.H.]),
+    ($e_1[x:=v]=lambda y. mon(k,l,j,kappa_2[x:=v],apply(v_1[x:=v],mon(l,k,j,kappa_1[x:=v],y)))$, []),
+    ($guard(v_1,kappa_1 -> kappa_2,k,l,j)[x:=v] = guard(v_1[x:=v],kappa_1[x:=v] -> kappa_2[x:=v],k,l,j)$, []),
+    ($guard(v_1,kappa_1 -> kappa_2,k,l,j)[x:=v] ~ rel(e)_1[x:=v']$, [Relation]),
+  ))
+
+  Choose variables, $y != x$ and $y in.not "fv"(v,v')$ by alpha-renaming.
+
+- Case $guard(v,dep(kappa_1, lambda y. kappa_2),k,l,j) ~ rel(e)_1$, with $e_1=lambda z. mon(k,l,j,kappa_3,apply(v,mon(l,k,j,kappa_1,z)))$ and $kappa_3=kappa_2[y:=mon(l,j,j,kappa_1,z)]$
+
+  #derivation((
+    ($e_1 ~ rel(e)_1$, [Given]),
+    ($e_1[x:=v] ~ rel(e)_1[x:=v']$, [I.H.]),
+    ($e_1[x:=v]=lambda y. mon(k,l,j,kappa_3[x:=v],apply(v_1[x:=v],mon(l,k,j,kappa_1[x:=v],x)))$, []),
+    ($kappa_3[x:=v] = kappa_2[y:=mon(l,j,j,kappa_1,z)][x:=v]$, []),
+    ($kappa_3[x:=v] = (kappa_2[x:=v])[y:=mon(l,j,j,kappa_1[x:=v],z)]$, [Substitution?]),
+    ($guard(v_1,dep(kappa_1, lambda y. kappa_2),k,l,j)[x:=v] = \ quad guard(v_1[x:=v],dep(kappa_1[x:=v], lambda y. kappa_2[x:=v]),k,l,j)$, []),
+    ($guard(v_1,dep(kappa_1, lambda y. kappa_2),k,l,j)[x:=v] ~ rel(e)[x:=v']$, [Relation]),
+  ))
+
+  Choose variables, $z != x$ and $y,z in.not "fv"(v,v')$ by alpha-renaming.
+
+- Case $guard(v,dep(kappa_1, lambda x. kappa_2),k,l,j) ~ rel(e)_1$, with $e_1=lambda z. mon(k,l,j,kappa_3,apply(v,mon(l,k,j,kappa_1,x)))$ and $kappa_3=kappa_2[x:=mon(l,j,j,kappa_1,x)]$
+
+  #derivation((
+    ($e_1 ~ rel(e)_1$, [Given]),
+    ($e_1[x:=v] ~ rel(e)_1[x:=v']$, [I.H.]),
+    ($e_1[x:=v]=lambda y. mon(k,l,j,kappa_3[x:=v],apply(v_1[x:=v],mon(l,k,j,kappa_1[x:=v],x)))$, []),
+    ($kappa_3[x:=v] = kappa_2[x:=mon(l,j,j,kappa_1,z)][x:=v]$, []),
+    ($kappa_3[x:=v] = kappa_2[x:=mon(l,j,j,kappa_1[x:=v],z)]$, []),
+    ($guard(v_1,dep(kappa_1, lambda x. kappa_2),k,l,j)[x:=v] = \ quad guard(v_1[x:=v],dep(kappa_1[x:=v], lambda x. kappa_2),k,l,j)$, []),
+    ($guard(v_1,dep(kappa_1, lambda x. kappa_2),k,l,j)[x:=v] ~ rel(e)[x:=v']$, [Relation]),
+  ))
+
+  Choose variables, $z != x$ and $z in.not "fv"(v,v')$ by alpha-renaming.
 
 - Other cases follows similarly.
 ]
 
 #lemma(title: "Breaking down Context E")[
-  For all contexts $E$, $E = E^+[E^*]$
+
+  For all contexts $E$, uniquely decompose $E = E^+[E^*]$.
+
+  Uniqueness observation: Recall that $E^*$ has no check contexts.
+  - If $E$ does not have check, then it is $E^* = E$, and $E^+ = square.stroked$.
+  - Else there is only a single decomposition to get out $E^*$ without check contexts
+
 ] <compiler-context-breakdown>
 
 #proof[
@@ -443,28 +523,38 @@ By induction on $E$.
 
   Choose $E^+ = E^* = square.stroked$
 
-- Case $E = E_1 e$
+- Case $E = apply(E_1,e)$
 
   #derivation((
     ($E_1 = E^+_1[E^*_1]$, "I.H."),
-    ($E = apply(E^+_1[E^*_1],e)$, "Definition"),
+    ($E = apply(E^+_1[E^*_1],e)$, []),
+    ($E = (apply(E^+_1,e))[E^*_1]$, []),
   ))
 
   - Case $E^+_1 = square.stroked$
 
     #derivation((
-      ($E = apply(E^*_1,e)$, ""),
-      ($E^+ = square.stroked, E^*=apply(E^*_1,e)$, "Choose"),
+      ($E = apply(E^*_1,e)$, []),
+      ($E^+ = square.stroked$, [Choose]),
+      ($E^* = apply(E^*_1,e)$, [Choose]),
     ))
 
-  - Case $E^+_1 = E^+_2[E^*_2[check(k,j,square.stroked,v)]]$
+  - Case $E^+_1 != square.stroked$
 
     #derivation((
-      ($E = apply(E^+_2[E^*_2[check(k,j,E^*_1,v)]],e) = (apply(E^+_2,e))[E^*_2[check(k,j,E^*_1,v)]]$, ""),
-      ($E^+ = (apply(E^+_2,e))[E^*_2[check(k,j,square.stroked,v)]], E^*=E^*_1$, "Choose"),
+      ($E^+ = apply(E^+_1,e)$, [@compiler-context-breakdown-1 ($K = apply(square.stroked,e)$) and Choose]),
+      ($E^* = E^*_1$, [Choose]),
     ))
 
-  Similarly to other basic cases.
+// - Case $E = mon(k,l,j,kappa,E_1)$
+
+//   #derivation((
+//     ($E_1 = E^+_1[E^*_1]$, "I.H."),
+//     ($E = mon(k,l,j,kappa,E^+_1[E^*_1])$, []),
+//     ($E = mon(k,l,j,kappa,E^+_1)[E^*_1]$, []),
+//     ($E^+ = mon(k,l,j,kappa,E^+_1)$, [Choose]),
+//     ($E^* = E^*_1$, [Choose]),
+//   ))
 
 - Case $E = check(k,j,E_1,v)$
 
@@ -480,49 +570,91 @@ By induction on $E$.
       ($E^+ = check(k,j,square.stroked,v), E^* = E^*_1$, "Choose"),
     ))
 
-  - Case $E^+_1 = E^+_2[E^*_2[check(k_1,j_1,square.stroked,v_1)]]$.
+  - Case $E^+_1 != square.stroked$
 
     #derivation((
-      ($E = check(k,j,E^+_2[E^*_2[check(k_1,j_1,square.stroked,v_1)]],v)[E^*_1]$, ""),
-      ($E^+ = check(k,j,E^+_2[E^*_2[check(k_1,j_1,square.stroked,v_1)]],v), E^* = E^*_1$, [Choose and @compiler-context-composition-preservation]),
+      ($E^+_2 = check(k,j,E^+_1,v)$,[@compiler-context-breakdown-1 ($K = check(k,j,square.stroked,v)$)]),
+      ($E = E^+_2[E^*]$, []),
     ))
 
 ]
 
-#lemma(title: "Context composition preserves check structure")[
+#lemma("Context Breakdown Helper")[
 
-  If $E^+ = E^+_0[E^*_0[check(k,j,square.stroked,v)]]$ and $E$ is any evaluation context, then $E[E^+] = E^+_1$ for some $E^+_1$ of the form $E^+_1 = E^+_2[E^*_2[check(k',j',square.stroked,v')]]$.
-] <compiler-context-composition-preservation>
+If $E^+_1 != square.stroked$ then there is a $E^+_2$, $E^+_2 = K[E^+_1]$.
+
+Where $K = apply(square.stroked,e) | apply(v,square.stroked) | mon(k,l,j,kappa,square.stroked) | check(k,j,square.stroked,v)$
+] <compiler-context-breakdown-1>
 
 #proof[
-By induction on the structure of $E$.
 
-- Case $square.stroked$.
+By induction on the structure of $E^+_1$.
 
-  #derivation((
-    ($E[E^+] = E^+ = E^+_0[E^*_0[check(k,j,square.stroked,v)]]$, ""),
-  ))
+- Case $square.stroked$ invalid.
 
-- Case $E = check(k_0,j_0,E_2,v_0)$
+- Case $E^+_3[E^*[check(k,j,square.stroked,v)]]$
 
-  #derivation((
-    ($E_2[E^+] = E^+_2$, [I.H.]),
-    ($E[E^+] = check(k_0,j_0,E^+_2[E^+],v_0)$, []),
-    ($check(k_0,j_0,E^+_2,v_0) = E^+_3$, [I.H. with $E = check(k_0,j_0,square.stroked,v_0)$]),
-    ($E^+_1 = E^+_3$,[Choose]),
-  ))
+  - Case $E^+_3 = square.stroked$
 
-- Case $E = apply(E_1, e)$.
+    - Case $K = check(k_1,j_1,square.stroked,v_1)$
 
-  #derivation((
-    ($E_1[E^+] = E^+_1 = E^+_2[E^*_2[check(k',j',square.stroked,v')]]$, [I.H.]),
-    ($E[E^+] = apply(E_1[E^+], e) = apply(E^+_2[E^*_2[check(k',j',square.stroked,v')]], e)$, "Definition"),
-    ($E[E^+] = (apply(E^+_2, e))[E^*_2[check(k',j',square.stroked,v')]]$, ""),
-    ($E^+_1 = (apply(E^+_2, e))[E^*_2[check(k',j',square.stroked,v')]]$, "Choose"),
-  ))
+      #derivation((
+        ($K = E^+_4$, [Definition of $E^+$]),
+        ($K[E^+_1] = E^+_4[E^*[check(k,j,square.stroked,v)]]$, []),
+        ($E^+_2 = E^+_4[E^*[check(k,j,square.stroked,v)]]$, [Choose]),
+      ))
 
-- Other cases (including monitor contexts) follow similarly.
+    - Case $K != check(k_1,j_1,square.stroked,v_1)$
+
+      #derivation((
+        ($K = E^*_4$, [Definition of $E^*$]),
+        ($K[E^+_1] = E^*_4[E^*[check(k,j,square.stroked,v)]] = E^*_5[check(k,j,square.stroked,v)]$, []),
+        ($E^+_2 = square.stroked[E^*_5[check(k,j,square.stroked,v)]]$, [Choose]),
+      ))
+
+  - Case $E^+_3 != square.stroked$
+
+    #derivation((
+      ($E^+_4 = K[E^+_3]$,[I.H.]),
+      ($K[E^+_1] = K[E^+_3[E^*[check(k,j,square.stroked,v)]]] = \ quad K[E^+_3][E^*[check(k,j,square.stroked,v)]] = E^+_4[E^*[check(k,j,square.stroked,v)]]$,[]),
+      ($E^+_2 = E^+_4[E^*[check(k,j,square.stroked,v)]]$,[Choose]),
+    ))
 ]
+
+// #lemma(title: "Context composition preserves check structure")[
+
+//   If $E^+ = E^+_0[E^*_0[check(k,j,square.stroked,v)]]$ and $E$ is any evaluation context, then $E[E^+] = E^+_1$ for some $E^+_1$ of the form $E^+_1 = E^+_2[E^*_2[check(k',j',square.stroked,v')]]$.
+// ] <compiler-context-composition-preservation>
+
+// #proof[
+// By induction on the structure of $E$.
+
+// - Case $square.stroked$.
+
+//   #derivation((
+//     ($E[E^+] = E^+ = E^+_0[E^*_0[check(k,j,square.stroked,v)]]$, ""),
+//   ))
+
+// - Case $E = check(k_0,j_0,E_2,v_0)$
+
+//   #derivation((
+//     ($E_2[E^+] = E^+_2$, [I.H.]),
+//     ($E[E^+] = check(k_0,j_0,E^+_2[E^+],v_0)$, []),
+//     ($check(k_0,j_0,E^+_2,v_0) = E^+_3$, [I.H. with $E = check(k_0,j_0,square.stroked,v_0)$]),
+//     ($E^+_1 = E^+_3$,[Choose]),
+//   ))
+
+// - Case $E = apply(E_1, e)$.
+
+//   #derivation((
+//     ($E_1[E^+] = E^+_1 = E^+_2[E^*_2[check(k',j',square.stroked,v')]]$, [I.H.]),
+//     ($E[E^+] = apply(E_1[E^+], e) = apply(E^+_2[E^*_2[check(k',j',square.stroked,v')]], e)$, "Definition"),
+//     ($E[E^+] = (apply(E^+_2, e))[E^*_2[check(k',j',square.stroked,v')]]$, ""),
+//     ($E^+_1 = (apply(E^+_2, e))[E^*_2[check(k',j',square.stroked,v')]]$, "Choose"),
+//   ))
+
+// - Other cases (including monitor contexts) follow similarly.
+// ]
 
 #lemma(title: "Compiler is subset of relation")[
 
@@ -589,7 +721,7 @@ By induction on structure of $compile(type(Gamma,e_1,tau),e_2)$.
 - Case #prooftree(rule(
         $compile(type(Gamma,e_3,tau_1 -> tau_2), e_4)$,
         $compile(type(Gamma,
-            lambda f. lambda x. mon(k,l,j,{mon(l,j,j,kappa_1,x)\/y}kappa_2,apply(f, mon(l,k,j,kappa_1,x))),
+            lambda f. lambda x. mon(k,l,j,kappa_2[y:=mon(l,j,j,kappa_1,x)],apply(f, mon(l,k,j,kappa_1,x))),
             (tau_1 -> tau_2) -> (tau_1 -> tau_2)),
           e_5)$,
         $compile(type(Gamma,mon(k,l,j,dep(kappa_1, lambda y. kappa_2),e_3),tau_1 -> tau_2),apply(e_5, e_4))$,
@@ -597,7 +729,7 @@ By induction on structure of $compile(type(Gamma,e_1,tau),e_2)$.
 
   #derivation((
     ($e_3 ~ e^*_4$, "I.H."),
-    ($lambda f. lambda x. mon(k,l,j,{mon(l,j,j,kappa_1,x)\/y}kappa_2,apply(f, mon(l,k,j,kappa_1,x))) ~ e^*_5$, "I.H."),
+    ($lambda f. lambda x. mon(k,l,j,kappa_2[y:=mon(l,j,j,kappa_1,x)],apply(f, mon(l,k,j,kappa_1,x))) ~ e^*_5$, "I.H."),
     ($e_1 ~ e^*_2$, "Relation"),
   ))
 
@@ -1004,7 +1136,7 @@ By case analysis on $e_1 cstep e_2$ with respect to $treq(e_1,e'_1)$.
 
     Similar to its functional variant.
 
-  - Case $e_3 = apply(guard(v_1,dep(kappa_1, lambda y. kappa_2),k,l,j),v_2) cstepx mon(k,l,j, kappa_3, apply(v_1, mon(l,k,j,kappa_1,v_2))) = e_4$ where $kappa_3 = {mon(l,j,j,kappa_1,v_2)\/y}kappa_2$
+  - Case $e_3 = apply(guard(v_1,dep(kappa_1, lambda y. kappa_2),k,l,j),v_2) cstepx mon(k,l,j, kappa_3, apply(v_1, mon(l,k,j,kappa_1,v_2))) = e_4$ where $kappa_3 = kappa_2[y:=mon(l,j,j,kappa_1,v_2)]$
 
     Similar to its functional variant.
 
