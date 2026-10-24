@@ -150,7 +150,7 @@ By induction on structure of $compile(type(Gamma,e,tau),e')$.
     $compile(type(Gamma,mon(k,l,j,dep(kappa_1, lambda y. kappa_2),e_1),tau_1 -> tau_2),apply(e_3, e_2))$,
   ))
 
-  where $e_w = lambda f : tau_1 -> tau_2. lambda x : tau_1. mon(k,l,j,{mon(l,j,j,kappa_1,x)\/y}kappa_2,apply(f, mon(l,k,j,kappa_1,x)))$
+  where $e_w = lambda f : tau_1 -> tau_2. lambda x : tau_1. mon(k,l,j,kappa_2[y:=mon(l,j,j,kappa_1,x)],apply(f, mon(l,k,j,kappa_1,x)))$
 
   #derivation((
     ($type(tc(Gamma), e_2, tc((tau_1 -> tau_2)), eff: hc)$, "I.H."),

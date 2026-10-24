@@ -183,7 +183,7 @@ $
     [$ife(rel(e), apply((lambda x. rel(E[x])), rel(v)), eblame(k))$],
     [],[],grid.cell(align:left,colspan:1)[where $e$ has no check in evaluation position (innermost check)],
 
-    [${e_y\/y}e$],
+    [$e[y:=e_y]$],
     [$tilde$],
     [$rel(e)[y:=rel(v)_y]$],
     [],[],grid.cell(align:left,colspan:1)[where $e_y = mon(l,j,j,kappa_1,v)$, $e_y cstep1 v_y$ and $v_y ~ rel(v)_y$ (indy argument)],
@@ -507,7 +507,7 @@ Note that $rel(E)$ is an evaluation context of $lange$ without $handle$. Unlike 
 
   Obtain $treq(e_2,e'_2)$ (case 1) by @compiler-shallow-shallow-relation-context.
 
-- Case $e_3 = apply(guard(v_1,dep(kappa_1, lambda y. kappa_2),k,l,j),v_2) cstepx mon(k,l,j, kappa_3, apply(v_1, mon(l,k,j,kappa_1,v_2))) = e_4$ where $kappa_3 = {mon(l,j,j,kappa_1,v_2)\/y}kappa_2$
+- Case $e_3 = apply(guard(v_1,dep(kappa_1, lambda y. kappa_2),k,l,j),v_2) cstepx mon(k,l,j, kappa_3, apply(v_1, mon(l,k,j,kappa_1,v_2))) = e_4$ where $kappa_3 = kappa_2[y:=mon(l,j,j,kappa_1,v_2)]$
 
   $rel(e)_3 = apply(rel(e)_5, rel(v)_2)$ where $e_5 = lambda x. apply((lambda y. e_(5a)), mon(l,j,j,kappa_1,x))$ and $e_(5a) = mon(k,l,j,kappa_2,apply(rel(v)_1,mon(l,k,j,kappa_1,x)))$
 
@@ -521,13 +521,13 @@ Note that $rel(E)$ is an evaluation context of $lange$ without $handle$. Unlike 
 
   - Case the check succeeds, $mon(l,j,j,kappa_1,v_2) cstep1 v_y$ ($v_y = v_2$ for flat $kappa_1$, otherwise $v_y = guard(v_2,kappa_1,l,j,j)$).
 
-    Let $e_6 = mon(k,l,j,kappa_2,apply(v_1,mon(l,k,j,kappa_1,v_2)))$, then $e_2 = E[{mon(l,j,j,kappa_1,v_2)\/y}e_6]$.
+    Let $e_6 = mon(k,l,j,kappa_2,apply(v_1,mon(l,k,j,kappa_1,v_2)))$, then $e_2 = E[e_6[y:=mon(l,j,j,kappa_1,v_2)]]$.
 
     $e'_1 estep1 handle(heffcheck, rel(E)[rel(e)_6[y:=rel(v)_y]]) = e'_2$
 
     By purity, the target's argument check $mon(l,k,j,kappa_1,rel(v)_2)$ succeeds again. Each later evaluation of $mon(l,j,j,kappa_1,v_2)$ inside $kappa_2$ in the source gives $v_y$ again and is matched by zero target steps.
 
-    ${mon(l,j,j,kappa_1,v_2)\/y}e_6 ~ rel(e)_6[y:=rel(v)_y]$ by the indy row.
+    $e_6[y:=mon(l,j,j,kappa_1,v_2)] ~ rel(e)_6[y:=rel(v)_y]$ by the indy row.
 
     Obtain $treq(e_2,e'_2)$ (case 1).
 

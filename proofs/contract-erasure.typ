@@ -289,7 +289,7 @@ By I.H. on $e ~ relate(e)$.
 
 Forall context $E$, either:
 - $E = F$ or
-- $E = F[check(k,j,E',v)]$
+- $E = F[check(k,j,E',v)]$ (get the first check)
 ] <langc-erasure-context-decomposition>
 
 #proof[
@@ -646,39 +646,39 @@ By case analysis of $ereq(e_1,e'_1)$:
 ]
 
 
-#block(width: 100%, fill: rgb("#FFF3CD"), inset: 8pt, radius: 3pt)[
-  *Correction note for @langc-erasure-step-simulation.*  The following paragraphs replace the indicated reasoning when completing the proof; the original proof above is deliberately left unchanged.
+// #block(width: 100%, fill: rgb("#FFF3CD"), inset: 8pt, radius: 3pt)[
+//   *Correction note for @langc-erasure-step-simulation.*  The following paragraphs replace the indicated reasoning when completing the proof; the original proof above is deliberately left unchanged.
 
-  *First ER clause: obtain the related context before analyzing redexes.*
-  In the case $e_1 ~ e'_1$ and $e_1 eq.not F[check(k,j,e_0,v)]$, invert the source step.  Step-C-Blame is impossible because no blaming expression satisfies $ereq$.  Hence
-  $e_1 = E[e_3]$, $e_2 = E[e_4]$, and $e_3 cstepx e_4$.
-  Apply @langc-erasure-context-decomposition to $E$.  If
-  $E = F[check(k,j,E_0,v_0)]$, then
-  $e_1 = F[check(k,j,E_0[e_3],v_0)]$, contradicting the first ER clause.  Therefore $E$ is check-free.  Moreover $e_3$ cannot itself be a check redex, for otherwise $e_1 = E[check(k,j,e_0,v)]$, the same contradiction.
+//   *First ER clause: obtain the related context before analyzing redexes.*
+//   In the case $e_1 ~ e'_1$ and $e_1 eq.not F[check(k,j,e_0,v)]$, invert the source step.  Step-C-Blame is impossible because no blaming expression satisfies $ereq$.  Hence
+//   $e_1 = E[e_3]$, $e_2 = E[e_4]$, and $e_3 cstepx e_4$.
+//   Apply @langc-erasure-context-decomposition to $E$.  If
+//   $E = F[check(k,j,E_0,v_0)]$, then
+//   $e_1 = F[check(k,j,E_0[e_3],v_0)]$, contradicting the first ER clause.  Therefore $E$ is check-free.  Moreover $e_3$ cannot itself be a check redex, for otherwise $e_1 = E[check(k,j,e_0,v)]$, the same contradiction.
 
-  Now apply @langc-context-decomposition-relation to
-  $e_1 ~ e'_1$ and $e_1 = E[e_3]$.  It supplies witnesses $relate(E)$ and $relate(e)_3$ such that
-  $E ~ relate(E)$, $e_3 ~ relate(e)_3$, and
-  $e'_1 = relate(E)[relate(e)_3]$.  It does *not* supply a relation for $e_4$; that relation is proved separately in each redex case.
+//   Now apply @langc-context-decomposition-relation to
+//   $e_1 ~ e'_1$ and $e_1 = E[e_3]$.  It supplies witnesses $relate(E)$ and $relate(e)_3$ such that
+//   $E ~ relate(E)$, $e_3 ~ relate(e)_3$, and
+//   $e'_1 = relate(E)[relate(e)_3]$.  It does *not* supply a relation for $e_4$; that relation is proved separately in each redex case.
 
-  For example, for
-  $e_3 = apply((lambda x.e_5),v_5)$, inversion of
-  $e_3 ~ relate(e)_3$ yields
-  $relate(e)_3 = apply((lambda x.relate(e)_5),relate(v)_5)$,
-  with $e_5 ~ relate(e)_5$ and $v_5 ~ relate(v)_5$.  S-App gives the target reduct
-  $relate(e)_5[x:=relate(v)_5]$, while @langc-relation-substitution gives
-  $e_4 = e_5[x:=v_5] ~ relate(e)_5[x:=relate(v)_5]$.  Closing this relation under $E ~ relate(E)$ proves the ER conclusion.  The $mu$ and other base-language redexes are similar.
+//   For example, for
+//   $e_3 = apply((lambda x.e_5),v_5)$, inversion of
+//   $e_3 ~ relate(e)_3$ yields
+//   $relate(e)_3 = apply((lambda x.relate(e)_5),relate(v)_5)$,
+//   with $e_5 ~ relate(e)_5$ and $v_5 ~ relate(v)_5$.  S-App gives the target reduct
+//   $relate(e)_5[x:=relate(v)_5]$, while @langc-relation-substitution gives
+//   $e_4 = e_5[x:=v_5] ~ relate(e)_5[x:=relate(v)_5]$.  Closing this relation under $E ~ relate(E)$ proves the ER conclusion.  The $mu$ and other base-language redexes are similar.
 
-  *Check redexes belong only to the second ER clause.*
-  In the first clause, check redexes have already been ruled out.  In the second clause,
-  $e_1 = F[check(k,j,e_(1a),v)]$ and
-  $e'_1 = relate(F)[relate(v)]$:
+//   *Check redexes belong only to the second ER clause.*
+//   In the first clause, check redexes have already been ruled out.  In the second clause,
+//   $e_1 = F[check(k,j,e_(1a),v)]$ and
+//   $e'_1 = relate(F)[relate(v)]$:
 
-  - If $e_(1a) = trueb$, choose $e'_2 = e'_1$.  Then
-    $e_2 = F[v] ~ relate(F)[relate(v)]$ by @langc-relation-is-correct, so ER holds by its first clause.
+//   - If $e_(1a) = trueb$, choose $e'_2 = e'_1$.  Then
+//     $e_2 = F[v] ~ relate(F)[relate(v)]$ by @langc-relation-is-correct, so ER holds by its first clause.
 
-  - If $e_(1a) cstepx e_(1b)$, choose $e'_2 = e'_1$.  Then
-    $e_2 = F[check(k,j,e_(1b),v)]$, so ER holds by its second clause.
+//   - If $e_(1a) cstepx e_(1b)$, choose $e'_2 = e'_1$.  Then
+//     $e_2 = F[check(k,j,e_(1b),v)]$, so ER holds by its second clause.
 
-  - If $e_(1a) = falseb$, then $e_2 = F[blame(k,j)]$, contradicting the premise that $e_2$ is not a blaming expression.
-]
+//   - If $e_(1a) = falseb$, then $e_2 = F[blame(k,j)]$, contradicting the premise that $e_2$ is not a blaming expression.
+// ]
