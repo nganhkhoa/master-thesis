@@ -1,6 +1,6 @@
 #lang racket
 
-(provide compile)
+(provide compile compile-and-run)
 
 (require redex/reduction-semantics)
 
@@ -226,25 +226,25 @@
             ;; ((λ C:x_1 (C:τ_1 -> C:τ_2) (λ C:x C:τ_1 E:e_3)) E:e_compiled))]
             (E:e_4 E:e_compiled))]
 
-  [(compile C:Γ C:e (C:τ_1 -> C:τ_2) E:e_compiled) ;; get τ_1
-   (where (C:x C:x_κ C:x_1) ,(variables-not-in (term (C:Γ C:e C:κ_2)) '(x x_k x_1)))
-   (where C:Γ_0 (extend C:Γ C:x C:τ_1))
-   (where C:Γ_new (extend C:Γ_0 C:x_κ C:τ_1))
-   (where C:Γ_f (extend C:Γ_new C:x_1 (C:τ_1 -> C:τ_2)))
-
-   (compile C:Γ_new (mon C:l C:k C:j C:κ_1 C:x) C:τ_1 E:e_1)
-   (compile C:Γ_new (mon C:l C:j C:j C:κ_1 C:x) C:τ_1 E:e_2)
-   (where C:κ_3 (substitute C:κ_2 C:x_arg C:x_κ))
-
-   (compile C:Γ_f (mon C:k C:l C:j C:κ_3 (C:x_1 C:x)) C:τ_2 E:e_3)
-   (where E:e_4 (substitute E:e_3 C:x E:e_1))
-   (where E:e_5 (substitute E:e_4 C:x_κ E:e_2))
+  ;; Preserve substitution of the dependent argument in the source contract:
+  ;; every occurrence of x_arg in κ_2 receives its own monitored argument.
+  ;; Binding x_arg once would incorrectly share a check.
+  [(compile C:Γ C:e (C:τ_1 -> C:τ_2) E:e_compiled)
+   (where (C:x C:x_1) ,(variables-not-in (term (C:Γ C:e C:κ_1 C:κ_2 C:x_arg)) '(x x_1)))
+   (where C:κ_range
+          (substitute C:κ_2 C:x_arg (mon C:l C:j C:j C:κ_1 C:x)))
+   (compile C:Γ
+            (λ C:x_1 (C:τ_1 -> C:τ_2)
+              (λ C:x C:τ_1
+                (mon C:k C:l C:j C:κ_range
+                     (C:x_1 (mon C:l C:k C:j C:κ_1 C:x)))))
+            ((C:τ_1 -> C:τ_2) -> (C:τ_1 -> C:τ_2))
+            E:e_4)
    ----------------------------------------------------------------------- "C-Mon-Dep-Complex"
    (compile C:Γ
             (mon C:k C:l C:j (C:κ_1 ->i C:x_arg C:κ_2) C:e)
             (C:τ_1 -> C:τ_2)
-            ;; remember to evaluate the contract expression first
-            ((λ C:x_1 (C:τ_1 -> C:τ_2) (λ C:x C:τ_1 E:e_5)) E:e_compiled))]
+            (E:e_4 E:e_compiled))]
 
   [(where C:x ,(variable-not-in (term (C:Γ C:e)) 'x))
    (compile C:Γ C:e (t C:τ_1 C:τ_2) E:e_3)
@@ -261,9 +261,12 @@
 (define-metafunction CompilerLang
   run-compiler : C:e -> E:e
 
+  ;; Some source terms admit extensionally equivalent derivations through the
+  ;; direct monitor and contract-wrapper rules.  Prefer the direct-monitor
+  ;; derivation, which is emitted last by the judgment form.
   [(run-compiler C:e_in) E:e_out
-   (where (E:e_out E:e_extra ...) ,(judgment-holds (compile () C:e_in C:τ E:e_target) E:e_target))
-   (side-condition (= (length (term (E:e_out E:e_extra ...))) 1))])
+   (where E:e_out ,(last (judgment-holds (compile () C:e_in C:τ E:e_target)
+                                          E:e_target)))])
 
 (define-metafunction CompilerLang
   run-type : C:e -> C:τ

@@ -1,6 +1,6 @@
 #lang racket
 
-(provide compile)
+(provide CompilerLang compile run-compiler run-type compile-and-run)
 
 (require redex/reduction-semantics)
 
