@@ -24,19 +24,25 @@
          ;; surface
          (λ ε x τ e) ;; added epsilon here
          (e τ)
-         (handle ε h e)
+         ;; dynamic handler frames, retaining the handler's modality
+         (d-handle ε h e)
+         (s-handle ε h e)
          ;; dynamic
          (error e))
 
   (v ::= ....
          (λ ε x τ e)
          (Λ α v)
-         (handler ε h)
+         ;; d-handler reinstalls itself around a resumed continuation;
+         ;; s-handler resumes its continuation without reinstalling itself.
+         (d-handler ε h)
+         (s-handler ε h)
          (perform ε op τ))
 
   (E ::= ....
          (E τ)
-         (handle ε h E)
+         (d-handle ε h E)
+         (s-handle ε h E)
          (error E))
 
   (Σ ::= ((effect : (op -> τ) ...) ...))
@@ -88,7 +94,9 @@
   ;; not sure about this lol
   [(bop (E τ)) (bop E)]
 
-  [(bop (handle ε ((op f) ...) E))
+  [(bop (d-handle ε ((op f) ...) E))
+   (append-ops (op ...) (bop E))]
+  [(bop (s-handle ε ((op f) ...) E))
    (append-ops (op ...) (bop E))])
 
 (define-metafunction Effects
@@ -229,8 +237,16 @@
   [(⊢_ops Σ Γ h τ effect_0 ε_ops)
    (where (effect_1 ...) ε_ops)
    (side-condition (term (same-effects? ε ε_ops)))
-   ----------------------------------------- "T-E-Handler"
-   (⊢_val Σ Γ (handler ε h)
+   ------------------------------------------- "T-E-D-Handler"
+   (⊢_val Σ Γ (d-handler ε h)
+          ((unit -> (effect_0 effect_1 ...) τ)
+           -> ε τ))]
+
+  [(⊢_ops Σ Γ h τ effect_0 ε_ops)
+   (where (effect_1 ...) ε_ops)
+   (side-condition (term (same-effects? ε ε_ops)))
+   ------------------------------------------- "T-E-S-Handler"
+   (⊢_val Σ Γ (s-handler ε h)
           ((unit -> (effect_0 effect_1 ...) τ)
            -> ε τ))]
 
@@ -299,8 +315,15 @@
    (where (effect_0 ... ) ε_1)
    (⊢ Σ Γ e τ ε)
    (side-condition (term (same-effects? ε (effect effect_0 ...))))
-   --------------------------------- "T-Handle"
-   (⊢ Σ Γ (handle ε h e) τ ε)]
+   ----------------------------------- "T-D-Handle"
+   (⊢ Σ Γ (d-handle ε h e) τ ε)]
+
+  [(⊢_ops Σ Γ h τ effect ε_1)
+   (where (effect_0 ... ) ε_1)
+   (⊢ Σ Γ e τ ε)
+   (side-condition (term (same-effects? ε (effect effect_0 ...))))
+   ----------------------------------- "T-S-Handle"
+   (⊢ Σ Γ (s-handle ε h e) τ ε)]
 )
 
 ;; during evaluation we can ignore types and effects
@@ -315,22 +338,41 @@
          (substitute v α τ)
          TAPP]
 
-    [==> ((handler ε h) v)
-         (handle ε h (v unit))
-         HANDLER-VALUE]
+    [==> ((d-handler ε h) v)
+         (d-handle ε h (v unit))
+         D-HANDLER-VALUE]
 
-    [==> (handle ε h v)
+    [==> ((s-handler ε h) v)
+         (s-handle ε h (v unit))
+         S-HANDLER-VALUE]
+
+    [==> (d-handle ε h v)
          v
-         HANDLE-VALUE]
+         D-HANDLE-VALUE]
 
-    [==> (handle ε h (in-hole E ((perform ε_1 op τ) v)))
+    [==> (s-handle ε h v)
+         v
+         S-HANDLE-VALUE]
+
+    [==> (d-handle ε h (in-hole E ((perform ε_1 op τ) v)))
          (((f τ) v) e)
 
          (side-condition (term (unhandled op E)))
          (side-condition (term (in-handler op h)))
          (where (τ_2 f) (find-op-in-handler op h))
-         (where e (λ y (substitute τ_2 α τ) (handle ε h (in-hole E y))))
-         HANDLE-OP]
+         ;; A deep handler remains active while its continuation runs.
+         (where e (λ y (substitute τ_2 α τ) (d-handle ε h (in-hole E y))))
+         D-HANDLE-OP]
+
+    [==> (s-handle ε h (in-hole E ((perform ε_1 op τ) v)))
+         (((f τ) v) e)
+
+         (side-condition (term (unhandled op E)))
+         (side-condition (term (in-handler op h)))
+         (where (τ_2 f) (find-op-in-handler op h))
+         ;; A shallow handler is consumed by its operation: no reinstallation.
+         (where e (λ y (substitute τ_2 α τ) (in-hole E y)))
+         S-HANDLE-OP]
 
     with
     [(--> ((in-hole E before) σ) ((in-hole E after) σ))
@@ -354,12 +396,12 @@
     h (term h-dup))
 
   (test-match Effects
-    (handle ε h E)
-    (term (handle (dup) h-dup (add hole 1))))
+    (d-handle ε h E)
+    (term (d-handle (dup) h-dup (add hole 1))))
 
   (test-match Effects
-    (handle ε h (in-hole (add hole 1) ((perform op τ) v)))
-    (term (handle (dup) h-dup (add ((perform op τ) v) 1))))
+    (d-handle ε h (in-hole (add hole 1) ((perform op τ) v)))
+    (term (d-handle (dup) h-dup (add ((perform op τ) v) 1))))
 
   ;; (test-equal (first (judgment-holds (⊢ () () 1 τ ()) τ))
   ;;             (term num))
@@ -399,7 +441,7 @@
   ;; (judgment-holds
   ;;   (⊢_val ((some-eff : (getval -> (∀ α (unit -> () num)))))
   ;;          Γ_init
-  ;;          (handler () ((getval (Λ α (λ mteff x unit (λ mteff k (num -> () num)
+  ;;          (d-handler () ((getval (Λ α (λ mteff x unit (λ mteff k (num -> () num)
   ;;                                                             (k 10)))))))
   ;;          τ)
   ;;   τ)
@@ -407,7 +449,7 @@
   ;; (judgment-holds
   ;;   (⊢ ((some-eff : (getval -> (∀ α (unit -> () num)))))
   ;;      Γ_init
-  ;;      ((handler () ((getval (Λ α (λ mteff x unit (λ mteff k (num -> () num) (k 10)))))))
+  ;;      ((d-handler () ((getval (Λ α (λ mteff x unit (λ mteff k (num -> () num) (k 10)))))))
   ;;       (perform () getval unit))
   ;;      τ
   ;;      mteff)
@@ -416,7 +458,7 @@
   ;; (judgment-holds
   ;;   (⊢ ((some-eff : (getval -> (∀ α (unit -> () num)))))
   ;;      Γ_init
-  ;;      ((handler () ((getval (Λ α (λ mteff x unit (λ mteff k (num -> () num) (k 10)))))))
+  ;;      ((d-handler () ((getval (Λ α (λ mteff x unit (λ mteff k (num -> () num) (k 10)))))))
   ;;       (λ (some-eff) y unit ((perform () getval unit) unit)))
   ;;      τ
   ;;      mteff)
@@ -425,8 +467,8 @@
   ;; (judgment-holds
   ;;   (⊢ ((some-eff : (getval -> (∀ α (unit -> () num)))))
   ;;      Γ_init
-  ;;      (handle ()
-  ;;              ((getval (Λ α (λ mteff x unit (λ mteff k (num -> () num) (k 10))))))
+  ;;      (d-handle ()
+  ;;                ((getval (Λ α (λ mteff x unit (λ mteff k (num -> () num) (k 10))))))
   ;;              ((perform () getval unit) unit))
   ;;      τ
   ;;      mteff)
@@ -454,7 +496,7 @@
   (judgment-holds
     (⊢ ((some-eff : (getval -> (∀ α (unit -> () num)))))
        Γ_init
-       ((handler mteff
+       ((d-handler mteff
                  ((getval (Λ α (λ mteff x unit (λ mteff k (num -> () num) (k 10)))))))
         (λ (some-eff) x unit 1))
        τ
@@ -472,7 +514,7 @@
     (test-equal
       (judgment-holds
         (⊢ ,effects Γ_init
-           ((handler mteff ,h_times2)
+           ((d-handler mteff ,h_times2)
             (λ (times2) x_1 unit ,main))
            τ
            mteff)
@@ -480,7 +522,7 @@
       (term (num)))
 
     (test-->> ->effects
-              (term (((handler mteff ,h_times2)
+              (term (((d-handler mteff ,h_times2)
                       (λ (times2) x_1 unit ,main))
                      ()))
               (term (8 ())))
@@ -502,10 +544,10 @@
     (test-equal
       (judgment-holds
         (⊢ ,effects Γ_init
-           ((handler mteff ,h_times2)
+           ((d-handler mteff ,h_times2)
             (λ (times2)
               x_1 unit
-              ((handler (times2) ,h_times4)
+              ((d-handler (times2) ,h_times4)
                (λ (times2 times4) x_2 unit ,main))))
            τ
            mteff)
@@ -513,19 +555,19 @@
       (term (num)))
 
     (test-->> ->effects
-              (term (((handler mteff ,h_times2)
+              (term (((d-handler mteff ,h_times2)
                       (λ (times2)
                         x_1 unit
-                        ((handler (times2) ,h_times4)
+                        ((d-handler (times2) ,h_times4)
                          (λ (times4) x_2 unit ,main))))
                      ()))
               (term (8 ()))))
 
   ;; make sure that dummy doesn't get called
   (test-->> ->effects
-            (term ((handle (dup) h-dup
-                           (handle (dummy) h-dummy
-                                   (add ((perform () dup num) 2) 1))) ()))
+            (term ((d-handle (dup) h-dup
+                             (d-handle (dummy) h-dummy
+                                       (add ((perform () dup num) 2) 1))) ()))
             (term (5 ())))
 
 
@@ -537,10 +579,10 @@
 
   (test-match Effects h (term h-check))
   (test-->> ->effects
-          (term ((handle (check) h-check ((perform () Check α) (t 123 (t (λ () x num false) 1)))) ()))
+          (term ((d-handle (check) h-check ((perform () Check α) (t 123 (t (λ () x num false) 1)))) ()))
           (term ((error 111) ())))
 
   (test-->> ->effects
-          (term ((handle (check) h-check ((perform () Check α) (t 123 (t (λ () x num true) 1)))) ()))
+          (term ((d-handle (check) h-check ((perform () Check α) (t 123 (t (λ () x num true) 1)))) ()))
           (term (1 ())))
 )

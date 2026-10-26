@@ -10,7 +10,7 @@
 ;; Each flat monitor installs a fresh one-shot handler.  Use the shallow effect
 ;; semantics: after it handles its own check, the captured continuation resumes
 ;; without reinstalling that handler.  Later checks bring their own handlers.
-(require "effects2.rkt")
+(require "effects.rkt")
 
 (define-union-language CompilerLocalHandler (C: Contracts) (E: Effects))
 
@@ -123,7 +123,7 @@
    ;; wrapper: handling is local because the compiler puts this handler around
    ;; every flat-contract `perform`.
    (compile C:Γ (mon C:k C:l C:j (flat C:e_1) C:e_2) C:τ
-            ((handler (𝒞)
+            ((s-handler (𝒞)
                ((𝒞
                  (Λ β (λ (𝒞) x β (λ (𝒞) k β
                    (if ((injl x) (injr x))

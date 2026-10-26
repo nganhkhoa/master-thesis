@@ -36,7 +36,7 @@
         $o : tau_a times tau_b -> tau_o$,
         $type(Gamma, e_1, tau_a)$,
         $type(Gamma, e_2, tau_b)$,
-        $type(Gamma, e_1 o e_2, tau_o)$
+        $type(Gamma, e_1 med o med e_2, tau_o)$
       )),
       prooftree(rule(
         name: [T-Var],
@@ -87,5 +87,5 @@
     v(2em),
   ),
   caption: [Type Rules for #langb]
-) <core-type-rules>
+) <base-type-rules>
 

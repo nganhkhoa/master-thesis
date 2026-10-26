@@ -37,5 +37,5 @@
     v(1em),
   ),
   caption: [Reduction Rules for #langb]
-) <core-reduction-rules>
+) <base-reduction-rules>
 

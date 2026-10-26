@@ -64,4 +64,4 @@
     v(1em),
   ),
   caption: [#langb Language]
-) <core-syntax>
+) <base-syntax>

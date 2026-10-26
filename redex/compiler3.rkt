@@ -181,7 +181,7 @@
   [(compile C:Γ C:e C:τ E:e)
    ------------------------------------------------------------- "C-Hijack"
    (compile C:Γ (hijack C:e) C:τ
-            ((handler genericeff h-hijack) (λ genericeff unused unit E:e)))]
+            ((d-handler genericeff h-hijack) (λ genericeff unused unit E:e)))]
 )
 
 (define-metafunction CompilerLang
@@ -224,7 +224,7 @@
        (k (injr x))))))))
 
 (define-term wrap
-  (μ w unit (Λ α (λ genericeff f unit ((handler genericeff h-check) f)))))
+  (μ w unit (Λ α (λ genericeff f unit ((d-handler genericeff h-check) f)))))
 
 (define (compile-and-run p #:trace-enabled [trace-enabled false] #:trace-print [trace-print false])
   (define (abbreviate-term t)
@@ -333,7 +333,7 @@
 
   ;; compile-time shape: hijack becomes a handler around the compiled mon
   (compile-expect (hijack (mon k l j fail 1))
-                  ((handler genericeff h-hijack)
+                  ((d-handler genericeff h-hijack)
                    (λ genericeff unused unit
                      ((perform genericeff 𝒞 num) (t (λ x num false) 1)))))
 

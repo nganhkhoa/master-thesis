@@ -52,15 +52,15 @@ This handler performs the check for the value $v$, with the predicate/contract $
     align: (left, left),
     gutter: 1em,
 
-    [], [$apply(handler(h_"naive"), lambda \_. (apply(lambda x_1. apply(perform(effcheck, tau: numt), tuple(k, tuple(e_3, apply(f, (apply(perform(effcheck, tau: numt), tuple(l, tuple(e_1, x_1)))))))), 42)))$],
+    [], [$apply(handler(h_"naive", m: d), lambda \_. (apply(lambda x_1. apply(perform(effcheck, tau: numt), tuple(k, tuple(e_3, apply(f, (apply(perform(effcheck, tau: numt), tuple(l, tuple(e_1, x_1)))))))), 42)))$],
 
-    [$estep$], [$handle(h_"naive", (apply(lambda x_1. apply(perform(effcheck, tau: numt), tuple(k, tuple(e_3, apply(f, (apply(perform(effcheck, tau: numt), tuple(l, tuple(e_1, x_1)))))))), 42)))$],
-    [$estep$], [$handle(h_"naive", apply(perform(effcheck, tau: numt), tuple(k, tuple(e'_3, apply(f, (apply(perform(effcheck, tau: numt), tuple(l, tuple(e_1, 42)))))))))$],
+    [$estep$], [$handle(h_"naive", (apply(lambda x_1. apply(perform(effcheck, tau: numt), tuple(k, tuple(e_3, apply(f, (apply(perform(effcheck, tau: numt), tuple(l, tuple(e_1, x_1)))))))), 42)), m: d)$],
+    [$estep$], [$handle(h_"naive", apply(perform(effcheck, tau: numt), tuple(k, tuple(e'_3, apply(f, (apply(perform(effcheck, tau: numt), tuple(l, tuple(e_1, 42)))))))), m: d)$],
     [], grid.cell(align: right, [where $e'_3 = e_2[y:=apply(perform(effcheck, tau: numt), tuple(l, tuple(e_1, 42)))]$]),
-    [$estep1$], [$handle(h_"naive", apply(perform(effcheck, tau: numt), tuple(k, tuple(e'_3, apply(f, 42)))))$],
-    [$estep1$], [$handle(h_"naive", apply(perform(effcheck, tau: numt), tuple(k, tuple(e'_3, 84))))$],
-    [$estep1$], [$ife(apply(e'_3,84),apply((lambda x. handle(h_"naive", x)),84),eblame(k))$],
-    [$estep1$], [$ife(84 > (apply(perform(effcheck, tau: numt), tuple(l, tuple(e_1, 42)))), apply((lambda x. handle(h_"naive", x)),84),eblame(k))$],
+    [$estep1$], [$handle(h_"naive", apply(perform(effcheck, tau: numt), tuple(k, tuple(e'_3, apply(f, 42)))), m: d)$],
+    [$estep1$], [$handle(h_"naive", apply(perform(effcheck, tau: numt), tuple(k, tuple(e'_3, 84))), m: d)$],
+    [$estep1$], [$ife(apply(e'_3,84),apply((lambda x. handle(h_"naive", x, m: d)),84),eblame(k))$],
+    [$estep1$], [$ife(84 > (apply(perform(effcheck, tau: numt), tuple(l, tuple(e_1, 42)))), apply((lambda x. handle(h_"naive", x, m: d)),84),eblame(k))$],
     [], [_stuck_]
   ),
 ))
@@ -105,25 +105,25 @@ If $compile(type(dot,e,tau),e')$ and $e^* = "untyped"(apply(kw("wrap")[tau],(lam
 
 
 
-== Compiling Contracts for Mutable Cells
+// == Compiling Contracts for Mutable Cells
 
-=== Observation
+// === Observation
 
-#langc uses $guard(v, kappa, k, l, j)$ as a proxy to mutable cells. Get and set operation go through this guard to enfore contracts at run-time. This proxy makes the action oblivious whether it is a real cell or a guarded value. Consider this simple function that calls $getcell(c)$ for any cell.
+// #langc uses $guard(v, kappa, k, l, j)$ as a proxy to mutable cells. Get and set operation go through this guard to enfore contracts at run-time. This proxy makes the action oblivious whether it is a real cell or a guarded value. Consider this simple function that calls $getcell(c)$ for any cell.
 
-$
-lambda c. getcell(c)
-$
+// $
+// lambda c. getcell(c)
+// $
 
-This function should work with both cells $newcell(v)$ and guards constructed from $mon(k,l,j,refc(e),r)$ (where $r$ a location). #lange does not have special reduction rules for mutable cells, therefore, we need a unified interface between cells and protected cells, and rewrite cell operations to use that unified interface.
+// This function should work with both cells $newcell(v)$ and guards constructed from $mon(k,l,j,refc(e),r)$ (where $r$ a location). #lange does not have special reduction rules for mutable cells, therefore, we need a unified interface between cells and protected cells, and rewrite cell operations to use that unified interface.
 
-=== Unified Interface
+// === Unified Interface
 
-Our compiler has supports for functions and tuples, this is useful for us to design such unified interface. A mutable cell must support get and set, we can encode this as a tuple of 2 functions. Contracts on a cell is now converted into contracts placed on these get and set functions. Cell's location is enclosed inside the closure, and should be accessible when invoked. The compiler should first convert all cell operations into this new wrapper. Then convert all $refc(kappa)$ into tuple contracts for get and set functions.
+// Our compiler has supports for functions and tuples, this is useful for us to design such unified interface. A mutable cell must support get and set, we can encode this as a tuple of 2 functions. Contracts on a cell is now converted into contracts placed on these get and set functions. Cell's location is enclosed inside the closure, and should be accessible when invoked. The compiler should first convert all cell operations into this new wrapper. Then convert all $refc(kappa)$ into tuple contracts for get and set functions.
 
-#v(1em)
-#include "/models/compiler-ref.typ"
-#v(1em)
+// #v(1em)
+// #include "/models/compiler.typ"
+// #v(1em)
 
 // == Contract States
 

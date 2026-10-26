@@ -15,28 +15,19 @@
 
 #let tc(t) = $#t^*$
 #let hc = $effs(heffcheck)$
-#let wrap(tau, e) = $apply(kw("wrap")[#tau], (lambda \_ : unit. #e))$
+#let wrap(tau, e, m) = $apply(kw("wrap")_(#m)[#tau], (lambda \_ : unit. #e))$
+#let wrapd = $kw("wrap")_d$
+#let wraps = $kw("wrap")_s$
 
 = #langc to #lange Compiler Typesoundness
 
 == Overview
-
-This part shows how the compiler remains typesoundness of the source program to the target program. Since the compiler introduces effects and explicitly declares it everywhere (in lambdas, and perform operations), the function type is augmented with the effect. The compiler also does not introduce any handler, this makes the whole program (potentially) produce the effect as well.
 
 The environment that will be used to type check target programs has the following $Sigma$ signature.
 
 $
 Sigma(heffcheck) = {effcheck : forall alpha. tuple(blab, tuple(teff(alpha,hc,boolt), alpha)) -> alpha}
 $
-
-// Assumptions:
-
-// - The rules of #langb are lifted to #lange by giving every premise and the conclusion the same effect row $epsilon$ (as T-E-App does).
-// - #lange has $type(Gamma, eblame(p), tau, eff: epsilon)$ for any $tau$ and $epsilon$ (T-E-Error), and blame labels have type $blab$ (T-E-Label).
-// - The compiler writes the translated type $tc(tau)$ on every binder and on $perform(effcheck, tau: tau)$. Types are erased at run time, so this does not change the compiler correctness proofs.
-// - Mutable cells are not covered.
-
-== Type Translation
 
 #block(width: 100%)[
   #rect(stroke: 0.5pt, inset: 5pt)[
@@ -64,12 +55,12 @@ $
 
 #theorem(title: "Compiler Type Preservation")[
 
-  If $compile(type(Gamma,e,tau),e')$ then $type(tc(Gamma),e',tc(tau),eff: hc)$.
+  If $compile(type(Gamma,e,tau),e', m: d)$ then $type(tc(Gamma),e',tc(tau),eff: hc)$.
 ] <compiler-type-ts-preservation>
 
 #proof[
 
-By induction on structure of $compile(type(Gamma,e,tau),e')$.
+By induction on structure of $compile(type(Gamma,e,tau),e', m: d)$.
 
 - Case $e = x$, $e = n$, $e = b$, $e = unit$
 
@@ -80,8 +71,8 @@ By induction on structure of $compile(type(Gamma,e,tau),e')$.
   ))
 
 - Case #prooftree(rule(
-    $compile(type(Gamma\, x : tau_1, e, tau_2), e'')$,
-    $compile(type(Gamma, lambda x : tau_1. e, tau_1 -> tau_2), lambda x : tc(tau_1). e'')$,
+    $compile(type(Gamma\, x : tau_1, e, tau_2), e'', m: d)$,
+    $compile(type(Gamma, lambda x : tau_1. e, tau_1 -> tau_2), lambda x : tc(tau_1). e'', m: d)$,
   ))
 
   #derivation((
@@ -92,9 +83,9 @@ By induction on structure of $compile(type(Gamma,e,tau),e')$.
   ))
 
 - Case #prooftree(rule(
-    $compile(type(Gamma, e_1, tau_1 -> tau_2), e'_1)$,
-    $compile(type(Gamma, e_2, tau_1), e'_2)$,
-    $compile(type(Gamma, apply(e_1,e_2), tau_2), apply(e'_1,e'_2))$,
+    $compile(type(Gamma, e_1, tau_1 -> tau_2), e'_1, m: d)$,
+    $compile(type(Gamma, e_2, tau_1), e'_2, m: d)$,
+    $compile(type(Gamma, apply(e_1,e_2), tau_2), apply(e'_1,e'_2), m: d)$,
   ))
 
   #derivation((
@@ -115,9 +106,9 @@ By induction on structure of $compile(type(Gamma,e,tau),e')$.
   For $mu x : tau. e$, the binder is $x : tc(tau)$, and the I.H. is used under $tc(Gamma)\, x : tc(tau)$.
 
 - Case #prooftree(rule(
-    $compile(type(Gamma,e_3,tau -> boolt), e_5)$,
-    $compile(type(Gamma,e_4,tau), e_6)$,
-    $compile(type(Gamma,mon(k,l,j,flat(e_3),e_4),tau), apply(perform(effcheck, tau: tc(tau)), tuple(k, tuple(e_5, e_6))))$,
+    $compile(type(Gamma,e_3,tau -> boolt), e_5, m: d)$,
+    $compile(type(Gamma,e_4,tau), e_6, m: d)$,
+    $compile(type(Gamma,mon(k,l,j,flat(e_3),e_4),tau), apply(perform(effcheck, tau: tc(tau)), tuple(k, tuple(e_5, e_6))), m: d)$,
   ))
 
   #derivation((
@@ -129,12 +120,12 @@ By induction on structure of $compile(type(Gamma,e,tau),e')$.
   This is the only rule that introduces $heffcheck$.
 
 - Case #prooftree(rule(
-    $compile(type(Gamma,e_1,tau_1 -> tau_2), e_2)$,
+    $compile(type(Gamma,e_1,tau_1 -> tau_2), e_2, m: d)$,
     $compile(type(Gamma,
         lambda f : tau_1 -> tau_2. lambda x : tau_1. mon(k,l,j,kappa_2,apply(f, mon(l,k,j,kappa_1,x))),
         (tau_1 -> tau_2) -> (tau_1 -> tau_2)),
-      e_3)$,
-    $compile(type(Gamma,mon(k,l,j,kappa_1->kappa_2,e_1),tau_1 -> tau_2),apply(e_3, e_2))$,
+      e_3, m: d)$,
+    $compile(type(Gamma,mon(k,l,j,kappa_1->kappa_2,e_1),tau_1 -> tau_2),apply(e_3, e_2), m: d)$,
   ))
 
   #derivation((
@@ -145,9 +136,9 @@ By induction on structure of $compile(type(Gamma,e,tau),e')$.
   ))
 
 - Case #prooftree(rule(
-    $compile(type(Gamma,e_1,tau_1 -> tau_2), e_2)$,
-    $compile(type(Gamma, e_w, (tau_1 -> tau_2) -> (tau_1 -> tau_2)), e_3)$,
-    $compile(type(Gamma,mon(k,l,j,dep(kappa_1, lambda y. kappa_2),e_1),tau_1 -> tau_2),apply(e_3, e_2))$,
+    $compile(type(Gamma,e_1,tau_1 -> tau_2), e_2, m: d)$,
+    $compile(type(Gamma, e_w, (tau_1 -> tau_2) -> (tau_1 -> tau_2)), e_3, m: d)$,
+    $compile(type(Gamma,mon(k,l,j,dep(kappa_1, lambda y. kappa_2),e_1),tau_1 -> tau_2),apply(e_3, e_2), m: d)$,
   ))
 
   where $e_w = lambda f : tau_1 -> tau_2. lambda x : tau_1. mon(k,l,j,kappa_2[y:=mon(l,j,j,kappa_1,x)],apply(f, mon(l,k,j,kappa_1,x)))$
@@ -162,10 +153,10 @@ By induction on structure of $compile(type(Gamma,e,tau),e')$.
 
 - Case #prooftree(rule(
     $x in.not "dom"(Gamma)$,
-    $compile(type(Gamma\,x:tuple(tau_1,tau_2),mon(k,l,j,kappa_1,injl(x)),tau_1), e_1)$,
-    $compile(type(Gamma\,x:tuple(tau_1,tau_2),mon(k,l,j,kappa_2,injr(x)),tau_2), e_2)$,
-    $compile(type(Gamma,e,tuple(tau_1,tau_2)),e_3)$,
-    $compile(type(Gamma,mon(k,l,j,tuple(kappa_1,kappa_2),e),tuple(tau_1,tau_2)), apply((lambda x : tc(tuple(tau_1,tau_2)). tuple(e_1,e_2)),e_3))$,
+    $compile(type(Gamma\,x:tuple(tau_1,tau_2),mon(k,l,j,kappa_1,injl(x)),tau_1), e_1, m: d)$,
+    $compile(type(Gamma\,x:tuple(tau_1,tau_2),mon(k,l,j,kappa_2,injr(x)),tau_2), e_2, m: d)$,
+    $compile(type(Gamma,e,tuple(tau_1,tau_2)),e_3, m: d)$,
+    $compile(type(Gamma,mon(k,l,j,tuple(kappa_1,kappa_2),e),tuple(tau_1,tau_2)), apply((lambda x : tc(tuple(tau_1,tau_2)). tuple(e_1,e_2)),e_3), m: d)$,
   ))
 
   #derivation((
@@ -180,7 +171,7 @@ By induction on structure of $compile(type(Gamma,e,tau),e')$.
 ]
 
 
-#lemma(title: "Typing a perform of the check effect")[
+#lemma(title: "Perform Type")[
 
   If $type(Gamma, e_1, teff(tau,hc,boolt), eff: hc)$ and $type(Gamma, e_2, tau, eff: hc)$ then
 
@@ -200,39 +191,37 @@ By induction on structure of $compile(type(Gamma,e,tau),e')$.
     ($type(Gamma, tuple(k, tuple(e_1, e_2)), tuple(blab, tuple(teff(tau,hc,boolt), tau)), eff: hc)$, rn("T-Tuple")),
     ($type(Gamma, apply(perform(effcheck, tau: tau), tuple(k, tuple(e_1, e_2))), tau, eff: hc)$, rn("T-E-App")),
   ))
-
-  In the last step, the effect on the arrow and the effect of both premises are the same row $hc$.
 ]
 
-== Wrapped Compiled Program Typing
+== Wrapped Compiled Program Typing (Deep Handler)
 
 The deep handler wrapper from the compiler equivalence proof removes $heffcheck$ from the effect row. We rewrite the wrapper as follows:
 
 $
-kw("wrap") = & mu w : forall alpha. teff((teff(unit,hc,alpha)),mteff,alpha). Lambda alpha. lambda f : teff(unit,hc,alpha). apply(handler(h_w), f) \
+wrapd = & mu w : forall alpha. teff((teff(unit,hc,alpha)),mteff,alpha). Lambda alpha. lambda f : teff(unit,hc,alpha). apply(handler(h_w, m: d), f) \
 h_w = & {effcheck -> Lambda beta. lambda tuple(l,tuple(e,v)). lambda k : teff(beta,mteff,alpha). ife(apply(w[boolt], (lambda \_ : unit. apply(e,v))),apply(k,v),eblame(l))}
 $
 
 Note that $h_w$ signature matches $Sigma(heffcheck)$ if we replace $alpha$ with $beta$.
 
-#theorem(title: "Compiler Effect Safety")[
+#theorem(title: "Compiler Effect Safety with wrapper deep handler")[
 
-  If $compile(type(dot.op,e,tau),e')$ then $type(dot.op, wrap(tc(tau),e'), tc(tau), eff: mteff)$.
+  If $compile(type(dot.op,e,tau),e', m: d)$ then $type(dot.op, wrap(tc(tau),e',d), tc(tau), eff: mteff)$.
 ] <compiler-type-ts-effect-safety>
 
 #proof[
   #derivation((
     ($type(dot.op,e',tc(tau),eff: hc)$, [@compiler-type-ts-preservation]),
     ($type(dot.op, lambda \_ : unit. e', teff(unit,hc,tc(tau)), type: "val")$, rn("T-E-Abs")),
-    ($type(dot.op, kw("wrap")[tc(tau)], teff((teff(unit,hc,tc(tau))),mteff,tc(tau)), eff: mteff)$, [@compiler-type-ts-wrap, #rn("T-E-Tapp")]),
-    ($type(dot.op, wrap(tc(tau),e'), tc(tau), eff: mteff)$, rn("T-E-App")),
+    ($type(dot.op, wrapd [tc(tau)], teff((teff(unit,hc,tc(tau))),mteff,tc(tau)), eff: mteff)$, [@compiler-type-ts-wrap, #rn("T-E-Tapp")]),
+    ($type(dot.op, wrap(tc(tau),e',d), tc(tau), eff: mteff)$, rn("T-E-App")),
   ))
 ]
 
 
-#lemma(title: "Type of wrap")[
+#lemma(title: "Type of wrap deep handler")[
 
-  $type(dot.op, kw("wrap"), forall alpha. teff((teff(unit,hc,alpha)),mteff,alpha), type: "val")$
+  $type(dot.op, wrapd, forall alpha. teff((teff(unit,hc,alpha)),mteff,alpha), type: "val")$
 ] <compiler-type-ts-wrap>
 
 #proof[
@@ -253,10 +242,55 @@ Note that $h_w$ signature matches $Sigma(heffcheck)$ if we replace $alpha$ with 
       [#rn("T-E-Abs"), #rn("T-E-TAbs")]),
     ($type(Gamma_w, h_w, alpha, type: "ops", eff: effs(heffcheck | mteff))$,
       rn("T-E-Ops")),
-    ($type(Gamma_w, handler(h_w), teff((teff(unit,hc,alpha)),mteff,alpha), type: "val")$, rn("T-E-Handler")),
-    ($type(Gamma_w\, f : teff(unit,hc,alpha), apply(handler(h_w), f), alpha, eff: mteff)$, rn("T-E-App")),
-    ($type(Gamma_w, lambda f : teff(unit,hc,alpha). apply(handler(h_w), f), teff((teff(unit,hc,alpha)),mteff,alpha), type: "val")$, rn("T-E-Abs")),
-    ($type(Gamma_w, Lambda alpha. lambda f. apply(handler(h_w), f), forall alpha. teff((teff(unit,hc,alpha)),mteff,alpha), type: "val")$, rn("T-E-TAbs")),
-    ($type(dot.op, kw("wrap"), forall alpha. teff((teff(unit,hc,alpha)),mteff,alpha), type: "val")$, rn("T-Fix")),
+    ($type(Gamma_w, handler(h_w, m: d), teff((teff(unit,hc,alpha)),mteff,alpha), type: "val")$, rn("T-E-Handler")),
+    ($type(Gamma_w\, f : teff(unit,hc,alpha), apply(handler(h_w, m: d), f), alpha, eff: mteff)$, rn("T-E-App")),
+    ($type(Gamma_w, lambda f : teff(unit,hc,alpha). apply(handler(h_w, m: d), f), teff((teff(unit,hc,alpha)),mteff,alpha), type: "val")$, rn("T-E-Abs")),
+    ($type(Gamma_w, Lambda alpha. lambda f. apply(handler(h_w, m: d), f), forall alpha. teff((teff(unit,hc,alpha)),mteff,alpha), type: "val")$, rn("T-E-TAbs")),
+    ($type(dot.op, wrapd, forall alpha. teff((teff(unit,hc,alpha)),mteff,alpha), type: "val")$, rn("T-Fix")),
+  ))
+]
+
+== Wrapped Compiled Program Typing (Shallow Handler)
+
+#let hcheck = $kw("H")$
+
+$
+kw("wrap") = & Lambda alpha. med lambda f: unit -> alpha. apply(hcheck, f) \
+hcheck = & mu h. handler({effcheck -> lambda tuple(l,tuple(e,v)). lambda k. apply(h,(lambda \_. ife(apply(e,v),apply(k,v),eblame(l))))}, m: s)
+$
+
+Note that $h_w$ signature matches $Sigma(heffcheck)$ if we replace $alpha$ with $beta$.
+
+#theorem(title: "Compiler Effect Safety with wrapper shallow handler")[
+
+  If $compile(type(dot.op,e,tau),e', m: s)$ then $type(dot.op, wrap(tc(tau),e',s), tc(tau), eff: mteff)$.
+] <compiler-type-ts-effect-safety-shallow>
+
+#proof[
+  #derivation((
+    ($type(dot.op,e',tc(tau),eff: hc)$, [@compiler-type-ts-preservation]),
+    ($type(dot.op, lambda \_ : unit. e', teff(unit,hc,tc(tau)), type: "val")$, rn("T-E-Abs")),
+    ($type(dot.op, wraps [tc(tau)], teff((teff(unit,hc,tc(tau))),mteff,tc(tau)), eff: mteff)$, [@compiler-type-ts-wrap-shallow, #rn("T-E-Tapp")]),
+    ($type(dot.op, wrap(tc(tau),e',s), tc(tau), eff: mteff)$, rn("T-E-App")),
+  ))
+]
+
+
+#lemma(title: "Type of wrap shallow handler")[
+
+  $type(dot.op, wrap_s, forall alpha. teff((teff(unit,hc,alpha)),mteff,alpha), type: "val")$
+] <compiler-type-ts-wrap-shallow>
+
+#proof[
+
+  Assume $Gamma_w = h : forall alpha. teff((teff(unit,hc,alpha)),mteff,alpha)$.
+
+  #derivation((
+    ($type(Gamma_w, hcheck, forall beta. teff(tuple(blab, tuple(teff(beta,hc,boolt), beta)),mteff,(teff((teff(beta,mteff,alpha)),mteff,alpha))), type: "val")$, [#rn("T-E-Abs"), #rn("T-E-TAbs")]),
+    ($type(Gamma_w, hcheck, alpha, type: "ops", eff: effs(heffcheck | mteff))$, rn("T-E-Ops")),
+    ($type(Gamma_w, handler(hcheck, m: s), teff((teff(unit,hc,alpha)),mteff,alpha), type: "val")$, rn("T-E-Handler")),
+    ($type(Gamma_w, lambda f : teff(unit,hc,alpha). apply(handler(hcheck, m: s), f), teff((teff(unit,hc,alpha)),mteff,alpha), type: "val")$, rn("T-E-Abs")),
+    ($type(dot.op, Lambda alpha. lambda f. apply(handler(hcheck, m: s), f), forall alpha. teff((teff(unit,hc,alpha)),mteff,alpha), type: "val")$, rn("T-E-TAbs")),
+    ($type(dot.op, wrap_s, forall alpha. teff((teff(unit,hc,alpha)),mteff,alpha), type: "val")$, rn("T-Fix")),
   ))
 ]

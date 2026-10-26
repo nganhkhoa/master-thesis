@@ -37,12 +37,12 @@
 
 // Effect annotations are syntax, not inferred decorations.  These helpers
 // distinguish the row stored in a term from a row used as a meta-variable.
-#let eabs(eps, x, tau, e) = $#kw("lambda")^eps x : tau . e$
+#let eabs(eps, x, tau, e) = $lambda^eps x : tau . e$
 // Build the effect forms through the notation exported by language.typ.  The
 // calculus stores the row annotation in the syntax, so handler and handle need
 // an outer attachment while perform can use its `eff` parameter directly.
-#let ehandler(eps, h) = $attach(handler(h), tr: #eps)$
-#let ehandle(eps, h, e) = $attach(handle(h, e), tr: #eps)$
+#let ehandler(eps, h, m: d) = $attach(handler(h, m: m), tr: #eps)$
+#let ehandle(eps, h, e, m: d) = $attach(handle(h, e, m: m), tr: #eps)$
 #let eperform(eps, op, tau) = $perform(op, tau: tau, eff: eps)$
 
 // labels of the handlers in a context, innermost first
@@ -59,7 +59,7 @@ The proofs for #lange follow the proofs of System $F^epsilon$ in Effect Handlers
 
 == Conventions
 
-*Typing.* There is no type variable context. As in $F^epsilon$, type variables are kept apart by the side conditions $alpha in.not "ftv"(Gamma)$ of T-E-Perform and $alpha in.not "ftv"(epsilon, tau)$ of T-E-Ops, and every type is assumed well-formed. The rules of #langb are lifted to #lange by giving every premise and the conclusion the same effect row $epsilon$. The value forms $n$, $b$, $unit$ and $x$ are typed by value rules (T-Num, T-Bool, T-Unit, T-E-Var). The effect row is also recorded in effect-bearing syntax: $#kw("lambda")^epsilon x : tau. e$ records the latent effect of its body, $eperform(epsilon, op, tau_s)$ records the tail of its operation row, and $ehandler(epsilon, h)$ and $ehandle(epsilon, h, e)$ record the handler residual row. Thus $ehandle(epsilon, h, e)$ checks $e$ at $row(l, epsilon)$ and produces effect $epsilon$. A tuple of values also has a value rule, T-E-VTuple: from $type(Gamma, v_1, tau_1, type: "val")$ and $type(Gamma, v_2, tau_2, type: "val")$ conclude $type(Gamma, tuple(v_1, v_2), tuple(tau_1, tau_2), type: "val")$. Without it, a tuple could not be substituted for a variable in a value position, such as the body of $Lambda alpha. v$. In the figure, the rule for $lambda$ is named T-E-Abs.
+*Typing.* There is no type variable context. As in $F^epsilon$, type variables are kept apart by the side conditions $alpha in.not "ftv"(Gamma)$ of T-E-Perform and $alpha in.not "ftv"(epsilon, tau)$ of T-E-Ops, and every type is assumed well-formed. The rules of #langb are lifted to #lange by giving every premise and the conclusion the same effect row $epsilon$. The value forms $n$, $b$, $unit$ and $x$ are typed by value rules (T-Num, T-Bool, T-Unit, T-E-Var). The effect row is also recorded in effect-bearing syntax: $lambda^epsilon x : tau. e$ records the latent effect of its body, $eperform(epsilon, op, tau_s)$ records the tail of its operation row, and $ehandler(epsilon, h)$ and $ehandle(epsilon, h, e)$ record the handler residual row. Thus $ehandle(epsilon, h, e)$ checks $e$ at $row(l, epsilon)$ and produces effect $epsilon$. A tuple of values also has a value rule, T-E-VTuple: from $type(Gamma, v_1, tau_1, type: "val")$ and $type(Gamma, v_2, tau_2, type: "val")$ conclude $type(Gamma, tuple(v_1, v_2), tuple(tau_1, tau_2), type: "val")$. Without it, a tuple could not be substituted for a variable in a value position, such as the body of $Lambda alpha. v$. In the figure, the rule for $lambda$ is named T-E-Abs.
 
 *Errors.* $eblame(p)$ is a value, typed by T-E-Error: $type(Gamma, eblame(p), tau, type: "val")$ for any $tau$. Step-E-Error aborts the program, $E[eblame(p)] estep eblame(p)$ for $E != square.stroked$. We drop the context $eblame(E)$ of the figure, since the argument of an error is a party, not an expression.
 
@@ -80,7 +80,7 @@ The proofs for #lange follow the proofs of System $F^epsilon$ in Effect Handlers
 #remark[
   The lifted fixpoint of #langb, which unfolds $mu x : tau. e$ to $e[x:=mu x : tau. e]$ for any $e$, does not preserve types once effects are tracked. Let $tau = teff(unit, mteff, numt)$ and
 
-  $e = apply((#kw("lambda")^effs(l) y. #kw("lambda")^mteff \_ : unit. apply(x, unit)), apply(eperform(mteff, op, tau_s), v))$.
+  $e = apply((lambda^effs(l) y. lambda^mteff \_ : unit. apply(x, unit)), apply(eperform(mteff, op, tau_s), v))$.
 
   Then $type(x : tau, e, tau, eff: effs(l))$, so $mu x : tau. e$ has type $tau$ with effect $effs(l)$. After one step, $mu x : tau. e$ sits in the body of $lambda \_ : unit. dots$, which has effect $mteff$. But $mu x : tau. e$ can only be typed with the effect of the $prf$ in $e$, so the result is not well typed. Restricting the body to a value avoids this. A value can be given any effect, and so can a recursive value. The $kw("wrap")$ handler of the compiler is such a recursive value.
 ]
@@ -354,12 +354,12 @@ and likewise for every frame without a handler.
       ($type(Gamma_0, y[x:=v], tau, type: "val")$, [#rn("T-E-Var"), $y[x:=v] = y$]),
     ))
 
-  - Case T-E-Abs with $v_0 = #kw("lambda")^epsilon_0 y : tau_2. e$, $y in.not {x} union "fv"(v)$.
+  - Case T-E-Abs with $v_0 = lambda^epsilon_0 y : tau_2. e$, $y in.not {x} union "fv"(v)$.
     #derivation((
       ($type(Gamma\, y : tau_2, e, tau_3, eff: epsilon_0)$, rn("T-E-Abs")),
       ($type(Gamma_0\, y : tau_2, v, tau_1, type: "val")$, [@lange-weakening]),
       ($type(Gamma_0\, y : tau_2, e[x:=v], tau_3, eff: epsilon_0)$, "I.H. 1"),
-      ($type(Gamma_0, #kw("lambda")^epsilon_0 y : tau_2. e[x:=v], teff(tau_2, epsilon_0, tau_3), type: "val")$, rn("T-E-Abs")),
+      ($type(Gamma_0, lambda^epsilon_0 y : tau_2. e[x:=v], teff(tau_2, epsilon_0, tau_3), type: "val")$, rn("T-E-Abs")),
     ))
 
   - Case T-E-Fix with $v_0 = mu y : tau. v_1$. As T-E-Abs, with the I.H. 2 on $v_1$.
@@ -488,7 +488,7 @@ and likewise for every frame without a handler.
       - $e_4 estep e_6$. Then $e_1$ steps by @lange-effects-step-context.
       - $e_4 = E_0[apply(eperform(epsilon_p, op, tau_s), v)]$. Take $E = apply(e_3, E_0)$.
       - $e_4$ is a value. By @lange-effects-canonical on $e_3$:
-        - $e_3 = #kw("lambda")^epsilon x : tau_1. e$. Then $e_1 estep e[x:=e_4]$ (S-App).
+        - $e_3 = lambda^epsilon x : tau_1. e$. Then $e_1 estep e[x:=e_4]$ (S-App).
         - $e_3 = ehandler(epsilon, h)$. Then $e_1 estep ehandle(epsilon, h, apply(e_4, unit))$ (Step-E-Handler).
         - $e_3 = eperform(epsilon_p, op, tau_s)$. Take $E = square.stroked$; $e_1$ is stuck on $op$.
         - $e_3 = mu x : tau_f. v_0$. Then $e_1 estep apply(v_0[x:=e_3], e_4)$ (Step-E-Fix-App).
@@ -505,7 +505,7 @@ and likewise for every frame without a handler.
     - $e_3$ steps. Then $e_1$ steps by @lange-effects-step-context.
     - $e_3$ is a value. Then $e_1 estep e_3$ (Step-E-Return).
     - $e_3 = E_0[apply(eperform(epsilon_p, op, tau_s), v)]$ with $op in.not bop(E_0)$.
-      - If $(op -> f) in h$, then $e_1 estep apply(apply(f[tau_s], v), k)$ with $k = #kw("lambda")^epsilon x : tau_2[alpha:=tau_s]. ehandle(epsilon, h, E_0[x])$ (Step-E-Perform).
+      - If $(op -> f) in h$, then $e_1 estep apply(apply(f[tau_s], v), k)$ with $k = lambda^epsilon x : tau_2[alpha:=tau_s]. ehandle(epsilon, h, E_0[x])$ (Step-E-Perform).
       - Otherwise take $E = ehandle(epsilon, h, E_0)$. Then $op in.not bop(E) = bop(E_0) union {op_0 | (op_0 -> f) in h}$, so $e_1$ is stuck on $op$.
 
   - Case T-If, $e_1 = ife(e_3, e_4, e_5)$. If $e_3$ steps or is stuck, so is $e_1$, with the context $ife(E_0, e_4, e_5)$. If $e_3$ is a value of type $boolt$, it is $trueb$ or $falseb$ and S-If-True or S-If-False applies, or it is $eblame(p)$ (error subcase).
@@ -535,9 +535,9 @@ and likewise for every frame without a handler.
 #proof[
   By cases on $e_1 estepx e_2$.
 
-  - Case S-App, $apply((#kw("lambda")^epsilon x : tau_1. e), v) estepx e[x:=v]$.
+  - Case S-App, $apply((lambda^epsilon x : tau_1. e), v) estepx e[x:=v]$.
     #derivation((
-      ($type(dot, #kw("lambda")^epsilon x : tau_1. e, teff(tau_1, epsilon, tau), eff: epsilon)$, rn("T-E-App")),
+      ($type(dot, lambda^epsilon x : tau_1. e, teff(tau_1, epsilon, tau), eff: epsilon)$, rn("T-E-App")),
       ([The $lambda$ annotation is the body effect $epsilon$.], rn("T-E-Abs")),
       ($type(dot, v, tau_1, eff: epsilon)$, rn("T-E-App")),
       ($type(x : tau_1, e, tau, eff: epsilon)$, [#rn("T-E-Val"), #rn("T-E-Abs")]),
@@ -583,7 +583,7 @@ and likewise for every frame without a handler.
       ($type(dot, v, tau, eff: epsilon)$, [@lange-values-any-effect]),
     ))
 
-  - Case Step-E-Perform, $ehandle(epsilon, h, E[apply(eperform(epsilon_p, op, tau_0), v)]) estepx apply(apply(f[tau_0], v), k)$, where $op in.not bop(E)$, $(op -> f) in h$, $op : forall alpha. tau_1 -> tau_2 in Sigma(l)$ and $k = #kw("lambda")^epsilon x : tau_2[alpha:=tau_0]. ehandle(epsilon, h, E[x])$.
+  - Case Step-E-Perform, $ehandle(epsilon, h, E[apply(eperform(epsilon_p, op, tau_0), v)]) estepx apply(apply(f[tau_0], v), k)$, where $op in.not bop(E)$, $(op -> f) in h$, $op : forall alpha. tau_1 -> tau_2 in Sigma(l)$ and $k = lambda^epsilon x : tau_2[alpha:=tau_0]. ehandle(epsilon, h, E[x])$.
     #derivation((
       ($tec(dot, ehandle(epsilon, h, E), tau_3, tau, epsilon)$, [@lange-effect-correspondence]),
       ($type(dot, apply(eperform(epsilon_p, op, tau_0), v), tau_3, eff: row(lbls(E), row(l, epsilon)))$, [@lange-effect-correspondence]),

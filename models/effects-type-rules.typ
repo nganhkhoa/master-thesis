@@ -32,7 +32,7 @@
     prooftree(rule(
       name: "T-E-Abs",
       type($Gamma\,x:tau_1$, $e$, $tau_2$, eff: $epsilon$),
-      type($Gamma$, $#kw("lambda")^epsilon x:tau_1 . e$, $tau_1 attach(->, tr: epsilon) tau_2$, type: "val"),
+      type($Gamma$, $lambda^epsilon x:tau_1 . e$, $tau_1 attach(->, tr: epsilon) tau_2$, type: "val"),
     )),
 
     // Row 2
@@ -85,7 +85,7 @@
     grid.cell(colspan: 2, prooftree(rule(
       name: "T-E-Handler",
       type($Gamma$, $h$, $tau$, type: "ops", eff: $l | epsilon$),
-      type($Gamma$, $#ekw("handler")^epsilon(h)$, $teff((teff(unit,chevron.l l|epsilon chevron.r,tau)),epsilon,tau)$, type: "val"),
+      type($Gamma$, $handler(h, m: m, eff: epsilon)$, $teff((teff(unit,chevron.l l|epsilon chevron.r,tau)),epsilon,tau)$, type: "val"),
     ))),
 
     // Row 7
@@ -93,7 +93,7 @@
       name: "T-E-Handle",
       type($Gamma$, $h$, $tau$, type: "ops", eff: $l | epsilon$),
       type($Gamma$, $e$, $tau$, eff: $chevron.l l|epsilon chevron.r$),
-      type($Gamma$, $#ekw("handle")^epsilon(h,e)$, $tau$, eff: $epsilon$),
+      type($Gamma$, $handle(h,e,m: m, eff: epsilon)$, $tau$, eff: $epsilon$),
     )))
   ),
   caption: [Type Rules for #lange]

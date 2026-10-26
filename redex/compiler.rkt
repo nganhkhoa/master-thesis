@@ -209,7 +209,7 @@
            (error 99991))))))))
 
 (define-term wrap
-  (μ w unit (Λ α (λ genericeff f unit ((handler genericeff h-check) f)))))
+  (μ w unit (Λ α (λ genericeff f unit ((d-handler genericeff h-check) f)))))
 
 (define (compile-and-run p #:trace-enabled [trace-enabled false] #:trace-print [trace-print false])
   (define (abbreviate-term t)

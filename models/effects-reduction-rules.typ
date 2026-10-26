@@ -14,6 +14,8 @@
 #let hdl = [handler]
 #let hnd = [handle]
 #let prf = [perform]
+#let elam = $lambda$
+#let mode = $m in {d, s}$
 
 #figure(
   stack(
@@ -21,17 +23,24 @@
       columns: (auto,auto,auto, auto),
       gutter: 1.5em,
       [$(Lambda alpha^k. v)[tau]$], [$estepx$], [$v[alpha:=tau]$], [Step-E-TApp],
-      [$apply(#ekw("handler")^epsilon(h), v)$],[$estepx$],[$#ekw("handle")^epsilon(h,(apply(v,())))$], [Step-E-Handler],
-      [$#ekw("handle")^epsilon(h,v)$],[$estepx$],[$v$], [Step-E-Return],
+      [$apply(handler(h, m: m, eff: epsilon), v)$],[$estepx$],[$handle(h, apply(v,()), m: m, eff: epsilon)$], [Step-E-Handler],
+      [$handle(h, v, m: m, eff: epsilon)$],[$estepx$],[$v$], [Step-E-Return],
     ),
     v(2em),
     rule-set(
       prooftree(rule(
-        name: [Step-E-Perform],
+        name: [Step-E-Perform-Deep],
         $op in.not bop(E) and (op -> f) in h$,
         $op : forall alpha. tau_1 -> tau_2 in Sigma(l)$,
-        $k = #kw("lambda")^epsilon x : tau_2[alpha:=tau] . #ekw("handle")^epsilon(h, E[x])$,
-        $#ekw("handle")^epsilon(h, E[apply(#ekw("perform")^epsilon_p(op, tau: tau), v)]) quad estepx quad apply(apply(f[tau], v), k)$
+        $k = lambda^epsilon x : tau_2[alpha:=tau] . ehandle(h, E[x], m: d, eff: epsilon)$,
+        $ehandle(h, E[eapply(eperform(op, tau: tau, eff: epsilon_p), v)], m: d, eff: epsilon) quad estepx quad apply(apply(f[tau], v), k)$
+      )),
+      prooftree(rule(
+        name: [Step-E-Perform-Shallow],
+        $op in.not bop(E) and (op -> f) in h$,
+        $op : forall alpha. tau_1 -> tau_2 in Sigma(l)$,
+        $k = lambda^epsilon x : tau_2[alpha:=tau] . E[x]$,
+        $ehandle(h, E[eapply(eperform(op, tau: tau, eff: epsilon_p), v)], m: s, eff: epsilon) quad estepx quad apply(apply(f[tau], v), k)$
       )),
     ),
     v(2em),
@@ -56,7 +65,7 @@
       [$bop(square.stroked)$], [$=$], [$diameter$],
       [$bop(apply(E,e))$], [$=$], [$bop(E)$],
       [$colon.tri$], [$colon.tri$], [$colon.tri$],
-      [$bop(#ekw("handle")^epsilon(h,E))$],[$=$], [$bop(E) union {op | (op -> f) in h}$],
+      [$bop(ehandle(h, E, m: m, eff: epsilon))$],[$=$], [$bop(E) union {op | (op -> f) in h}$],
     ),
     v(1em),
   ),

@@ -10,6 +10,11 @@
 #let etxt(it) = text(weight: "bold", math.mono(it))
 #let kw(it) = text(fill: rgb("#333333"), weight: "regular", math.sans(it))
 
+// Compiler and handler modes.
+#let d = [d]
+#let s = [s]
+#let l = [l]
+
 #let numt = $kw("num")$
 #let boolt = $kw("bool")$
 #let trueb = $kw("true")$
@@ -47,10 +52,29 @@
 #let flat(e) = $ckw("flat")(#e)$
 #let dep(kappa_1,kappa_2) = $#kappa_1 attach(->, br: i) #kappa_2$
 #let cabs(x,e) = $ckw(lambda) #x . #e$ // freely add types or no types
+#let ehandle(h, e, m: d, eff: none) = {
+  if eff != none {
+    $ekw("handle")^(#eff)_#m (#h,#e)$
+  } else {
+    $ekw("handle")_#m (#h,#e)$
+  }
+}
+#let eperform(op, tau: none, eff: none) = {
+  if tau != none {
+    $ekw("perform")^#eff #op #tau$
+  } else {
+    $ekw("perform") #op$
+  }
+}
+#let eapply(a, b) = $#a med #b$
 #let ife(c,t,f) = $"if" #c "then" #t "else" #f$
 #let guard(v, c, k, l, j) = $attach(ckw("guard"), tr: #k\,#l, br: #j)(#c, #v)$
 
 #let eif(c, t, f) = $#base-kw("if") #c #base-kw("then") #t #base-kw("else") #f$
+
+#let d = [d]
+#let s = [s]
+#let l = [l]
 
 #let mteff = $chevron.l chevron.r$
 #let effs(..l) = $chevron.l #l.pos().join([, ]) chevron.r$
@@ -58,12 +82,27 @@
 #let lab = ekw("lab")
 #let blab = ekw("blab")
 #let eblame(p) = $attach(ekw("error"), br: #p)$
-#let handler(h) = $ekw("handler") #h$
+// Every handler records its resumption mode: `d` (deep) or `s` (shallow).
+// Deep is the default so existing figures remain compact; a shallow use writes
+// `m: s`.  The rendered syntax always displays the mode as the first argument.
+#let handler(h, m: d, eff: none) = {
+  if eff != none {
+    $ekw("handler")^(#eff)_(#m) (#h)$
+  } else {
+    $ekw("handler")_(#m) (#h)$
+  }
+}
+#let handle(h, e, m: d, eff: none) = {
+  if eff != none {
+    $ekw("handle")^(#eff)_#m (#h,#e)$
+  } else {
+    $ekw("handle")_#m (#h,#e)$
+  }
+}
 
-#let handle(h, e) = $ekw("handle") #h space #e$
 #let perform(op, tau: none, eff: none) = {
   if tau != none {
-    $ekw("perform") #eff #op #tau$
+    $ekw("perform")^(#eff) #op #tau$
   } else {
     $ekw("perform") #op$
   }
@@ -110,7 +149,11 @@
 #let effstateset = $#text(fill: rgb("#009E73"), weight: "regular", math.scr("M"))$
 #let heffcheck = $ekw("h")_effcheck$
 #let heffstate = $ekw("h")_effstate$
-#let compile(src,target) = $#src med #compiles-into med #target$
+// Compilation derivations record the compiler variant above the arrow:
+// d = deep, s = shallow, l = local. Deep is the default for generic rules.
+#let compile(src, target, m: d) = {
+  $#src med attach(arrow.r.tail, tr: #m) med #target$
+}
 #let typecompile(t) = $#t^*$
 
 

@@ -39,7 +39,7 @@
 // ==========================================
 
 #include "contents/intro.typ"
-#include "contents/core.typ"
+#include "contents/base.typ"
 #include "contents/contracts.typ"
 #include "contents/effects.typ"
 
@@ -56,7 +56,7 @@
 #set heading(numbering: "A.1")
 #counter(heading).update(0)
 
-#include "proofs/core.typ"
+#include "proofs/base.typ"
 
 #include "proofs/contracts.typ"
 #include "proofs/contract-erasure.typ"

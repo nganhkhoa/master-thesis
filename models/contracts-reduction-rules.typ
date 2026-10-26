@@ -33,22 +33,21 @@
       // [$injl(guard(tuple(v_1,v_2),tuple(kappa_1,kappa_2),k,l,j))$],[$cstepx$],[$guard(v_1,kappa_1,k,l,j)$],[Guard-Inj-Left],
       // [$injr(guard(tuple(v_1,v_2),tuple(kappa_1,kappa_2),k,l,j))$],[$cstepx$],[$guard(v_2,kappa_2,k,l,j)$],[Guard-Inj-Right],
 
-      [$getcell(guard(v,kappa,k,l,j))$], [$cstepx$], [$mon(k,l,j,kappa,getcell(v))$], [Mon-Get],
-      [$setcell(guard(v_1,kappa,k,l,j),v_2)$], [$cstepx$], [$mon(k,l,j,refc(kappa), e)$], [Mon-Set],
-
-      [],[],grid.cell(colspan: 2, align: right, [where $e = setcell(v_1, mon(l,k,j,kappa,v_2))$]),
+      // [$getcell(guard(v,kappa,k,l,j))$], [$cstepx$], [$mon(k,l,j,kappa,getcell(v))$], [Mon-Get],
+      // [$setcell(guard(v_1,kappa,k,l,j),v_2)$], [$cstepx$], [$mon(k,l,j,refc(kappa), e)$], [Mon-Set],
+      // [],[],grid.cell(colspan: 2, align: right, [where $e = setcell(v_1, mon(l,k,j,kappa,v_2))$]),
     ),
     v(2em),
     rule-set(
       prooftree(rule(
         name: [Step-C-Blame],
         $E != square.stroked$,
-        $E[blame(k,j)], sigma cstep blame(k,j), sigma$
+        $E[blame(k,j)] cstep blame(k,j)$
       )),
       prooftree(rule(
         name: [Step-C],
         $e_1 cstepx e_2$,
-        $E[e_1], sigma cstep E[e_2], sigma$
+        $E[e_1] cstep E[e_2]$
       )),
     ),
     v(1em),

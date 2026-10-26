@@ -30,17 +30,17 @@
         $type(Gamma, lambda x : tau_1. kappa_2, tau_1 -> con(tau_2))$,
         $type(Gamma, dep(kappa_1, lambda x. kappa_2), con(tau_1 -> tau_2))$
       )),
-      prooftree(rule(
-        name: [Type-C-Ref],
-        $type(Gamma, kappa, con(tau))$,
-        $type(Gamma, refc(kappa), con(ref(tau)))$
-      )),
-      prooftree(rule(
-        name: [Type-C-Tuple],
-        $type(Gamma, kappa_1, con(tau_1))$,
-        $type(Gamma, kappa_2, con(tau_2))$,
-        $type(Gamma, tuple(kappa_1,kappa_2), con(tuple(tau_1,tau_2)))$
-      )),
+      // prooftree(rule(
+      //   name: [Type-C-Ref],
+      //   $type(Gamma, kappa, con(tau))$,
+      //   $type(Gamma, refc(kappa), con(ref(tau)))$
+      // )),
+      // prooftree(rule(
+      //   name: [Type-C-Tuple],
+      //   $type(Gamma, kappa_1, con(tau_1))$,
+      //   $type(Gamma, kappa_2, con(tau_2))$,
+      //   $type(Gamma, tuple(kappa_1,kappa_2), con(tuple(tau_1,tau_2)))$
+      // )),
       prooftree(rule(
         name: [Type-C-Mon],
         $type(Gamma, kappa, con(tau))$,
@@ -50,6 +50,18 @@
       prooftree(rule(
         name: [Type-C-Blame],
         $type(Gamma, blame(k,l), tau)$
+      )),
+      prooftree(rule(
+        name: [Type-C-Check],
+        $type(Gamma, e, boolt)$,
+        $type(Gamma, v, tau)$,
+        $type(Gamma, check(k,l,e,v), tau)$
+      )),
+      prooftree(rule(
+        name: [Type-C-Guard],
+        $type(Gamma,v,tau)$,
+        $type(Gamma,kappa,con(tau))$,
+        $type(Gamma, guard(v,kappa,k,l,j), tau)$
       )),
     ),
     v(2em),

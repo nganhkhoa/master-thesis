@@ -14,7 +14,7 @@
 
 == Example
 
-In @handler-example-1, we present a simple example: a program wants to compute $(effdup 2) + 1$ is registered with a handler $h$ for effect #effdup, basically _duplicating_ its input. When an effect is perform, the main program pauses the execution, and push everything later into a continuation $k = lambda y. handle(h, (y + 1))$, at (i). Here, the continuation register the handler $h$ again, in case the rest of the program uses $effdup$. When the program is a value, the handler removes itself (ii).
+In @handler-example-1, we present a simple example: a program wants to compute $(effdup 2) + 1$ is registered with a handler $h$ for effect #effdup, basically _duplicating_ its input. When an effect is perform, the main program pauses the execution, and push everything later into a continuation $k = lambda y. handle(h, (y + 1), m: d)$, at (i). Here, the continuation register the handler $h$ again, in case the rest of the program uses $effdup$. When the program is a value, the handler removes itself (ii).
 
 #figure(
   stack(
@@ -30,24 +30,24 @@ In @handler-example-1, we present a simple example: a program wants to compute $
       gutter: 0.5em,
 
       [],
-      [$handle(h, ((apply(perform(effdup, tau: numt), 2)) + 1))$],
+      [$handle(h, ((apply(perform(effdup, tau: numt), 2)) + 1), m: d)$],
       [],
 
       [$estep$],
-      [$handle(h, apply(perform(effdup, tau: numt), 2))$],
+      [$handle(h, apply(perform(effdup, tau: numt), 2), m: d)$],
       [],
 
       [$estep$],
       [$apply(apply((lambda#underline(rgb("2D8DDD"), $v$). lambda#underline(rgb("#7D8DDD"), $k$).
-        apply(k,(v + v))),#underline(rgb("2D8DDD"),2)), #underline(rgb("#7D8DDD"),$(lambda y. handle(h, (y + 1)))$))$],
+        apply(k,(v + v))),#underline(rgb("2D8DDD"),2)), #underline(rgb("#7D8DDD"),$(lambda y. handle(h, (y + 1), m: d))$))$],
       [(i)],
 
       [$estep1$],
-      [$apply((lambda y. handle(h, (y + 1))),(2 + 2))$],
+      [$apply((lambda y. handle(h, (y + 1), m: d)),(2 + 2))$],
       [],
 
       [$estep1$],
-      [$handle(h, 5)$],
+      [$handle(h, 5, m: d)$],
       [(ii)],
 
       [$estep$],
@@ -61,10 +61,10 @@ In @handler-example-1, we present a simple example: a program wants to compute $
 
 Handlers can encode states. This is a nice feature to provide a common state across the code. We illustrate the example in @handler-example-2, where a simple state can be managed by two effects _get_ #effget, and _set_ #effset. As can be seen, the continuation now returns a function expecting a state. During handler execution, this state is applied automatically if the handler is installed with initial state. The continuation resumes the program with the new state, made possible because handler is installed with new state.
 
-Without careful setup, the program might enter the stuck state because the handler removes itself when the execution completes, making the result applies with the state. For example, this program $apply(handle(h,v) ,s) estep1 apply(v,s)$ stucks if $v$ is not callable. There are many ways to resolve this problem. The first approach requires the program awareness of the state. The programmer explicitly returns a function taking the result and the state but only returns the result.
+Without careful setup, the program might enter the stuck state because the handler removes itself when the execution completes, making the result applies with the state. For example, this program $apply(handle(h,v, m: d) ,s) estep1 apply(v,s)$ stucks if $v$ is not callable. There are many ways to resolve this problem. The first approach requires the program awareness of the state. The programmer explicitly returns a function taking the result and the state but only returns the result.
 
 $
-apply(handle(h, (apply((lambda x. lambda s. x),e))), s) estep1 apply(handle(h, (apply((lambda x. lambda s. x),v))), s) estep1 apply((lambda s. v), s) estep v
+apply(handle(h, (apply((lambda x. lambda s. x),e)), m: d), s) estep1 apply(handle(h, (apply((lambda x. lambda s. x),v)), m: d), s) estep1 apply((lambda s. v), s) estep v
 $
 
 The second approach is to use _parameterized handlers_ @leijen2017type, which puts the state into the handler expression. The third approach is to augment the handler with a special effect $ekw("return")$, which modifies the value before removing the handler. The example @handler-example-1 chooses the first approach, as it keeps the handler semantics simple, although a programmer needs to pay more attention when dealing with handlers receiving arguments.
@@ -83,24 +83,24 @@ The second approach is to use _parameterized handlers_ @leijen2017type, which pu
       gutter: 0.5em,
 
       [],
-      [$apply((handle(h, (apply((lambda x. lambda s. x),((apply(perform(effset,tau: numt), 42)) + (apply(perform(effget, tau: numt), unit)) + 100))))), 0)$],
+      [$apply((handle(h, (apply((lambda x. lambda s. x),((apply(perform(effset,tau: numt), 42)) + (apply(perform(effget, tau: numt), unit)) + 100))), m: d)), 0)$],
       [],
 
       [$estep1$],
       [$apply(apply(apply((lambda#underline(rgb("2D8DDD"), $v$). lambda#underline(rgb("#7D8DDD"), $k$). lambda#underline(rgb("#987112"), $s$).
-        apply(apply(k,s),v)), #underline(rgb("2D8DDD"), 42)), #underline(rgb("#7D8DDD"), $lambda y. handle(h, (apply((lambda x. lambda s. x),(y + (apply(perform(effget, tau: numt), unit)) + 100))))$)), #underline(rgb("#987112"), 0))$],
+        apply(apply(k,s),v)), #underline(rgb("2D8DDD"), 42)), #underline(rgb("#7D8DDD"), $lambda y. handle(h, (apply((lambda x. lambda s. x),(y + (apply(perform(effget, tau: numt), unit)) + 100))), m: d)$)), #underline(rgb("#987112"), 0))$],
       [],
 
       [$estep1$],
-      [$apply(apply((lambda y. handle(h, (apply((lambda x. lambda s. x),(y + (apply(perform(effget, tau: numt), unit)) + 100))))),0), 42)$],
+      [$apply(apply((lambda y. handle(h, (apply((lambda x. lambda s. x),(y + (apply(perform(effget, tau: numt), unit)) + 100))), m: d)),0), 42)$],
       [],
 
       [$estep1$],
-      [$apply(handle(h, (apply((lambda x.lambda s. x), ((0 + (apply(perform(effget, tau: numt), unit)) + 100))))), 42)$],
+      [$apply(handle(h, (apply((lambda x.lambda s. x), ((0 + (apply(perform(effget, tau: numt), unit)) + 100)))), m: d), 42)$],
       [],
 
       [$estep1$],
-      [$apply(handle(h, (apply((lambda x.lambda s. x), 142))), 42)$],
+      [$apply(handle(h, (apply((lambda x.lambda s. x), 142)), m: d), 42)$],
       [],
 
       [$estep1$],
@@ -120,7 +120,7 @@ The second approach is to use _parameterized handlers_ @leijen2017type, which pu
 
 #lange, inspired by @ningning2020effect, equips #langb with effects and effect handlers. We extend the type system into a kinded type system based on System F, mainly to separate between effect types and normal types. System F also provides polymorphism. The type system adapts its syntax of functions into $teff(tau_1,epsilon,tau_2)$ denotes an effect $epsilon$ (may) occurs during the execution of the function.
 
-Following @ningning2020effect, effects are group of "operations", distinct by its label. An operation $scr("O")$ of effect $epsilon$ is invoked by applying $perform(scr("O"), tau: tau)$ with an argument, and produces an effect $epsilon$. Given an expression $e$ that would perform some effect $epsilon$, a handler $h$ providing all definitions for operations of $epsilon$ must be installed. The calculus provides two ways to install a handler, $handle(h,e)$ and $apply(handler(h),(lambda \_. e))$. The former is the base syntax, during evaluation of $e$, the handler $h$ is used. The other syntax is useful for suspending a computation, and run it only when a handler is applied, providing flexibility such as different handlers.
+Following @ningning2020effect, effects are group of "operations", distinct by its label. An operation $scr("O")$ of effect $epsilon$ is invoked by applying $perform(scr("O"), tau: tau)$ with an argument, and produces an effect $epsilon$. Given an expression $e$ that would perform some effect $epsilon$, a handler $h$ providing all definitions for operations of $epsilon$ must be installed. Each handler is tagged with a mode $m in {d,s}$: $d$ is deep and $s$ is shallow. The calculus provides two ways to install a handler, $handle(h,e,m: m)$ and $apply(handler(h,m: m),(lambda \_. e))$. The former is the base syntax, during evaluation of $e$, the handler $h$ is used. The other syntax is useful for suspending a computation, and run it only when a handler is applied, providing flexibility such as different handlers.
 
 A handler is a mapping between operation names and their definitions. An operation is a function with the template $Lambda alpha. lambda x : tau_1. lambda k : tau_2. e$. The polymorphic type variable $alpha$ is used to make operations polymorphic. The argument $x$ is the operation argument. The argument $k$ is the _continuation_ or _resumption_, enclosing the rest of the program after the operation invocation. When $k$ is called, the program resumes with the argument provided to $k$.
 
@@ -141,7 +141,7 @@ Typing for an effect language requires some consideration. Following the works i
 #include "/models/effects-type-rules.typ"
 #v(1em)
 
-Lastly the semantic model of #lange is presented in @effects-reduction-rules. A handler can be installed to a function as a shorthand, where it applies the function with a unit argument, which to be ignored. The reduction for handling an effect calling is encoded as _deep handler_. Supporting the shallow should be straightforward by not installing the handler again in the continuation $k$. There is little advantage to support shallow handlers, therefore, only deep handlers are used. While looking for the handler, we make sure we get the innermost handler that can handle the operation.
+Lastly the semantic model of #lange is presented in @effects-reduction-rules. A handler can be installed to a function as a shorthand, where it applies the function with a unit argument, which is ignored. The mode determines how its resumption behaves: a deep handler ($m=d$) reinstalls $handle(h,dots,m: d)$ around the captured continuation $k$, while a shallow handler ($m=s$) resumes directly with the captured evaluation context and does not reinstall itself. This makes a shallow handler one-shot; a later operation must be handled by another surrounding or newly installed handler. While looking for the handler, we make sure we get the innermost handler that can handle the operation.
 
 #v(1em)
 #include "/models/effects-reduction-rules.typ"

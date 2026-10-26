@@ -8,8 +8,7 @@
 (require rackunit redex/reduction-semantics
          "contracts.rkt"
          "effects.rkt"
-         (prefix-in local-effects: "effects2.rkt")
-         (prefix-in outside: "compiler.rkt")
+                  (prefix-in outside: "compiler.rkt")
          (prefix-in local: "compiler-local-handler.rkt")
          (prefix-in shallow: "compiler2.rkt"))
 
@@ -35,7 +34,7 @@
 ;; the outer/deep and shallow variants, its target program is evaluated as-is.
 (define (local-direct-result p)
   (define compiled (term (local:run-compiler ,p)))
-  (apply-reduction-relation* local-effects:->effects (term (,compiled ()))))
+  (apply-reduction-relation* ->effects (term (,compiled ()))))
 (define (local-observation p) (observe (local-direct-result p)))
 (define (shallow-observation p) (observe (shallow:compile-and-run p)))
 

@@ -14,6 +14,7 @@
 #let hdl = [handler]
 #let hnd = [handle]
 #let prf = [perform]
+#let mode = $m in {d, s}$
 
 #figure(
   stack(
@@ -41,38 +42,41 @@
           Or[$#eff$][]
           Or[$#lab$][]
         }),
+        Prod($m$, {
+          Or[$d$][]
+          Or[$s$][]
+        }),
         Prod($e$, {
           Or[$...$][]
-          Or[$#kw("lambda")^epsilon x : tau. e$][]
+          Or[$lambda^epsilon x : tau. e$][]
           Or[$e[tau]$][]
-          Or[$attach(handle(h, e), tr: epsilon)$][]
+          Or[$handle(h, e, m: m)$][]
           Or[$eblame(p)$][]
         }),
         Prod($h$, {
           Or[${op -> f, ..., }$][]
         }),
         Prod($f$, {
-          Or[$Lambda alpha. #kw("lambda")^epsilon x : tau_1.
-              #kw("lambda")^epsilon k : (tau_2 attach(->, tr: epsilon) tau). e$][]
+          Or[$Lambda alpha. lambda^epsilon x : tau_1.
+              lambda^epsilon k : (tau_2 attach(->, tr: epsilon) tau). e$][]
         }),
       ),
       bnf(
+        Prod($l$, {
+          Or[Error Label][]
+        }),
         Prod($v$, {
           Or[$...$][]
-          Or[$#kw("lambda")^epsilon x : tau. e$][]
+          Or[$lambda^epsilon x : tau. e$][]
           Or[$Lambda alpha^k. v$][]
-          Or[$attach(handler(h), tr: epsilon)$][]
+          Or[$handler(h, m: m, eff: epsilon)$][]
           Or[$perform(op, tau: tau, eff: epsilon)$][]
-          Or[$eblame(p)$][]
-        }),
-        Prod($p$, {
-          Or[Blame Party][]
+          Or[$eblame(l)$][]
         }),
         Prod($E$, {
           Or[$...$][]
           Or[$E[tau]$][]
-          Or[$#ekw("handle")^epsilon(h, E)$][]
-          Or[$eblame(E)$][]
+          Or[$handle(h, E, m: m, eff: epsilon)$][]
         }),
         Prod($F$, {
           Or[$square.stroked$][]

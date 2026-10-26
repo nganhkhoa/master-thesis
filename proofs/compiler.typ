@@ -14,15 +14,17 @@
 #let theorem = appendix-theorem
 #let lemma = appendix-lemma
 
+#let tc(t) = $#t^*$
+#let hc = $effs(heffcheck)$
+#let wrap(tau, e) = $apply(kw("wrap")[#tau], (lambda \_ : unit. #e))$
 #let rel(e) = $accent(#e, tilde)$
 #let treq(a,b) = $"EQ"(#a,#b)$
-#let wrap(tau, e) = $apply(kw("wrap")[#tau], (lambda \_. #e))$
 
 = #langc to #lange Compiler Correctness \ (Deep Handler)
 
 == Overview
 
-Proof for compiler from $langc$ to $"Untyped" "Deep" lange$, the handler semantic is deep, where the continuation automatically reinstall the handler.
+Proof for a compiler from $langc$ to $lange$ using the deep handler, where the continuation automatically reinstalls the handler.
 
 #grid(
   columns: (auto,auto,auto),
@@ -35,17 +37,15 @@ Proof for compiler from $langc$ to $"Untyped" "Deep" lange$, the handler semanti
 
   [$kw("wrap")$], [$=$],
   grid.cell(align: left,
-    [$mu w : forall alpha. ((teff((), chevron.l heffcheck chevron.r, alpha)) -> alpha). Lambda alpha. med lambda f: (teff((),chevron.l heffcheck chevron.r,alpha)).$]
+    [$mu w : forall alpha. ((teff((), chevron.l heffcheck chevron.r, alpha)) -> alpha). Lambda alpha. med lambda f: (teff((),chevron.l heffcheck chevron.r,alpha)). apply(handler(h, m: d), f)$]
   ),
 
-  [], [],
-  [$apply(handler({effcheck -> lambda tuple(l,tuple(e,v)). lambda k. ife(apply(w[kw("bool")], (lambda \_. apply(e,v))),apply(k,v),eblame(l))}), f)$],
+  [$h$], [$=$],
+  [${effcheck -> lambda tuple(l,tuple(e,v)). lambda k. ife(apply(w[kw("bool")], (lambda \_. apply(e,v))),apply(k,v),eblame(l))}$],
   [], grid.cell(colspan: 2, align: right,
     [where $lambda tuple(l,tuple(e,v))$ deconstructs the argument as tuple pattern]),
 )
 
-
-The proof get into the way a lot because it switch back and forth between states prepended with handle and states without handle.
 
 #line(length: 100%)
 
@@ -91,14 +91,14 @@ Before we define relations that will be used in the simulation proof below. We d
     [$tilde$],
     [$rel(e)$],
     [],[],grid.cell(align:left,colspan:1)[$e=lambda x: tau. mon(k,l,j,kappa_2,apply(v,mon(l,k,j,kappa_1,x)))$],
-    [],[],grid.cell(align:left,colspan:1)[With $type(dot,tau,v)$],
+    // [],[],grid.cell(align:left,colspan:1)[With $type(dot,tau,v)$],
 
     [$guard(v,dep(kappa_1, lambda y. kappa_2),k,l,j)$],
     [$tilde$],
     [$rel(e)$],
     [],[],grid.cell(align:left,colspan:1)[$e=lambda x: tau. mon(k,l,j,kappa_3,apply(v,mon(l,k,j,kappa_1,x)))$],
     [],[],grid.cell(align:left,colspan:1)[$kappa_3=kappa_2[y:=mon(l,j,j,kappa_1,x)]$],
-    [],[],grid.cell(align:left,colspan:1)[With $type(dot,tau,v)$],
+    // [],[],grid.cell(align:left,colspan:1)[With $type(dot,tau,v)$],
   )
 ]
 
@@ -197,7 +197,7 @@ Before we define relations that will be used in the simulation proof below. We d
 
   #v(1em)
   #grid(
-    columns: (1fr, auto, 1fr),
+    columns: (1fr, auto, auto),
     column-gutter: 1em,
     row-gutter: 1.2em,
     align: (right, left, left),
@@ -208,23 +208,23 @@ Before we define relations that will be used in the simulation proof below. We d
 
     [$E^+[E^*[check(k,j,square.stroked,v)]]$],
     [$tilde$],
-    [$rel(E)^+[ife(square.stroked, apply((lambda x. handle(heffcheck,rel(E)^*[x])),rel(v)), eblame(j))]$],
+    [$rel(E)^+[ife(square.stroked, apply((lambda x. handle(heffcheck,rel(E)^*[x], m: d)),rel(v)), eblame(k))]$],
 
-    [$apply(E^+,e)$],
-    [$tilde$],
-    [$apply(rel(E)^+,e)$],
+    // [$apply(E^+,e)$],
+    // [$tilde$],
+    // [$apply(rel(E)^+,e)$],
 
-    [$apply(v,E^+)$],
-    [$tilde$],
-    [$apply(v,rel(E)^+)$],
+    // [$apply(v,E^+)$],
+    // [$tilde$],
+    // [$apply(v,rel(E)^+)$],
 
-    [$mon(k,l,j,kappa,E^+)$],
-    [$tilde$],
-    [$mon(k,l,j,kappa,rel(E)^+)$],
+    // [$mon(k,l,j,kappa,E^+)$],
+    // [$tilde$],
+    // [$mon(k,l,j,kappa,rel(E)^+)$],
   )
 ]
 
-
+#v(2em)
 
 #lemma(title: "Relation is closed")[
   If $e ~ e'$ and $E^* ~ E'^*$ then $E^*[e] ~ E'^*[e']$.
@@ -658,20 +658,20 @@ By induction on the structure of $E^+_1$.
 
 #lemma(title: "Compiler is subset of relation")[
 
-  If $compile(type(Gamma,e_1,tau),e_2)$ then $e_1 ~ e^*_2$.
+  If $compile(type(Gamma,e_1,tau),e_2, m: d)$ then $e_1 ~ e^*_2$.
 
-  In particular, for closed programs, if $compile(type(dot,e_1,tau),e_2)$ then $e_1 ~ e^*_2$.
+  In particular, for closed programs, if $compile(type(dot,e_1,tau),e_2, m: d)$ then $e_1 ~ e^*_2$.
 
   In this lemma, we use $e^*$ as shorthand to denote $e$ untyped.
 ] <compiler-is-relation>
 
 #proof[
 
-By induction on structure of $compile(type(Gamma,e_1,tau),e_2)$.
+By induction on structure of $compile(type(Gamma,e_1,tau),e_2, m: d)$.
 
 - Case #prooftree(rule(
     $x : tau in Gamma$,
-    $compile(type(Gamma, x, tau), x)$,
+    $compile(type(Gamma, x, tau), x, m: d)$,
   ))
 
   #derivation((
@@ -680,8 +680,8 @@ By induction on structure of $compile(type(Gamma,e_1,tau),e_2)$.
   ))
 
 - Case #prooftree(rule(
-    $compile(type(Gamma\, x : tau_1, e, tau_2), e')$,
-    $compile(type(Gamma, lambda x : tau_1. e, tau_1 -> tau_2), lambda x : tau_1. e')$,
+    $compile(type(Gamma\, x : tau_1, e, tau_2), e', m: d)$,
+    $compile(type(Gamma, lambda x : tau_1. e, tau_1 -> tau_2), lambda x : tau_1. e', m: d)$,
   ))
 
   #derivation((
@@ -691,9 +691,9 @@ By induction on structure of $compile(type(Gamma,e_1,tau),e_2)$.
   ))
 
 - Case #prooftree(rule(
-    $compile(type(Gamma,e_3,tau -> boolt), e_5)$,
-    $compile(type(Gamma,e_4,tau), e_6)$,
-    $compile(type(Gamma,mon(k,l,j,flat(e_3),e_4),tau), apply(perform(effcheck, tau: tau), tuple(k, tuple(e_5, e_6))))$,
+    $compile(type(Gamma,e_3,tau -> boolt), e_5, m: d)$,
+    $compile(type(Gamma,e_4,tau), e_6, m: d)$,
+    $compile(type(Gamma,mon(k,l,j,flat(e_3),e_4),tau), apply(perform(effcheck, tau: tau), tuple(k, tuple(e_5, e_6))), m: d)$,
   ))
 
   #derivation((
@@ -704,12 +704,12 @@ By induction on structure of $compile(type(Gamma,e_1,tau),e_2)$.
   ))
 
 - Case #prooftree(rule(
-        $compile(type(Gamma,e_3,tau_2), e_4)$,
+        $compile(type(Gamma,e_3,tau_2), e_4, m: d)$,
         $compile(type(Gamma,
             lambda f : tau_1 -> tau_2. lambda x : tau_1. mon(k,l,j,kappa_2,apply(f, mon(l,k,j,kappa_1,x))),
             (tau_1 -> tau_2) -> (tau_1 -> tau_2)),
-          e_5)$,
-        $compile(type(Gamma,mon(k,l,j,kappa_1->kappa_2,e_1),tau_1 -> tau_2),apply(e_5, e_4))$,
+          e_5, m: d)$,
+        $compile(type(Gamma,mon(k,l,j,kappa_1->kappa_2,e_1),tau_1 -> tau_2),apply(e_5, e_4), m: d)$,
       ))
 
   #derivation((
@@ -719,12 +719,12 @@ By induction on structure of $compile(type(Gamma,e_1,tau),e_2)$.
   ))
 
 - Case #prooftree(rule(
-        $compile(type(Gamma,e_3,tau_1 -> tau_2), e_4)$,
+        $compile(type(Gamma,e_3,tau_1 -> tau_2), e_4, m: d)$,
         $compile(type(Gamma,
             lambda f. lambda x. mon(k,l,j,kappa_2[y:=mon(l,j,j,kappa_1,x)],apply(f, mon(l,k,j,kappa_1,x))),
             (tau_1 -> tau_2) -> (tau_1 -> tau_2)),
-          e_5)$,
-        $compile(type(Gamma,mon(k,l,j,dep(kappa_1, lambda y. kappa_2),e_3),tau_1 -> tau_2),apply(e_5, e_4))$,
+          e_5, m: d)$,
+        $compile(type(Gamma,mon(k,l,j,dep(kappa_1, lambda y. kappa_2),e_3),tau_1 -> tau_2),apply(e_5, e_4), m: d)$,
       ))
 
   #derivation((
@@ -793,9 +793,9 @@ Define a predicate between $langc e$ and $"Untyped" lange e'$.
 $
 treq(e,e') = cases(
   "true" "if" e = v "and" e' = rel(v),
-  "true" "if" e' = handle(heffcheck,rel(e)) "and" e != E^*[check(k,j,e'',v)],
+  "true" "if" e' = handle(heffcheck,rel(e), m: d) "and" e != E^*[check(k,j,e'',v)],
   "true" "if" e = E^+[E^*[check(k,j,e_1,v)]] "and",
-  quad quad quad e' = rel(E)^+[ife(e'_1,apply((lambda x. handle(heffcheck,rel(E)^*[x])),rel(v)),eblame(j))] "and",
+  quad quad quad e' = rel(E)^+[ife(e'_1,apply((lambda x. handle(heffcheck,rel(E)^*[x], m: d)),rel(v)),eblame(j))] "and",
   quad quad quad treq(e_1,e'_1),
   "true" "if" e = blame(k,j) "and" e' = eblame(k),
   "false" "otherwise",
@@ -805,7 +805,7 @@ $
 
 #theorem(title: "Compiler Correctness")[
 
-  If $compile(type(dot,e,tau),e')$ and $e^* = "untyped"(wrap(tau,e'))$ and $e cstep1 b$ then $e^* estep1 b$.
+  If $compile(type(dot,e,tau),e', m: d)$ and $e^* = "untyped"(wrap(tau,e'))$ and $e cstep1 b$ then $e^* estep1 b$.
 ] <compiler-correctness>
 
 #proof[
@@ -820,31 +820,29 @@ $
 
 #lemma(title: "Wrapped program steps into an EQ state with source")[
 
-  If $compile(type(dot,e,tau),e')$ and $e^*_1 = "untyped"(wrap(tau,e'))$ then it exists $e^*_2$ such that $e^*_1 estep1 e^*_2$ and $treq(e,e^*_2)$.
-
-  In this lemma, we use $e^*$ as shorthand to denote $e$ untyped.
+If $compile(type(dot,e,tau),e', m: d)$ and $e^*_1 = wrap(tau,e')$ then it exists $e^*_2$ such that $e^*_1 estep1 e^*_2$ and $treq(e,e^*_2)$.
 ] <compiler-wrap-step-eq>
 
 #proof[
 
 #derivation((
   ($e ~ e'^*$, [@compiler-is-relation]),
-  ($e^*_1 estep1 apply(handler(heffcheck),lambda \_. e'^*) estep1 handle(heffcheck, e'^*) = e^*_2$, [#lange reduction]),
+  ($e^*_1 estep1 apply(handler(heffcheck, m: d),lambda \_. e'^*) estep1 handle(heffcheck, e'^*, m: d) = e^*_2$, []),
   ($treq(e,e^*_2)$, "Definition"),
 ))
 
-// By case on $compile(type(dot,e,tau),e')$.
+// By case on $compile(type(dot,e,tau),e', m: d)$.
 
 // - Case #prooftree(rule(
-//     $compile(type(dot,e_3,tau -> boolt), e_5)$,
-//     $compile(type(dot,e_4,tau), e_6)$,
-//     $compile(type(dot,mon(k,l,j,flat(e_3),e_4),tau), apply(perform(effcheck, tau: tau), tuple(k, tuple(e_5, e_6))))$,
+//     $compile(type(dot,e_3,tau -> boolt), e_5, m: d)$,
+//     $compile(type(dot,e_4,tau), e_6, m: d)$,
+//     $compile(type(dot,mon(k,l,j,flat(e_3),e_4),tau), apply(perform(effcheck, tau: tau), tuple(k, tuple(e_5, e_6))), m: d)$,
 //   ))
 
 //   $
 //   e^*_1 &= kw("wrap")(lambda \_. apply(perform(effcheck), tuple(k, tuple(e^*_5, e^*_6)))) \
-//   &= apply(handler(heffcheck), (lambda \_. apply(perform(effcheck), tuple(k, tuple(e^*_5, e^*_6))))) \
-//   &estep1 handle(heffcheck, (apply(perform(effcheck), tuple(k, tuple(e^*_5, e^*_6))))) = e^*_2
+//   &= apply(handler(heffcheck, m: d), (lambda \_. apply(perform(effcheck), tuple(k, tuple(e^*_5, e^*_6))))) \
+//   &estep1 handle(heffcheck, (apply(perform(effcheck), tuple(k, tuple(e^*_5, e^*_6)))), m: d) = e^*_2
 //   $
 
 //   $e ~ apply(perform(effcheck), tuple(k, tuple(e^*_5, e^*_6)))$ by @compiler-is-relation
@@ -853,17 +851,17 @@ $
 
 // - Case #prooftree(rule(
 //         $x,f in.not "dom"(Gamma)$,
-//         $compile(type(dot,e_3,tau_2), e_4)$,
-//         $compile(type(dot\,x:tau_1\,f:tau_1->tau_2,mon(k,l,j,kappa_2,apply(f,x)),tau_2), e_5)$,
-//         $compile(type(dot\,x:tau_1,mon(l,k,j,kappa_1,x),tau_1),e_6)$,
+//         $compile(type(dot,e_3,tau_2), e_4, m: d)$,
+//         $compile(type(dot\,x:tau_1\,f:tau_1->tau_2,mon(k,l,j,kappa_2,apply(f,x)),tau_2), e_5, m: d)$,
+//         $compile(type(dot\,x:tau_1,mon(l,k,j,kappa_1,x),tau_1),e_6, m: d)$,
 //         $e_7 = e_5[x:=e_6]$,
-//         $compile(type(Gamma,mon(k,l,j,kappa_1->kappa_2,e_3),tau_1 -> tau_2),apply((lambda f: tau_1 -> tau_2. lambda x: tau_1. e_7),e_4))$,
+//         $compile(type(Gamma,mon(k,l,j,kappa_1->kappa_2,e_3),tau_1 -> tau_2),apply((lambda f: tau_1 -> tau_2. lambda x: tau_1. e_7),e_4), m: d)$,
 //       ))
 
 //   $
 //   e^*_1 &= apply(kw("wrap"),(lambda \_. apply((lambda f. lambda x. e^*_7),e^*_4))) \
-//   &= apply(handler(heffcheck), (lambda \_. apply((lambda f. lambda x. e^*_7),e^*_4))) \
-//   &estep1 handle(heffcheck, apply((lambda f. lambda x. e^*_7),e^*_4)) = e^*_2
+//   &= apply(handler(heffcheck, m: d), (lambda \_. apply((lambda f. lambda x. e^*_7),e^*_4))) \
+//   &estep1 handle(heffcheck, apply((lambda f. lambda x. e^*_7),e^*_4), m: d) = e^*_2
 //   $
 
 //   $e ~ apply((lambda f. lambda x. e^*_7),e^*_4)$ by @compiler-is-relation.
@@ -906,8 +904,6 @@ $
 ]
 
 
-We also need to make a claim that in no where in $e'_1$ do we have $perform(eff)$ that $eff != effcheck$.
-
 #lemma()[
   If $e_1 cstep e_2$ and $treq(e_1,e'_1)$ then there exists $e'_2$ such that $e'_1 estep1 e'_2$ and $treq(e_2,e'_2)$.
 ] <compiler-simulation>
@@ -936,7 +932,7 @@ By case analysis on $e_1 cstep e_2$ with respect to $treq(e_1,e'_1)$.
     #derivation((
       ($E[blame(k,j)] = E^+_1[E^*_1[check(k_1,j_1,blame(k,j),v_1)]]$,[]),
       ($blame(k,j) ~ eblame(k)$, [Definition]),
-      ($e_1 ~ rel(E)^+_1[ife(eblame(k), apply((lambda x. handle(heffcheck,rel(E)^*_1[x])),rel(v)), eblame(k_1))]$,[]),
+      ($e_1 ~ rel(E)^+_1[ife(eblame(k), apply((lambda x. handle(heffcheck,rel(E)^*_1[x], m: d)),rel(v)), eblame(k_1))]$,[]),
       ($e'_1 estep eblame(k)$,[]),
       ($treq(blame(k,j), eblame(k))$, [EQ Definition]),
       ($e'_2 = eblame(k)$, [Choose]),
@@ -947,7 +943,7 @@ By case analysis on $e_1 cstep e_2$ with respect to $treq(e_1,e'_1)$.
 
   Overview of proof strategy: breaking down $E=E^+[E^*]$ using @compiler-context-breakdown and case on $E^+$, then try to match $treq(e_1,e'_1)$ cases. $"EQ"$ case 2 holds if and only if $E^+=square.stroked$, and case 3 holds if and only if $E^+ != square.stroked$ (other case) easily observed the form of $e_1$ in $"EQ"$. By step it should arrive at the next state that matches $"EQ"$ predicate cases.
 
-  During the reduction, we likely encounter $handle(heffcheck,rel(E)^*[e])$. By @compiler-e-star-no-handler, the handler invoked is obviously the current handler.
+  During the reduction, we likely encounter $handle(heffcheck,rel(E)^*[e], m: d)$. By @compiler-e-star-no-handler, the handler invoked is obviously the current handler.
 
   - Case $e_3 = mon(k,l,j,flat(e),v) cstepx check(k,j,apply(e,v),v) = e_4$
 
@@ -963,10 +959,10 @@ By case analysis on $e_1 cstep e_2$ with respect to $treq(e_1,e'_1)$.
         ($e_3 ~ rel(e)_3$, [@compiler-relation-context-decomposition]),
         ($rel(e)_1 = rel(E)^*[rel(e)_3]$, [@compiler-relation-context-decomposition]),
         ($e_1 = E^*[e_3] ~ rel(E)^*[apply(perform(effcheck),tuple(k,tuple(rel(e),rel(v))))]$, "Relation"),
-        ($e'_1 = handle(heffcheck,rel(E)^*[apply(perform(effcheck),tuple(k,tuple(rel(e),rel(v))))])$, [Case 2]),
-        ($e'_1 estep1 ife(handle(heffcheck,apply(rel(e),rel(v))),apply((lambda x. handle(heffcheck,rel(E)^*[x])),rel(v)),eblame(j))$, []),
-        ($e'_2 = ife(handle(heffcheck,apply(rel(e),rel(v))),apply((lambda x. handle(heffcheck,rel(E)^*[x])),rel(v)),eblame(j))$, [Choose]),
-        ($treq(apply(e,v),handle(heffcheck,apply(rel(e),rel(v))))$, "Case 2"),
+        ($e'_1 = handle(heffcheck,rel(E)^*[apply(perform(effcheck),tuple(k,tuple(rel(e),rel(v))))], m: d)$, [Case 2]),
+        ($e'_1 estep1 ife(handle(heffcheck,apply(rel(e),rel(v)), m: d),apply((lambda x. handle(heffcheck,rel(E)^*[x], m: d)),rel(v)),eblame(j))$, []),
+        ($e'_2 = ife(handle(heffcheck,apply(rel(e),rel(v)), m: d),apply((lambda x. handle(heffcheck,rel(E)^*[x], m: d)),rel(v)),eblame(j))$, [Choose]),
+        ($treq(apply(e,v),handle(heffcheck,apply(rel(e),rel(v)), m: d))$, "Case 2"),
         ($treq(e_2,e'_2)$, "Case 3"),
       ))
 
@@ -975,19 +971,19 @@ By case analysis on $e_1 cstep e_2$ with respect to $treq(e_1,e'_1)$.
       #derivation((
         ($e_1 = E^+_1[E^*_1[check(k_1,j_1,E^*[e_3],v_1)]]$, []),
         ($e_3 ~ apply(perform(effcheck),tuple(k,tuple(rel(e),rel(v)))) = rel(e)_3$, []),
-        ($treq(E^*[e_3],handle(heffcheck,rel(E)^*[rel(e)_3]))$,[Case 2, by shape]),
-        ($treq(e_1,rel(E)^+_1[ife(handle(heffcheck,rel(E)^*[rel(e)_3]),apply((lambda x. handle(heffcheck,rel(E)^*_1[x])),rel(v)_1),eblame(j_1))])$, []),
-        ($e'_1 = rel(E)^+_1[ife(handle(heffcheck,rel(E)^*[rel(e)_3]),apply((lambda x. handle(heffcheck,rel(E)^*_1[x])),rel(v)_1),eblame(j_1))]$, []),
+        ($treq(E^*[e_3],handle(heffcheck,rel(E)^*[rel(e)_3], m: d))$,[Case 2, by shape]),
+        ($treq(e_1,rel(E)^+_1[ife(handle(heffcheck,rel(E)^*[rel(e)_3], m: d),apply((lambda x. handle(heffcheck,rel(E)^*_1[x], m: d)),rel(v)_1),eblame(j_1))])$, []),
+        ($e'_1 = rel(E)^+_1[ife(handle(heffcheck,rel(E)^*[rel(e)_3], m: d),apply((lambda x. handle(heffcheck,rel(E)^*_1[x], m: d)),rel(v)_1),eblame(j_1))]$, []),
         ([Identified $e'_1$ based on the condition of $"EQ"$ case 3],[]),
-        ($e'_1 estep1 rel(E)^+_2[ife(handle(heffcheck,apply(rel(e),rel(v))),apply((lambda x. handle(heffcheck, rel(E)^*[x])),rel(v)),eblame(j))]$, []),
-        ($e'_2 = rel(E)^+_2[ife(handle(heffcheck,apply(rel(e),rel(v))),apply((lambda x. handle(heffcheck, rel(E)^*[x])),rel(v)),eblame(j))]$, [Choose]),
+        ($e'_1 estep1 rel(E)^+_2[ife(handle(heffcheck,apply(rel(e),rel(v)), m: d),apply((lambda x. handle(heffcheck, rel(E)^*[x], m: d)),rel(v)),eblame(j))]$, []),
+        ($e'_2 = rel(E)^+_2[ife(handle(heffcheck,apply(rel(e),rel(v)), m: d),apply((lambda x. handle(heffcheck, rel(E)^*[x], m: d)),rel(v)),eblame(j))]$, [Choose]),
       ))
 
-      where $rel(E)^+_2 = rel(E)^+_1[ife(square.stroked,apply((lambda x. handle(heffcheck,rel(E)^*_1[x])),rel(v)_1),eblame(j_1))]$
+      where $rel(E)^+_2 = rel(E)^+_1[ife(square.stroked,apply((lambda x. handle(heffcheck,rel(E)^*_1[x], m: d)),rel(v)_1),eblame(j_1))]$
 
       #derivation((
         ($e_2 = E^+_1[E^*_1[check(k_1,j_1,E^*[check(k,j,apply(e,v),v)],v_1)]]$, []),
-        ($treq(E^*[check(k,j,apply(e,v),v)], ife(handle(heffcheck,apply(rel(e),rel(v))),apply((lambda x. handle(heffcheck, rel(E)^*[x])),rel(v)),eblame(j)))$, []),
+        ($treq(E^*[check(k,j,apply(e,v),v)], ife(handle(heffcheck,apply(rel(e),rel(v)), m: d),apply((lambda x. handle(heffcheck, rel(E)^*[x], m: d)),rel(v)),eblame(j)))$, []),
         ($treq(e_2,e'_2)$, "Case 3"),
       ))
 
@@ -1004,28 +1000,28 @@ By case analysis on $e_1 cstep e_2$ with respect to $treq(e_1,e'_1)$.
 
     - Case $E^+ = square.stroked$
 
-      Let $e_5 = apply((lambda x. handle(heffcheck,rel(E)^*[x])),rel(v))$.
+      Let $e_5 = apply((lambda x. handle(heffcheck,rel(E)^*[x], m: d)),rel(v))$.
 
       #derivation((
         ($e'_1 = ife(e'_3,e_5,eblame(j))$, [$treq(e_1,e'_1)$, case 3]),
         ($treq(trueb,e'_3)$, [Since $trueb$ is a value]),
         ($e'_3 = trueb$, [Definition of $"EQ"$]),
-        ($e'_1 estep1 handle(heffcheck,rel(E)^*[rel(v)]) = e'_2$, []),
+        ($e'_1 estep1 handle(heffcheck,rel(E)^*[rel(v)], m: d) = e'_2$, []),
         ($e_2 = E^*[v]$, []),
         ($treq(e_2,e'_2)$, "Case 2"),
       ))
 
     - Case $E^+ = E^+_1[E^*_1[check(k_1,j_1,square.stroked,v_1)]]$
 
-      Let $e_5 = apply((lambda x. handle(heffcheck,rel(E)^*[x])),rel(v))$ and $e_6 = apply((lambda x. handle(heffcheck,rel(E)^*_1[x])),rel(v)_1)$.
+      Let $e_5 = apply((lambda x. handle(heffcheck,rel(E)^*[x], m: d)),rel(v))$ and $e_6 = apply((lambda x. handle(heffcheck,rel(E)^*_1[x], m: d)),rel(v)_1)$.
 
       #derivation((
         ($e'_1 = rel(E)^+_1[ife(ife(e'_3,e_5,eblame(j)),e_6,eblame(j_1))]$, [$treq(e_1,e'_1)$, case 3]),
         ($treq(trueb,e'_3)$, [Since $trueb$ is a value]),
         ($e'_3 = trueb$, [Definition of $"EQ"$]),
-        ($e'_1 estep1 rel(E)^+_1[ife(handle(heffcheck,rel(E)^*[rel(v)]),e_6,eblame(j_1))] = e'_2$, []),
+        ($e'_1 estep1 rel(E)^+_1[ife(handle(heffcheck,rel(E)^*[rel(v)], m: d),e_6,eblame(j_1))] = e'_2$, []),
         ($e_2 = E^+_1[E^*_1[check(k_1,j_1,E^*[v],v_1)]]$, []),
-        ($treq(E^*[v],handle(heffcheck,rel(E)^*[rel(v)]))$, "Case 2"),
+        ($treq(E^*[v],handle(heffcheck,rel(E)^*[rel(v)], m: d))$, "Case 2"),
         ($treq(e_2,e'_2)$, "Case 3"),
       ))
 
@@ -1049,7 +1045,7 @@ By case analysis on $e_1 cstep e_2$ with respect to $treq(e_1,e'_1)$.
 
       #derivation((
         ($e_1 = E^+[E^*[check(k,j,falseb,v)]]$, []),
-        ($e'_1 = rel(E)^+[ife(falseb,apply((lambda x. handle(heffcheck,rel(E)^*[x])),rel(v)),eblame(j))]$, [$treq(e_1,e'_1)$]),
+        ($e'_1 = rel(E)^+[ife(falseb,apply((lambda x. handle(heffcheck,rel(E)^*[x], m: d)),rel(v)),eblame(j))]$, [$treq(e_1,e'_1)$]),
         ($e'_1 estep1 rel(E)^+[eblame(j)] = e'_2$, "Reduction"),
         ($e_2 = E^+[E^*[blame(k,j)]]$, "Source reduction"),
         ($rel(E)^+[eblame(j)] estep eblame(j)$, rn("Step-E-Error")),
@@ -1075,8 +1071,8 @@ By case analysis on $e_1 cstep e_2$ with respect to $treq(e_1,e'_1)$.
         ($e_3 ~ rel(e)_3$, [@compiler-relation-context-decomposition]),
         ($rel(e)_1 = rel(E)^*[rel(e)_3]$, [@compiler-relation-context-decomposition]),
         ($e_1 = E^*[e_3] ~ rel(E)^*[apply((lambda f. lambda x. rel(e)_(5a)),rel(v))]$, "Relation"),
-        ($e'_1 = handle(heffcheck,rel(E)^*[apply((lambda f. lambda x. rel(e)_(5a)),rel(v))])$, [$treq(e_1,e'_1)$, case 2]),
-        ($e'_1 estep1 handle(heffcheck,rel(E)^*[lambda x. rel(e)_(5a)[f:=rel(v)]]) = e'_2$, "Reduction"),
+        ($e'_1 = handle(heffcheck,rel(E)^*[apply((lambda f. lambda x. rel(e)_(5a)),rel(v))], m: d)$, [$treq(e_1,e'_1)$, case 2]),
+        ($e'_1 estep1 handle(heffcheck,rel(E)^*[lambda x. rel(e)_(5a)[f:=rel(v)]], m: d) = e'_2$, "Reduction"),
         ($e_2 = E^*[guard(v,kappa_1 -> kappa_2,k,l,j)]$, []),
         ($e_6 = lambda x. mon(k,l,j,kappa_2,apply(v,mon(l,k,j,kappa_1,x)))$, [Let]),
         ($e_6 = e_5[f:=v]$, [Substitution]),
@@ -1090,18 +1086,18 @@ By case analysis on $e_1 cstep e_2$ with respect to $treq(e_1,e'_1)$.
 
       Let $e_5 = lambda f. lambda x. e_(5a)$, where $e_(5a) = mon(k,l,j,kappa_2,apply(f,mon(l,k,j,kappa_1,x)))$.
 
-      Let $rel(E)^+_2 = rel(E)^+_1[ife(square.stroked,apply((lambda x. handle(heffcheck,rel(E)^*_1[x])),rel(v)_1),eblame(j_1))]$
+      Let $rel(E)^+_2 = rel(E)^+_1[ife(square.stroked,apply((lambda x. handle(heffcheck,rel(E)^*_1[x], m: d)),rel(v)_1),eblame(j_1))]$
 
       #derivation((
-        ($e'_1 = rel(E)^+_2[handle(heffcheck,rel(E)^*[apply(rel(e)_5,rel(v))])]$, []),
-        ($e'_1 estep1 rel(E)^+_2[handle(heffcheck,rel(E)^*[lambda x. rel(e)_(5a)[f:=rel(v)]])] = e'_2$, []),
+        ($e'_1 = rel(E)^+_2[handle(heffcheck,rel(E)^*[apply(rel(e)_5,rel(v))], m: d)]$, []),
+        ($e'_1 estep1 rel(E)^+_2[handle(heffcheck,rel(E)^*[lambda x. rel(e)_(5a)[f:=rel(v)]], m: d)] = e'_2$, []),
         ($e_2 = E^+_1[E^*_1[check(k_1,j_1,E^*[guard(v,kappa_1 -> kappa_2,k,l,j)],v_1)]]$, []),
         ($e_6 = lambda x. mon(k,l,j,kappa_2,apply(v,mon(l,k,j,kappa_1,x)))$, [Let]),
         ($e_6 = e_(5a)[f:=v]$, [Substitution]),
         ($rel(e)_6 = rel(e)_(5a)[f:=rel(v)]$, [@compiler-relation-subst]),
         ($guard(v,kappa_1 -> kappa_2,k,l,j) ~ rel(e)_6 = rel(e)_(5a)[f:=rel(v)]$, [Definition]),
         ($E^*[guard(v,kappa_1 -> kappa_2,k,l,j)] ~ rel(E)^*[rel(e)_(5a)[f:=rel(v)]]$, [@compiler-relation-is-closed]),
-        ($treq(E^*[guard(v,kappa_1 -> kappa_2,k,l,j)], handle(heffcheck,rel(E)^*[rel(e)_(5a)[f:=rel(v)]]))$, [Case 1]),
+        ($treq(E^*[guard(v,kappa_1 -> kappa_2,k,l,j)], handle(heffcheck,rel(E)^*[rel(e)_(5a)[f:=rel(v)]], m: d))$, [Case 1]),
         ($treq(e_2,e'_2)$, [Case 3]),
       ))
 
@@ -1121,7 +1117,7 @@ By case analysis on $e_1 cstep e_2$ with respect to $treq(e_1,e'_1)$.
         ($e_3 ~ rel(e)_3$, [@compiler-relation-context-decomposition]),
         ($rel(e)_1 = rel(E)^*[rel(e)_3]$, [@compiler-relation-context-decomposition]),
         ($rel(e)_3 = apply(rel(e)_5, rel(v)_2)$, [Relation]),
-        ($e'_1 = handle(heffcheck, rel(E)^*[rel(e)_3])$, [$treq(e_1,e'_1)$, case 2]),
+        ($e'_1 = handle(heffcheck, rel(E)^*[rel(e)_3], m: d)$, [$treq(e_1,e'_1)$, case 2]),
         ($e'_1 estep1 e'_1 = e'_2$, [Reflexivity]),
         ($rel(e)_4 = apply(rel(e)_5, rel(v)_2)$, [Relation]),
         ($E^*[e_4] ~ rel(E)^*[rel(e)_4]$,[@compiler-relation-is-closed]),

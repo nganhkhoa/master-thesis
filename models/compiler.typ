@@ -69,7 +69,7 @@
       ),
 
       [], [],
-      [$apply(handler({effcheck -> lambda tuple(l,tuple(e,v)). lambda k. ife(apply(w[kw("bool")], (lambda \_. apply(e,v))),apply(k,v),eblame(l))}), f)$],
+      [$apply(handler({effcheck -> lambda tuple(l,tuple(e,v)). lambda k. ife(apply(w[kw("bool")], (lambda \_. apply(e,v))),apply(k,v),eblame(l))}, m: d), f)$],
       [], grid.cell(colspan: 2, align: right,
         [where $lambda tuple(l,tuple(e,v))$ deconstructs the argument as tuple pattern]),
     ),

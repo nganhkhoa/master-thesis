@@ -38,8 +38,8 @@
       ),
       bnf(
         Prod($kappa$, {
-          Or[$flat(e) | kappa -> kappa | dep(kappa,lambda x: tau. kappa)$][]
-          Or[$tuple(kappa,kappa) | refc(kappa)$][]
+          Or[$flat(e)$][]
+          Or[$kappa -> kappa | dep(kappa,lambda x: tau. kappa)$][]
         }),
         Prod($v$, {
           Or[$...$][]

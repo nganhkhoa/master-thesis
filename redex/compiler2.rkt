@@ -6,7 +6,7 @@
 
 ;; (require "base.rkt")
 (require "contracts.rkt")
-(require "effects2.rkt")
+(require "effects.rkt")
 
 (define-union-language CompilerLang (C: Contracts) (E: Effects))
 
@@ -294,7 +294,7 @@
            (error 99991))))))))
 
 (define-term wrap
-  (μ w unit (Λ α (λ genericeff f unit ((handler genericeff h-check) f)))))
+  (μ w unit (Λ α (λ genericeff f unit ((s-handler genericeff h-check) f)))))
 
 (define (compile-and-run p #:trace-enabled [trace-enabled false] #:trace-print [trace-print false])
   (define (abbreviate-term t)
