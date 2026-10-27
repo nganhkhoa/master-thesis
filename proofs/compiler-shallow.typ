@@ -509,7 +509,7 @@ Define a predicate between $langc e$ and $lange e'$.
 
 $
 treq(e,e') = cases(
-  "true" "if" e ~ e',
+  "true" "if" e ~ e' "and" e != E^*[check(k_1,j_1,e_1,v_1)],
   "true" "if" e = E^+[E^*[check(k_1,j_1,e_1,v_1)]] "and",
    quad quad quad e' = ife(rel(e)_1, apply((lambda x. rel(E)^+[rel(E)^*[x]]), rel(v)_1), eblame(k_1)),
   "true" "if" e = E[blame(k,j)] "and" e' = eblame(k),
@@ -525,9 +525,9 @@ $
 
 #proof[
   #derivation((
-    ($e^* estep1 e'_1$, [@compiler-shallow-wrap-step-eq]),
-    ($treq(e,e'_1)$, [@compiler-shallow-wrap-step-eq]),
-    ($e'_1 estep1 rel(r)$, [@compiler-shallow-full-simulation]),
+    ($e^* estep1 handle(heffcheck,e^*_1,m:s)$, [@compiler-shallow-wrap-step-eq]),
+    ($treq(e, e^*_1)$, [@compiler-shallow-wrap-step-eq]),
+    ($handle(heffcheck,e^*_1,m:s) estep1 rel(r)$, [@compiler-shallow-full-simulation]),
     ($e^* estep1 rel(r)$, []),
   ))
 ]
@@ -565,38 +565,38 @@ $
     - Case $blame(k,j) cstep1 blame(k,j)$
 
       #derivation((
-        ($e' = eblame(k)$, [Case 3 $"EQ"$]),
+        ($e' = eblame(k)$, [Case 1 or 3 by $"EQ"$]),
         ($e' estep1 eblame(k)$, [Reflexivity]),
       ))
 
   - Case $e cstep e_1$ and $e_1 cstep1 r$
 
     #derivation((
-      ($e' estep1 e'_1$, [@compiler-shallow-simulation]),
+      ($handle(heffcheck,e',m:s) estep1 handle(heffcheck,e'_1,m:s)$, [@compiler-shallow-simulation]),
       ($treq(e_1, e'_1)$, [@compiler-shallow-simulation]),
-      ($e'_1 estep1 rel(r)$, [I.H.]),
-      ($e' estep1 rel(r)$, []),
+      ($handle(heffcheck,e'_1,m:s) estep1 rel(r)$, [I.H.]),
+      ($handle(heffcheck,e',m:s) estep1 rel(r)$, []),
     ))
 ]
 
-#lemma(title: "Performing a check")[
+// #lemma(title: "Performing a check")[
 
-If $bop(E) = emptyset$, then
+// If $bop(E) = emptyset$, then
 
-  $
-  & handle(heffcheck, E[apply(perform(effcheck),tuple(k,tuple(e,v)))], m: s) \
-  estep1 & handle(heffcheck, ife(apply(e,v), apply((lambda x. E[x]),rel(v)), eblame(k)), m: s)
-  $
-] <compiler-shallow-perform-check>
+//   $
+//   & handle(heffcheck, E[apply(perform(effcheck),tuple(k,tuple(e,v)))], m: s) \
+//   estep1 & handle(heffcheck, ife(apply(e,v), apply((lambda x. E[x]),rel(v)), eblame(k)), m: s)
+//   $
+// ] <compiler-shallow-perform-check>
 
-#proof[
-  $
-  & handle(heffcheck, E[apply(perform(effcheck),tuple(k,tuple(e,v)))], m: s) \
-  estep1& apply(apply((lambda tuple(l,tuple(e,v)). lambda k. apply(hcheck,(lambda \_. ife(apply(e,v),apply(k,v),eblame(l))))), tuple(k,tuple(e,v))), (lambda x. E[x])) \
-  estep1& apply(hcheck,(lambda \_. ife(apply(e,v),apply((lambda x. E[x]),v),eblame(k)))) \
-  estep1& handle(heffcheck, ife(apply(e,v),apply((lambda x. E[x]),v),eblame(k)), m: s)
-  $
-]
+// #proof[
+//   $
+//   & handle(heffcheck, E[apply(perform(effcheck),tuple(k,tuple(e,v)))], m: s) \
+//   estep1& apply(apply((lambda tuple(l,tuple(e,v)). lambda k. apply(hcheck,(lambda \_. ife(apply(e,v),apply(k,v),eblame(l))))), tuple(k,tuple(e,v))), (lambda x. E[x])) \
+//   estep1& apply(hcheck,(lambda \_. ife(apply(e,v),apply((lambda x. E[x]),v),eblame(k)))) \
+//   estep1& handle(heffcheck, ife(apply(e,v),apply((lambda x. E[x]),v),eblame(k)), m: s)
+//   $
+// ]
 
 #lemma()[
   If $e_1 cstep e_2$ and $treq(e_1,e'_1)$ then there exists $e'_2$ such that $handle(heffcheck,e'_1,m:s) estep1 handle(heffcheck,e'_2,m:s)$ and $treq(e_2,e'_2)$.
@@ -609,8 +609,7 @@ By case analysis on $e_1 cstep e_2$ with respect to $treq(e_1,e'_1)$.
 - Case $E[blame(k,j)] cstep blame(k,j)$
 
   #derivation((
-    // ($E ~ rel(E)$, [@compiler-shallow-relation-find-E]),
-    ($e'_1 = eblame(k)$, [$"EQ"$ case 3]),
+    ($e'_1 = eblame(k)$, [Case 3 EQ]),
     ($e'_1 estep1 eblame(k)$, [Reflexivity]),
     ($treq(e_2, eblame(k))$, []),
     ($e'_2 = eblame(k)$, [Choose]),
@@ -618,94 +617,307 @@ By case analysis on $e_1 cstep e_2$ with respect to $treq(e_1,e'_1)$.
 
 - Case $E[e_3] cstep E[e_4]$ and $e_3 cstepx e_4$ is a redex
 
-  // Overview: For $e_3 != check(k,j,e,v)$ easily find $rel(E),rel(e)_3$ and because the only match $"EQ"$ case is case 2, then $e'_1 = handle(heffcheck,rel(E)[rel(e)_3], m: s)$. Else, we can identify the shape of $e'_1$ by EQ predicate.
+  // Overview: Because $e_1 != v$ and $e_1 != E[blame(k,j)]$, it *must* matches case 2. Therefore, $e_1 = E^+[E^*[e]]$, and $e'_1 = handle(heffcheck,rel(E)^+[rel(E)^*[rel(e)]], m:s)$. We know the shape of $e_1$ by both EQ predicate and the case analysis, we can try to unify them together. Most cases can unify $E=E^+[E^*]$ naturally. The cases where it breaks is $e_3=check(k,j,b_4,v_4)$, where we identify $E^+ = E[check(k,j,square.stroked,v_4)], E^*=square.stroked$, and $e_1 = E^+[E^*[b_4]]$, then the relation holds.
 
-  Overview: Because $e_1 != v$ and $e_1 != E[blame(k,j)]$, it *must* matches case 2. Therefore, $e_1 = E^+[E^*[e]]$, and $e'_1 = handle(heffcheck,rel(E)^+[rel(E)^*[rel(e)]], m:s)$. We know the shape of $e_1$ by both EQ predicate and the case analysis, we can try to unify them together. Most cases can unify $E=E^+[E^*]$ naturally. The cases where it breaks is $e_3=check(k,j,b_4,v_4)$, where we identify $E^+ = E[check(k,j,square.stroked,v_4)], E^*=square.stroked$, and $e_1 = E^+[E^*[b_4]]$, then the relation holds.
+  Proof Sketch: $E = E^+[E^*[check(k,j,square.stroked,v)]]$, then casing on $E^+$ structure. At the same time, EQ predicate will allow one case analysis ($e_1 ?= E'[check(k',j',e',v')]$). If $E^+ = square.stroked$, use @compiler-shallow-relation-find-E to find equivalent $rel(E)^*$, else, by EQ case 2 identify the shape of $e'_1$ by $E^+$ relation.
+
 
   - Case $e_3 = mon(k,l,j,flat(e),v) cstepx check(k,j,apply(e,v),v) = e_4$
 
+    Actually need $e != E'[check(k',j',e',v')]$ to obtain $rel(e)$. But the proof goes through without stating this fact because we inverse from EQ predicate. When running, this $e$ is never a check, because we don't evaluate inside flat contract.
+
     #derivation((
-      ($e_1 = E[mon(k,l,j,flat(e),v)] = E^+[E^*[mon(k,l,j,flat(e),v)]]$, []),
-      ($E ~ rel(E)$, [@compiler-shallow-relation-find-E]),
-      ($e_3 ~ rel(e)_3$, [@compiler-shallow-relation-find-E]),
-      ($e'_1 = handle(heffcheck,rel(E)[rel(e)_3], m: s)$, [$"EQ"$ case 2]),
-      ($rel(e)_3 = apply(perform(effcheck),tuple(k,tuple(rel(e),rel(v))))$, [Inversion]),
-      ($e_2 = E[check(k,j,apply(e,v),v)]$, [Given]),
-      ($e'_1 estep1 handle(heffcheck, ife(apply(rel(e),rel(v)), apply((lambda x. rel(E)[x]), rel(v)), eblame(k)), m: s)$, [@compiler-shallow-perform-check]),
-      ($treq(e_2,handle(heffcheck, ife(apply(rel(e),rel(v)), apply((lambda x. rel(E)[x]), rel(v)), eblame(k)), m: s))$, [Case 3]),
-      ($e'_2 = handle(heffcheck, ife(apply(rel(e),rel(v)), apply((lambda x. rel(E)[x]), rel(v)), eblame(k)), m: s)$, [Choose]),
+      ($e_1 = E[mon(k,l,j,flat(e),v)] = E^+[E^*[mon(k,l,j,flat(e),v)]]$, [@compiler-shallow-context-breakdown]),
     ))
+
+    - Case $E^+ = square.stroked$
+
+      #derivation((
+        ($e_1 = E^*[mon(k,l,j,flat(e),v)]$, []),
+        ($E^* ~ rel(E)^*$, [@compiler-shallow-relation-find-E]),
+        ($e_3 ~ rel(e)_3$, [@compiler-shallow-relation-find-E]),
+        ($rel(e)_3 = apply(perform(effcheck),tuple(k,tuple(rel(e),rel(v))))$, [Inversion]),
+        ($e'_1 = rel(E)^*[apply(perform(effcheck),tuple(k,tuple(rel(e),rel(v))))]$, [Case 1 $"EQ"$]),
+        ($handle(heffcheck,e'_1,m:s) estep1 apply(hcheck,(ife(apply(rel(e),rel(v)),apply((lambda x. rel(E)^*[x]), rel(v)),eblame(k))))$, []),
+        ($quad estep1 handle(heffcheck,(ife(apply(rel(e),rel(v)),apply((lambda x. rel(E)^*[x]), rel(v)),eblame(k))),m:s)$, []),
+
+        ($e_2 = E^+[E^*[check(k,j,apply(e,v),v)]]$, []),
+        ($treq(e_2, ife(apply(rel(e),rel(v)),apply((lambda x. rel(E)^*[x]), rel(v)),eblame(k)))$, [Case 3 $"EQ"$]),
+        ($e'_2 = ife(apply(rel(e),rel(v)),apply((lambda x. rel(E)^*[x]), rel(v)),eblame(k))$, [Choose]),
+      ))
+
+    - Case $E^+ = E^+_1[E^*_1[check(k_1,j_1,square.stroked,v_1)]]$
+
+      #derivation((
+        ($e_2 = E^+_1[E^*_1[check(k_1,j_1,E^*[check(k,j,apply(e,v),v)],v_1)]] = E^+_2[E^*[check(k,j,apply(e,v),v)]]$, []),
+        ($rel(E)^+_2 = ife(square.stroked,apply((lambda x. rel(E)^+_1[rel(E)^*_1[x]]), rel(v)_1),eblame(k_1))$, []),
+        ($E^+_2[E^*[check(k,j,square.stroked,v)]] ~ ife(square.stroked,apply((lambda x. rel(E)^+_2[rel(E)^*[x]]), rel(v)),eblame(k))$, []),
+        ($e'_1 = ife(rel(E)^*[rel(e)_3],apply((lambda x. rel(E)^+_1[rel(E)^*_1[x]]), rel(v)_1),eblame(k_1))$, [Case 3 EQ]),
+        ($rel(e)_3 = apply(perform(effcheck),tuple(k,tuple(rel(e),rel(v))))$, [Inversion]),
+        ($handle(heffcheck, e'_1, m:s)$, []),
+        ($estep1 handle(heffcheck, \ quad quad ife(apply(rel(e),rel(v)), apply((lambda x. ife(rel(E)^*[x],apply((lambda y. rel(E)^+_1[rel(E)^*_1[y]]), rel(v)_1),eblame(k_1))), rel(v)), eblame(k)), m:s)$, []),
+        ($= ife(apply(rel(e),rel(v)), apply((lambda x. rel(E)^+_2[rel(E)^*[x]]), rel(v)), eblame(k))$, []),
+        ($treq(e_2, ife(apply(rel(e),rel(v)), apply((lambda x. rel(E)^+_2[rel(E)^*[x]]), rel(v)), eblame(k)))$, [Case 3 $"EQ"$]),
+        ($e'_2 = ife(apply(rel(e),rel(v)), apply((lambda x. rel(E)^+_2[rel(E)^*[x]]), rel(v)), eblame(k))$, [Choose]),
+      ))
 
   - Case $e_3 = check(k,j,trueb,v) cstepx v = e_4$
 
+    Due to the restriction of EQ, only EQ case 2 matches this case.
+
     #derivation((
-      ($e_3 cstep v$, []),
-      ($e_1 = E[check(k,j,trueb,v)]$, [Given]),
-      ($e'_1 = handle(heffcheck,ife(trueb,apply((lambda x. rel(E)[x]), rel(v)),eblame(k)), m: s)$, [EQ case 3]),
-      ($e'_1 estep1 handle(heffcheck,rel(E)[rel(v)], m: s)$, []),
-      ($e_2 = E[v] ~ rel(E)[rel(v)]$, [@compiler-shallow-relation-substitution]),
-      ($treq(e_2, handle(heffcheck,rel(E)[rel(v)], m: s))$, []),
-      ($e'_2 = handle(heffcheck,rel(E)[rel(v)], m: s)$, [Choose]),
+      ($e_1 = E[check(k,j,trueb,v)] = E^+[E^*[check(k,j,trueb,v)]]$, [Given and @compiler-shallow-context-breakdown]),
+      ($e_2 = E^+[E^*[v]]$, []),
     ))
+
+    - Case $E^+ = square.stroked$
+
+      #derivation((
+        ($e_1 = E^*[check(k,j,trueb,v)]$, []),
+        ($e_2 = E^*[v]$, []),
+        ($e'_1 = ife(trueb, apply((lambda x. rel(E)^*[x]),rel(v)), eblame(k))$, [EQ case 2]),
+        ($handle(heffcheck, e'_1,m:s) estep1 handle(heffcheck, rel(E)^*[rel(v)],m:s)$, []),
+        ($E^*[v] ~ rel(E)^*[rel(v)]$, [@compiler-shallow-relation-context]),
+        ($treq(e_2, rel(E)^*[rel(v)])$, [EQ case 1]),
+        ($e'_2 = rel(E)^*[rel(v)]$, [Choose]),
+      ))
+
+    - Case $E^+ = E^+_1[E^*_1[check(k_1,j_1,square.stroked,v_1)]]$
+
+      #derivation((
+        ($e_2 = E^+_1[E^*_1[check(k_1,j_1,E^*[v],v_1)]]$, []),
+        ($e_1 = E^+_1[E^*_1[check(k_1,j_1,E^*[check(k,j,trueb,v)],v_1)]] = E^+_2[E^*[check(k,j,trueb,v)]]$, []),
+        ($e'_1 = ife(trueb, apply((lambda y. rel(E)^+_2[rel(E)^*[y]]), rel(v)), eblame(k))$, [Case 2 EQ]),
+        ($E^+_2 ~ ife(square.stroked,apply((lambda x. rel(E)^+_1[E^*_1[x]]), rel(v)_1),eblame(k_1)) = rel(E)^+_2$, []),
+        ($handle(heffcheck, e'_1,m:s) estep1 handle(heffcheck, rel(E)^+_2[rel(E)^*[rel(v)]], m:s)$, []),
+        ($E^*[v] ~ rel(E)^*[rel(v)]$, [@compiler-shallow-relation-context]),
+        ($treq(e_2, ife(rel(E)^*[rel(v)],apply((lambda x. rel(E)^+_1[E^*_1[x]]), rel(v)_1),eblame(k_1)))$, [Case 2 EQ]),
+        ($treq(e_2, rel(E)^+_2[rel(E)^*[rel(v)]])$, [Replace with $rel(E)^+_2$]),
+        ($e'_2 = rel(E)^+_2[rel(E)^*[rel(v)]]$, [Choose]),
+      ))
 
   - Case $e_3 = check(k,j,falseb,v) cstepx blame(k,j) = e_4$
 
     #derivation((
-      ($e_3 cstep blame(k,j)$, []),
-      ($e_1 = E[check(k,j,falseb,v)]$, [Given]),
-      ($e'_1 = handle(heffcheck,ife(falseb,apply((lambda x. rel(E)[x]), rel(v)),eblame(k)), m: s)$, [EQ case 3]),
-      ($e'_1 estep1 eblame(k)$, []),
-      ($e_2 = E[blame(k,j)]$, [Given]),
-      ($treq(e_2, eblame(k))$, []),
-      ($e'_2 = eblame(k)$, [Choose]),
+      ($e_1 = E[check(k,j,falseb,v)] = E^+[E^*[check(k,j,falseb,v)]]$, [Given and @compiler-shallow-context-breakdown]),
+      ($e_2 = E^+[E^*[blame(k,j)]]$, []),
     ))
 
-  - Case $mon(k,l,j,kappa,v) cstepx guard(v,kappa,k,l,j)$ and $kappa != flat(e)$
+    - Case $E^+ = square.stroked$
 
       #derivation((
-        ($E ~ rel(E)$, [@compiler-shallow-relation-find-E]),
+        ($e_1 = E^*[check(k,j,falseb,v)]$, []),
+        ($e_2 = E^*[blame(k,j)]$, []),
+        ($e'_1 = ife(falseb, apply((lambda x. rel(E)^*[x]),rel(v)), eblame(k))$, [EQ case 2]),
+        ($handle(heffcheck, e'_1,m:s) estep1 handle(heffcheck, eblame(k),m:s)$, []),
+        ($treq(e_2, eblame(k))$, [Case 3 EQ]),
+        ($e'_2 = eblame(k)$, [Choose]),
+      ))
+
+    - Case $E^+ = E^+_1[E^*_1[check(k_1,j_1,square.stroked,v_1)]]$
+
+      #derivation((
+        ($e_2 = E^+_1[E^*_1[check(k_1,j_1,E^*[blame(k,j)],v_1)]]$, []),
+        ($e_1 = E^+_1[E^*_1[check(k_1,j_1,E^*[check(k,j,falseb,v)],v_1)]] = E^+_2[E^*[check(k,j,falseb,v)]]$, []),
+        ($e'_1 = ife(falseb, apply((lambda y. rel(E)^+_2[rel(E)^*[y]]), rel(v)), eblame(k))$, [Case 2 EQ]),
+        // ($E^+_2 ~ ife(square.stroked,apply((lambda x. rel(E)^+_1[E^*_1[x]]), rel(v)_1),eblame(k_1)) = rel(E)^+_2$, []),
+        ($handle(heffcheck, e'_1,m:s) estep1 handle(heffcheck, eblame(k), m:s)$, []),
+        ($treq(e_2, eblame(k))$, [Case 3 EQ]),
+        ($e'_2 = eblame(k)$, [Choose]),
+      ))
+
+  - Case $mon(k,l,j,kappa_1 -> kappa_2,v) cstepx guard(v,kappa_1 -> kappa_2,k,l,j)$
+
+    #derivation((
+      ($e_1 = E^+[E^*[mon(k,l,j,kappa_1 -> kappa_2,v)]]$, [@compiler-shallow-context-breakdown]),
+    ))
+
+    - Case $E^+ = square.stroked$
+
+      #derivation((
+        ($e_1 = E^*[mon(k,l,j,kappa_1 -> kappa_2,v)]$, []),
+        ($e_2 = E^*[guard(v,kappa_1 -> kappa_2,k,l,j)]$, []),
+        ($E^* ~ rel(E)^*$, [@compiler-shallow-relation-find-E]),
         ($e_3 ~ rel(e)_3$, [@compiler-shallow-relation-find-E]),
+        ($rel(e)_3 = apply((lambda f. rel(e)_(3a)),rel(v)); e_(3a) = lambda x. mon(k,l,j,kappa_2,apply(f,mon(l,k,j,kappa_1,x)))$, []),
+        ($e_1 ~ rel(E)^*[rel(e)_3]$, [@compiler-shallow-relation-context]),
+        ($e'_1 = rel(E)^*[rel(e)_3]$, []),
+        ($handle(heffcheck,e'_1,m:s) estep1 handle(heffcheck, rel(E)^*[rel(e)_(3a)[f:=rel(v)]], m:s)$, []),
+        ($e_(3a)[f:=v] = lambda x. mon(k,l,j,kappa_2,apply(v,mon(l,k,j,kappa_1,x)))$, []),
+        ($e_(3a)[f:=v] ~ rel(e)_(3a)[f:=rel(v)]$, [@compiler-shallow-relation-substitution]),
+        ($guard(v,kappa_1 -> kappa_2,k,l,j) ~ rel(e)_(3a)[f:=rel(v)]$, [Relation]),
+        ($e_2 ~ rel(E)^*[rel(e)_(3a)[f:=rel(v)]]$, [@compiler-shallow-relation-context]),
+        ($treq(e_2, rel(E)^*[rel(e)_(3a)[f:=rel(v)]])$, [Case 1 EQ]),
+        ($e'_2 = rel(E)^*[rel(e)_(3a)[f:=rel(v)]]$, [Choose]),
       ))
 
-    - Case $kappa = kappa_1 -> kappa_2$
+    - Case $E^+ = E^+_1[E^*_1[check(k_1,j_1,square.stroked,v_1)]]$
 
       #derivation((
-        ($rel(e)_3 = apply(rel(e)_5,rel(v))$,[Inversion]),
-        ($quad e_5=lambda f. lambda x. mon(k,l,j,kappa_2,apply(f,mon(l,k,j,kappa_1,x))) = lambda f. e_(5a)$, []),
-        // ($e_6 = apply(e_5,v)=lambda x. mon(k,l,j,kappa_2,apply(v,mon(l,k,j,kappa_1,x)))$, []),
-        ($e'_1 = rel(E)[apply(rel(e)_5,rel(v))]$, []),
-        ($e'_1 estep rel(E)[rel(e)_(5a)[f:=rel(v)]]$, []),
-        ($e_(5a) ~ rel(e)_(5a)$, []),
-        ($v ~ rel(v)$, []),
-        ($e_(5a)[f:=v] ~ rel(e)_(5a)[f:=rel(v)]$, [@compiler-shallow-relation-substitution]),
-        ($e_(5a)[f:=v] = lambda x. mon(k,l,j,kappa_2,apply(v,mon(l,k,j,kappa_1,x)))$, []),
-        ($e_4 ~ rel(e)_(5a)[f:=rel(v)]$, [Relation]),
-        ($e_2 = E[e_4] ~ rel(E)[rel(e)_(5a)[f:=rel(v)]]$, [@compiler-shallow-relation-context]),
-        ($e'_2 = rel(E)[rel(e)_(5a)[f:=rel(v)]]$, [Choose]),
+        ($e_1 = E^+_1[E^*_1[check(k_1,j_1,E^*[mon(k,l,j,kappa_1 -> kappa_2,v)],v_1)]]$,[]),
+        ($e_2 = E^+_1[E^*_1[check(k_1,j_1,E^*[guard(v,kappa_1 -> kappa_2,k,l,j)],v_1)]]$,[]),
+        ($E^* ~ rel(E)^*$, [@compiler-shallow-relation-find-E]),
+        ($e_3 ~ rel(e)_3$, [@compiler-shallow-relation-find-E]),
+        ($rel(e)_3 = apply((lambda f. rel(e)_(3a)),rel(v)); e_(3a) = lambda x. mon(k,l,j,kappa_2,apply(f,mon(l,k,j,kappa_1,x)))$, []),
+        ($e_1 ~ rel(E)^*[rel(e)_3]$, [@compiler-shallow-relation-context]),
+        ($e'_1 = ife(rel(E)^*[rel(e)_3], apply((lambda x. rel(E)^+_1[rel(E)^*_1[x]]), rel(v)_1), eblame(k_1))$, [Case 2 EQ]),
+        ($handle(heffcheck, e'_1, m:s)$, []),
+        ($estep1 handle(heffcheck, \ quad ife(rel(E)^*[rel(e)_(3a)[f:=rel(v)]], apply((lambda x. rel(E)^+_1[rel(E)^*_1[x]]), rel(v)_1), eblame(k_1)), m:s)$,[]),
+        ($e_(3a)[f:=v] = lambda x. mon(k,l,j,kappa_2,apply(v,mon(l,k,j,kappa_1,x)))$, []),
+        ($e_(3a)[f:=v] ~ rel(e)_(3a)[f:=rel(v)]$, [@compiler-shallow-relation-substitution]),
+        ($guard(v,kappa_1 -> kappa_2,k,l,j) ~ rel(e)_(3a)[f:=rel(v)]$, [Relation]),
+        ($E^*[guard(v,kappa_1 -> kappa_2,k,l,j)] ~ rel(E)^*[rel(e)_(3a)[f:=rel(v)]]$, [@compiler-shallow-relation-context]),
+        ($treq(e_2, ife(rel(E)^*[rel(e)_(3a)[f:=rel(v)]], apply((lambda x. rel(E)^+_1[rel(E)^*_1[x]]), rel(v)_1), eblame(k_1)))$,[Case 2 EQ]),
+        ($e'_2 = ife(rel(E)^*[rel(e)_(3a)[f:=rel(v)]], apply((lambda x. rel(E)^+_1[rel(E)^*_1[x]]), rel(v)_1), eblame(k_1))$,[Choose]),
       ))
 
-    - Case $kappa = dep(kappa_1, lambda y. kappa_2)$
+  - Case $mon(k,l,j,dep(kappa_1, lambda y. kappa_2),v) cstepx guard(v,dep(kappa_1, lambda y. kappa_2),k,l,j)$
+
+    Similarly to the functional case. Replacement variable is a fresh $f$, it does not affect anything.
+
+    #derivation((
+      ($e_1 = E^+[E^*[mon(k,l,j,dep(kappa_1, lambda y. kappa_2),v)]]$, [@compiler-shallow-context-breakdown]),
+    ))
+
+    - Case $E^+ = square.stroked$
 
       #derivation((
-        ($rel(e)_3 = apply(rel(e)_5,rel(v))$,[Inversion]),
-        ($quad e_5=lambda f. lambda x. mon(k,l,j,kappa_3,apply(f,mon(l,k,j,kappa_1,x))) = lambda f. e_(5a)$, []),
-        ($quad kappa_3=kappa_2[y:=mon(l,j,j,kappa_1,x)]$, []),
-        // ($e_6 = apply(e_5,v)=lambda x. mon(k,l,j,kappa_2,apply(v,mon(l,k,j,kappa_1,x)))$, []),
-        ($e'_1 = rel(E)[apply(rel(e)_5,rel(v))]$, []),
-        ($e'_1 estep rel(E)[rel(e)_(5a)[f:=rel(v)]]$, []),
-        ($e_(5a) ~ rel(e)_(5a)$, []),
-        ($v ~ rel(v)$, []),
-        ($e_(5a)[f:=v] ~ rel(e)_(5a)[f:=rel(v)]$, [@compiler-shallow-relation-substitution]),
-        ($e_(5a)[f:=v] = lambda x. mon(k,l,j,kappa_3,apply(v,mon(l,k,j,kappa_1,x)))$, []),
-        ($e_4 ~ rel(e)_(5a)[f:=rel(v)]$, [Relation]),
-        ($e_2 = E[e_4] ~ rel(E)[rel(e)_(5a)[f:=rel(v)]]$, [@compiler-shallow-relation-context]),
-        ($e'_2 = rel(E)[rel(e)_(5a)[f:=rel(v)]]$, [Choose]),
+        ($e_1 = E^*[mon(k,l,j,dep(kappa_1, lambda y. kappa_2),v)]$, []),
+        ($e_2 = E^*[guard(v,dep(kappa_1, lambda y. kappa_2),k,l,j)]$, []),
+        ($E^* ~ rel(E)^*$, [@compiler-shallow-relation-find-E]),
+        ($e_3 ~ rel(e)_3$, [@compiler-shallow-relation-find-E]),
+        ($rel(e)_3 = apply((lambda f. rel(e)_(3a)),rel(v))$, []),
+        ($quad e_(3a) = lambda x. mon(k,l,j,kappa_3,apply(f,mon(l,k,j,kappa_1,x))); kappa_3 = kappa_2[y:=mon(l,j,j,kappa_1,x)]$, []),
+        ($e_1 ~ rel(E)^*[rel(e)_3]$, [@compiler-shallow-relation-context]),
+        ($e'_1 = rel(E)^*[rel(e)_3]$, []),
+        ($handle(heffcheck,e'_1,m:s) estep1 handle(heffcheck, rel(E)^*[rel(e)_(3a)[f:=rel(v)]], m:s)$, []),
+        ($e_(3a)[f:=v] = lambda x. mon(k,l,j,kappa_3,apply(v,mon(l,k,j,kappa_1,x)))$, []),
+        ($e_(3a)[f:=v] ~ rel(e)_(3a)[f:=rel(v)]$, [@compiler-shallow-relation-substitution]),
+        ($guard(v,dep(kappa_1, lambda y. kappa_2),k,l,j) ~ rel(e)_(3a)[f:=rel(v)]$, [Relation]),
+        ($e_2 ~ rel(E)^*[rel(e)_(3a)[f:=rel(v)]]$, [@compiler-shallow-relation-context]),
+        ($treq(e_2, rel(E)^*[rel(e)_(3a)[f:=rel(v)]])$, [Case 1 EQ]),
+        ($e'_2 = rel(E)^*[rel(e)_(3a)[f:=rel(v)]]$, [Choose]),
+      ))
+
+    - Case $E^+ = E^+_1[E^*_1[check(k_1,j_1,square.stroked,v_1)]]$
+
+      #derivation((
+        ($e_1 = E^+_1[E^*_1[check(k_1,j_1,E^*[mon(k,l,j,dep(kappa_1, lambda y. kappa_2),v)],v_1)]]$,[]),
+        ($e_2 = E^+_1[E^*_1[check(k_1,j_1,E^*[guard(v,dep(kappa_1, lambda y. kappa_2),k,l,j)],v_1)]]$,[]),
+        ($E^* ~ rel(E)^*$, [@compiler-shallow-relation-find-E]),
+        ($e_3 ~ rel(e)_3$, [@compiler-shallow-relation-find-E]),
+        ($rel(e)_3 = apply((lambda f. rel(e)_(3a)),rel(v))$, []),
+        ($quad e_(3a) = lambda x. mon(k,l,j,kappa_3,apply(f,mon(l,k,j,kappa_1,x))); kappa_3 = kappa_2[y:=mon(l,j,j,kappa_1,x)]$, []),
+        ($e_1 ~ rel(E)^*[rel(e)_3]$, [@compiler-shallow-relation-context]),
+        ($e'_1 = ife(rel(E)^*[rel(e)_3], apply((lambda x. rel(E)^+_1[rel(E)^*_1[x]]), rel(v)_1), eblame(k_1))$, [Case 2 EQ]),
+        ($handle(heffcheck, e'_1, m:s)$, []),
+        ($estep1 handle(heffcheck, \ quad ife(rel(E)^*[rel(e)_(3a)[f:=rel(v)]], apply((lambda x. rel(E)^+_1[rel(E)^*_1[x]]), rel(v)_1), eblame(k_1)), m:s)$,[]),
+        ($e_(3a)[f:=v] = lambda x. mon(k,l,j,kappa_3,apply(v,mon(l,k,j,kappa_1,x)))$, []),
+        ($e_(3a)[f:=v] ~ rel(e)_(3a)[f:=rel(v)]$, [@compiler-shallow-relation-substitution]),
+        ($guard(v,dep(kappa_1, lambda y. kappa_2),k,l,j) ~ rel(e)_(3a)[f:=rel(v)]$, [Relation]),
+        ($E^*[guard(v,dep(kappa_1, lambda y. kappa_2),k,l,j)] ~ rel(E)^*[rel(e)_(3a)[f:=rel(v)]]$, [@compiler-shallow-relation-context]),
+        ($treq(e_2, ife(rel(E)^*[rel(e)_(3a)[f:=rel(v)]], apply((lambda x. rel(E)^+_1[rel(E)^*_1[x]]), rel(v)_1), eblame(k_1)))$,[Case 2 EQ]),
+        ($e'_2 = ife(rel(E)^*[rel(e)_(3a)[f:=rel(v)]], apply((lambda x. rel(E)^+_1[rel(E)^*_1[x]]), rel(v)_1), eblame(k_1))$,[Choose]),
       ))
 
   - Case $e_3 = apply(guard(v_1,kappa_1 -> kappa_2,k,l,j),v_2) cstepx mon(k,l,j, kappa_2, apply(v_1, mon(l,k,j,kappa_1,v_2))) = e_4$
 
+    #derivation((
+      ($e_1 = E^+[E^*[apply(guard(v_1,kappa_1 -> kappa_2,k,l,j),v_2)]]$, [@compiler-shallow-context-breakdown]),
+    ))
+
+    - Case $E^+ = square.stroked$
+
+      #derivation((
+        ($e_1 = E^*[apply(guard(v_1,kappa_1 -> kappa_2,k,l,j),v_2)]$, []),
+        ($E^* ~ rel(E)^*$, [@compiler-shallow-relation-find-E]),
+        ($e_3 ~ rel(e)_3$, [@compiler-shallow-relation-find-E]),
+        ($rel(e)_3 = apply(lambda x. rel(e)_(3a), rel(v)_2); e_(3a) = mon(k,l,j,kappa_2,apply(v_1,mon(l,k,j,kappa_1,x)))$, []),
+        ($e_1 ~ rel(E)^*[rel(e)_3]$, [@compiler-shallow-relation-context]),
+        ($e'_1 = rel(E)^*[rel(e)_3]$, [Case 1 EQ]),
+        ($handle(heffcheck, e'_1, m:s) estep1 handle(heffcheck, rel(E)^*[rel(e)_(3a)[x:=rel(v)_2]],m:s)$, []),
+        ($e_(3a)[x:=v_2] = mon(k,l,j,kappa_2,apply(v_1,mon(l,k,j,kappa_1,v_2)))$, []),
+        ($e_(3a)[x:=v_2] ~ rel(e)_(3a)[x:=rel(v)_2]$, [@compiler-shallow-relation-substitution]),
+        ($e_2 = E^*[mon(k,l,j,kappa_2,apply(v_1,mon(l,k,j,kappa_1,v_2)))] ~ rel(E)^*[rel(e)_(3a)[x:=rel(v)_2]]$, [@compiler-shallow-relation-context]),
+        ($treq(e_2, rel(E)^*[rel(e)_(3a)[x:=rel(v)_2]])$, [Case 1 EQ]),
+        ($e'_2 = rel(E)^*[rel(e)_(3a)[x:=rel(v)_2]]$, [Choose]),
+      ))
+
+    - Case $E^+ = E^+_1[E^*_1[check(k_1,j_1,square.stroked,v_3)]]$
+
+      #derivation((
+        ($e_1 = E^+_1[E^*_1[check(k_1, j_1, E^*[apply(guard(v_1,kappa_1 -> kappa_2,k,l,j),v_2)], v_3)]]$, []),
+        ($E^* ~ rel(E)^*$, [@compiler-shallow-relation-find-E]),
+        ($e_3 ~ rel(e)_3$, [@compiler-shallow-relation-find-E]),
+        ($rel(e)_3 = apply(lambda x. rel(e)_(3a), rel(v)_2); e_(3a) = mon(k,l,j,kappa_2,apply(v_1,mon(l,k,j,kappa_1,x)))$, []),
+
+        ($E^*[rel(e)_3] ~ rel(E)^*[rel(e)_3]$, [@compiler-shallow-relation-context]),
+        ($e'_1 = ife(rel(E)^*[rel(e)_3], apply((lambda x. rel(E)^+_1[rel(E)^*[x]]), rel(v)_3), eblame(k_1))$, [Case 2 EQ]),
+        ($handle(heffcheck, e'_1, m:s)$, []),
+        ($estep1 handle(heffcheck, \ quad ife(rel(E)^*[rel(e)_(3a)[x:=rel(v)_2]], apply((lambda x. rel(E)^+_1[rel(E)^*[x]]), rel(v)_3), eblame(k_1)),m:s)$, []),
+        ($e_(3a)[x:=v_2] = mon(k,l,j,kappa_2,apply(v_1,mon(l,k,j,kappa_1,v_2)))$, []),
+        ($e_(3a)[x:=v_2] ~ rel(e)_(3a)[x:=rel(v)_2]$, [@compiler-shallow-relation-substitution]),
+        ($E^*[mon(k,l,j,kappa_2,apply(v_1,mon(l,k,j,kappa_1,v_2)))] ~ rel(E)^*[rel(e)_(3a)[x:=rel(v)_2]]$, [@compiler-shallow-relation-context]),
+        ($e_2 = E^+_1[E^*_1[check(k_1,j_1,E^*[mon(k,l,j,kappa_2,apply(v_1,mon(l,k,j,kappa_1,v_2)))],v_3)]]$, []),
+        ($treq(e_2, ife(rel(E)^*[rel(e)_(3a)[x:=rel(v)_2]], apply((lambda x. rel(E)^+_1[rel(E)^*[x]]), rel(v)_3), eblame(k_1)))$, [Case 2 EQ]),
+        ($e'_2 = ife(rel(E)^*[rel(e)_(3a)[x:=rel(v)_2]], apply((lambda x. rel(E)^+_1[rel(E)^*[x]]), rel(v)_3), eblame(k_1))$, [Choose]),
+      ))
+
   - Case $e_3 = apply(guard(v_1,dep(kappa_1, lambda y. kappa_2),k,l,j),v_2) cstepx mon(k,l,j, kappa_3, apply(v_1, mon(l,k,j,kappa_1,v_2))) = e_4$ where $kappa_3 = kappa_2[y:=mon(l,j,j,kappa_1,v_2)]$
 
+    Similar to the functional case. The only problem is $kappa_4 = kappa_2[y:=mon(l,j,j,kappa_1,x)]$ where $x$ is the new argument of the function created for relation. We need to reason $kappa_4[x:=v_2] = kappa_3$, which is obvious.
 
-  - Other cases are follow similarly.
+    #derivation((
+      ($e_1 = E^+[E^*[apply(guard(v_1,dep(kappa_1, lambda y. kappa_2),k,l,j),v_2)]]$, [@compiler-shallow-context-breakdown]),
+    ))
+
+    - Case $E^+ = square.stroked$
+
+      #derivation((
+        ($e_1 = E^*[apply(guard(v_1,dep(kappa_1, lambda y. kappa_2),k,l,j),v_2)]$, []),
+        ($E^* ~ rel(E)^*$, [@compiler-shallow-relation-find-E]),
+        ($e_3 ~ rel(e)_3$, [@compiler-shallow-relation-find-E]),
+        ($rel(e)_3 = apply(lambda x. rel(e)_(3a), rel(v)_2)$, []),
+        ($quad e_(3a) = mon(k,l,j,kappa_4,apply(v_1,mon(l,k,j,kappa_1,x))); kappa_4 = kappa_2[y:=mon(l,j,j,kappa_1,x)]$, []),
+        ($e_1 ~ rel(E)^*[rel(e)_3]$, [@compiler-shallow-relation-context]),
+        ($e'_1 = rel(E)^*[rel(e)_3]$, [Case 1 EQ]),
+        ($handle(heffcheck, e'_1, m:s) estep1 handle(heffcheck, rel(E)^*[rel(e)_(3a)[x:=rel(v)_2]],m:s)$, []),
+        ($e_(3a)[x:=v_2] = mon(k,l,j,kappa_4[x:=v_2],apply(v_1,mon(l,k,j,kappa_1,v_2)))$, []),
+        ($kappa_4[x:=v_2]$, []),
+        ($quad = kappa_2[y:=mon(l,j,j,kappa_1,x)][x:=v_2] = kappa_2[y:=mon(l,j,j,kappa_1,v_2)]$, []),
+        ($quad = kappa_3$, []),
+        ($e_(3a)[x:=v_2] = mon(k,l,j,kappa_3,apply(v_1,mon(l,k,j,kappa_1,v_2)))$, []),
+        ($e_(3a)[x:=v_2] ~ rel(e)_(3a)[x:=rel(v)_2]$, [@compiler-shallow-relation-substitution]),
+        ($e_2 = E^*[mon(k,l,j,kappa_3,apply(v_1,mon(l,k,j,kappa_1,v_2)))] ~ rel(E)^*[rel(e)_(3a)[x:=rel(v)_2]]$, [@compiler-shallow-relation-context]),
+        ($treq(e_2, rel(E)^*[rel(e)_(3a)[x:=rel(v)_2]])$, [Case 1 EQ]),
+        ($e'_2 = rel(E)^*[rel(e)_(3a)[x:=rel(v)_2]]$, [Choose]),
+      ))
+
+    - Case $E^+ = E^+_1[E^*_1[check(k_1,j_1,square.stroked,v_3)]]$
+
+      #derivation((
+        ($e_1 = E^+_1[E^*_1[check(k_1, j_1, E^*[apply(guard(v_1,dep(kappa_1, lambda y. kappa_2),k,l,j),v_2)], v_3)]]$, []),
+        ($E^* ~ rel(E)^*$, [@compiler-shallow-relation-find-E]),
+        ($e_3 ~ rel(e)_3$, [@compiler-shallow-relation-find-E]),
+        ($rel(e)_3 = apply(lambda x. rel(e)_(3a), rel(v)_2)$, []),
+        ($quad e_(3a) = mon(k,l,j,kappa_4,apply(v_1,mon(l,k,j,kappa_1,x))); kappa_4 = kappa_2[y:=mon(l,j,j,kappa_1,x)]$, []),
+
+        ($E^*[rel(e)_3] ~ rel(E)^*[rel(e)_3]$, [@compiler-shallow-relation-context]),
+        ($e'_1 = ife(rel(E)^*[rel(e)_3], apply((lambda x. rel(E)^+_1[rel(E)^*[x]]), rel(v)_3), eblame(k_1))$, [Case 2 EQ]),
+        ($handle(heffcheck, e'_1, m:s)$, []),
+        ($estep1 handle(heffcheck, \ quad ife(rel(E)^*[rel(e)_(3a)[x:=rel(v)_2]], apply((lambda x. rel(E)^+_1[rel(E)^*[x]]), rel(v)_3), eblame(k_1)),m:s)$, []),
+        ($e_(3a)[x:=v_2] = mon(k,l,j,kappa_4[x:=v_2],apply(v_1,mon(l,k,j,kappa_1,v_2)))$, []),
+        ($kappa_4[x:=v_2]$, []),
+        ($quad = kappa_2[y:=mon(l,j,j,kappa_1,x)][x:=v_2] = kappa_2[y:=mon(l,j,j,kappa_1,v_2)]$, []),
+        ($quad = kappa_3$, []),
+        ($e_(3a)[x:=v_2] = mon(k,l,j,kappa_3,apply(v_1,mon(l,k,j,kappa_1,v_2)))$, []),
+        ($e_(3a)[x:=v_2] ~ rel(e)_(3a)[x:=rel(v)_2]$, [@compiler-shallow-relation-substitution]),
+        ($E^*[mon(k,l,j,kappa_3,apply(v_1,mon(l,k,j,kappa_1,v_2)))] ~ rel(E)^*[rel(e)_(3a)[x:=rel(v)_2]]$, [@compiler-shallow-relation-context]),
+        ($e_2 = E^+_1[E^*_1[check(k_1,j_1,E^*[mon(k,l,j,kappa_3,apply(v_1,mon(l,k,j,kappa_1,v_2)))],v_3)]]$, []),
+        ($treq(e_2, ife(rel(E)^*[rel(e)_(3a)[x:=rel(v)_2]], apply((lambda x. rel(E)^+_1[rel(E)^*[x]]), rel(v)_3), eblame(k_1)))$, [Case 2 EQ]),
+        ($e'_2 = ife(rel(E)^*[rel(e)_(3a)[x:=rel(v)_2]], apply((lambda x. rel(E)^+_1[rel(E)^*[x]]), rel(v)_3), eblame(k_1))$, [Choose]),
+      ))
+
+
+  - Other cases follow similarly.
 ]

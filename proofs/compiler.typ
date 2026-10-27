@@ -797,7 +797,7 @@ treq(e,e') = cases(
   "true" "if" e = E^+[E^*[check(k,j,e_1,v)]] "and",
   quad quad quad e' = rel(E)^+[ife(e'_1,apply((lambda x. handle(heffcheck,rel(E)^*[x], m: d)),rel(v)),eblame(j))] "and",
   quad quad quad treq(e_1,e'_1),
-  "true" "if" e = blame(k,j) "and" e' = eblame(k),
+  "true" "if" e = E[blame(k,j)] "and" e' = eblame(k),
   "false" "otherwise",
 )
 $
@@ -946,6 +946,8 @@ By case analysis on $e_1 cstep e_2$ with respect to $treq(e_1,e'_1)$.
   During the reduction, we likely encounter $handle(heffcheck,rel(E)^*[e], m: d)$. By @compiler-e-star-no-handler, the handler invoked is obviously the current handler.
 
   - Case $e_3 = mon(k,l,j,flat(e),v) cstepx check(k,j,apply(e,v),v) = e_4$
+
+    Actually need $e != E'[check(k',j',e',v')]$ to obtain $rel(e)$. But the proof goes through without stating this fact because we inverse from EQ predicate. When running, this $e$ is never a check, because we don't evaluate inside flat contract.
 
     #derivation((
       ($E = E^+[E^*]$, [@compiler-context-breakdown]),
