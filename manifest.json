@@ -1,27 +1,25 @@
 {
   "models": [
-    "models/compiler-ref.pdf",
-    "models/compiler-state.pdf",
+    "models/base-reduction-rules.pdf",
+    "models/base-type-rules.pdf",
+    "models/base.pdf",
     "models/compiler.pdf",
     "models/contracts-reduction-rules.pdf",
-    "models/contracts-state.pdf",
     "models/contracts-type-rules.pdf",
     "models/contracts.pdf",
-    "models/core-reduction-rules.pdf",
-    "models/core-type-rules.pdf",
-    "models/core.pdf",
     "models/effects-reduction-rules.pdf",
     "models/effects-type-rules.pdf",
     "models/effects.pdf",
     "models/language.pdf"
   ],
   "proofs": [
+    "proofs/base.pdf",
+    "proofs/compiler-local.pdf",
     "proofs/compiler-shallow.pdf",
     "proofs/compiler-typesoundness.pdf",
     "proofs/compiler.pdf",
     "proofs/contract-erasure.pdf",
     "proofs/contracts.pdf",
-    "proofs/core.pdf",
     "proofs/effects.pdf",
     "proofs/setup.pdf"
   ]
