@@ -289,7 +289,7 @@ By induction on $E$. Follows similarly to @compiler-relation-is-closed because t
 ] <compiler-shallow-relation-substitution>
 
 #proof[
-  By induction on $e ~ e'$. Follows @compiler-relation-subst because relations ($R_E,R_e$) are the same.
+By induction on $e ~ e'$. Follows @compiler-relation-subst because relations ($R_v,R_e$) are the same.
 ]
 
 #lemma(title: "Compiler is subset of relation")[
@@ -884,7 +884,7 @@ By case analysis on $e_1 cstep e_2$ with respect to $treq(e_1,e'_1)$.
         ($handle(heffcheck, e'_1, m:s) estep1 handle(heffcheck, rel(E)^*[rel(e)_(3a)[x:=rel(v)_2]],m:s)$, []),
         ($e_(3a)[x:=v_2] = mon(k,l,j,kappa_4[x:=v_2],apply(v_1,mon(l,k,j,kappa_1,v_2)))$, []),
         ($kappa_4[x:=v_2]$, []),
-        ($quad = kappa_2[y:=mon(l,j,j,kappa_1,x)][x:=v_2] = kappa_2[y:=mon(l,j,j,kappa_1,v_2)]$, []),
+        ($quad = kappa_2[y:=mon(l,j,j,kappa_1,x)][x:=v_2] = kappa_2[y:=mon(l,j,j,kappa_1,v_2)]$, [$x in.not "fv"(kappa_2,kappa_1)$]),
         ($quad = kappa_3$, []),
         ($e_(3a)[x:=v_2] = mon(k,l,j,kappa_3,apply(v_1,mon(l,k,j,kappa_1,v_2)))$, []),
         ($e_(3a)[x:=v_2] ~ rel(e)_(3a)[x:=rel(v)_2]$, [@compiler-shallow-relation-substitution]),
@@ -908,7 +908,7 @@ By case analysis on $e_1 cstep e_2$ with respect to $treq(e_1,e'_1)$.
         ($estep1 handle(heffcheck, \ quad ife(rel(E)^*[rel(e)_(3a)[x:=rel(v)_2]], apply((lambda x. rel(E)^+_1[rel(E)^*[x]]), rel(v)_3), eblame(k_1)),m:s)$, []),
         ($e_(3a)[x:=v_2] = mon(k,l,j,kappa_4[x:=v_2],apply(v_1,mon(l,k,j,kappa_1,v_2)))$, []),
         ($kappa_4[x:=v_2]$, []),
-        ($quad = kappa_2[y:=mon(l,j,j,kappa_1,x)][x:=v_2] = kappa_2[y:=mon(l,j,j,kappa_1,v_2)]$, []),
+        ($quad = kappa_2[y:=mon(l,j,j,kappa_1,x)][x:=v_2] = kappa_2[y:=mon(l,j,j,kappa_1,v_2)]$, [$x in.not "fv"(kappa_2,kappa_1)$]),
         ($quad = kappa_3$, []),
         ($e_(3a)[x:=v_2] = mon(k,l,j,kappa_3,apply(v_1,mon(l,k,j,kappa_1,v_2)))$, []),
         ($e_(3a)[x:=v_2] ~ rel(e)_(3a)[x:=rel(v)_2]$, [@compiler-shallow-relation-substitution]),
