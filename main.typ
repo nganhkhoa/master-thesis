@@ -17,7 +17,7 @@
   graduation-year: 2026,
 
   abstract: [
-    nice
+    Contracts checking can be turned into effects and handled with handlers.
   ],
 
   acknowledgements: [
@@ -66,3 +66,4 @@
 #include "proofs/compiler-typesoundness.typ"
 #include "proofs/compiler.typ"
 #include "proofs/compiler-shallow.typ"
+#include "proofs/compiler-local.typ"
