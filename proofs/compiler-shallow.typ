@@ -642,7 +642,7 @@ By case analysis on $e_1 cstep e_2$ with respect to $treq(e_1,e'_1)$.
         ($quad estep1 handle(heffcheck,(ife(apply(rel(e),rel(v)),apply((lambda x. rel(E)^*[x]), rel(v)),eblame(k))),m:s)$, []),
 
         ($e_2 = E^+[E^*[check(k,j,apply(e,v),v)]]$, []),
-        ($treq(e_2, ife(apply(rel(e),rel(v)),apply((lambda x. rel(E)^*[x]), rel(v)),eblame(k)))$, [Case 3 $"EQ"$]),
+        ($treq(e_2, ife(apply(rel(e),rel(v)),apply((lambda x. rel(E)^*[x]), rel(v)),eblame(k)))$, [Case 2 $"EQ"$]),
         ($e'_2 = ife(apply(rel(e),rel(v)),apply((lambda x. rel(E)^*[x]), rel(v)),eblame(k))$, [Choose]),
       ))
 
@@ -652,12 +652,12 @@ By case analysis on $e_1 cstep e_2$ with respect to $treq(e_1,e'_1)$.
         ($e_2 = E^+_1[E^*_1[check(k_1,j_1,E^*[check(k,j,apply(e,v),v)],v_1)]] = E^+_2[E^*[check(k,j,apply(e,v),v)]]$, []),
         ($rel(E)^+_2 = ife(square.stroked,apply((lambda x. rel(E)^+_1[rel(E)^*_1[x]]), rel(v)_1),eblame(k_1))$, []),
         ($E^+_2[E^*[check(k,j,square.stroked,v)]] ~ ife(square.stroked,apply((lambda x. rel(E)^+_2[rel(E)^*[x]]), rel(v)),eblame(k))$, []),
-        ($e'_1 = ife(rel(E)^*[rel(e)_3],apply((lambda x. rel(E)^+_1[rel(E)^*_1[x]]), rel(v)_1),eblame(k_1))$, [Case 3 EQ]),
+        ($e'_1 = ife(rel(E)^*[rel(e)_3],apply((lambda x. rel(E)^+_1[rel(E)^*_1[x]]), rel(v)_1),eblame(k_1))$, [Case 2 EQ]),
         ($rel(e)_3 = apply(perform(effcheck),tuple(k,tuple(rel(e),rel(v))))$, [Inversion]),
         ($handle(heffcheck, e'_1, m:s)$, []),
         ($estep1 handle(heffcheck, \ quad quad ife(apply(rel(e),rel(v)), apply((lambda x. ife(rel(E)^*[x],apply((lambda y. rel(E)^+_1[rel(E)^*_1[y]]), rel(v)_1),eblame(k_1))), rel(v)), eblame(k)), m:s)$, []),
         ($= ife(apply(rel(e),rel(v)), apply((lambda x. rel(E)^+_2[rel(E)^*[x]]), rel(v)), eblame(k))$, []),
-        ($treq(e_2, ife(apply(rel(e),rel(v)), apply((lambda x. rel(E)^+_2[rel(E)^*[x]]), rel(v)), eblame(k)))$, [Case 3 $"EQ"$]),
+        ($treq(e_2, ife(apply(rel(e),rel(v)), apply((lambda x. rel(E)^+_2[rel(E)^*[x]]), rel(v)), eblame(k)))$, [Case 2 $"EQ"$]),
         ($e'_2 = ife(apply(rel(e),rel(v)), apply((lambda x. rel(E)^+_2[rel(E)^*[x]]), rel(v)), eblame(k))$, [Choose]),
       ))
 
