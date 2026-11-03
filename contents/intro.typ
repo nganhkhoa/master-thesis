@@ -42,8 +42,9 @@ effect, and reuse the capabilities of handlers.
 
 
 #pad(left: 3em)[
-  _Contract checking can be encoded as effects, and delegate them to
-  handlers can unify all contracts in the same context, while separated from main code._
+  #emph[
+    While encoding contracts as effects does not increase the expressiveness of effects, delicate handler constructions make it possible to unify contracts into a single context. This unification enables contract states and communication between contracts without relying on boxes.
+  ]
 ]
 
 == Contributions

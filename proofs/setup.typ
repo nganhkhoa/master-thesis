@@ -37,6 +37,20 @@
 
 // Number of an appendix theorem/lemma, for restating it elsewhere (e.g. in the body).
 #let appendix-number(lbl) = context {
-  let d = query(selector(label("great-theorems:numberfunc")).after(lbl)).first()
-  (d.value)(d.location())
+  // A standalone chapter does not include the appendix theorem. Do not run
+  // an unanchored metadata lookup: it can select this restatement's own
+  // manual-number metadata and recursively evaluate appendix-number again.
+  let targets = query(lbl)
+  if targets.len() == 0 {
+    [?]
+  } else {
+    let numbers = query(selector(label("great-theorems:numberfunc"))
+      .after(targets.first().location()))
+    if numbers.len() == 0 {
+      [?]
+    } else {
+      let d = numbers.first()
+      (d.value)(d.location())
+    }
+  }
 }

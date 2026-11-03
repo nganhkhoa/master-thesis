@@ -12,7 +12,7 @@
 
 = #lange Language
 
-== Example
+== Example <effects-example>
 
 In @handler-example-1, we present a simple example: a program wants to compute $(effdup 2) + 1$ is registered with a handler $h$ for effect #effdup, basically _duplicating_ its input. When an effect is perform, the main program pauses the execution, and push everything later into a continuation $k = lambda y. handle(h, (y + 1), m: d)$, at (i). Here, the continuation register the handler $h$ again, in case the rest of the program uses $effdup$. When the program is a value, the handler removes itself (ii).
 
