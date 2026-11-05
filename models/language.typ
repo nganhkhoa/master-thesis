@@ -151,8 +151,12 @@
 #let heffstate = $ekw("h")_effstate$
 // Compilation derivations record the compiler variant above the arrow:
 // d = deep, s = shallow, l = local. Deep is the default for generic rules.
-#let compile(src, target, m: d) = {
-  $#src med attach(arrow.r.tail, tr: #m) med #target$
+#let compile(src, target, m: none) = {
+  if m != none or m == l {
+    $#src med attach(arrow.r.tail, tr: l) med #target$
+  } else {
+    $#src med arrow.r.tail med #target$
+  }
 }
 #let typecompile(t) = $#t^*$
 

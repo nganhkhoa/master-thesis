@@ -1,9 +1,13 @@
 #import "/setup.typ": setupdoc
 #show: setupdoc
 
+#import "@preview/simplebnf:0.1.2": *
+#import "@preview/curryst:0.6.0": rule, prooftree, rule-set
+#import "@preview/great-theorems:0.1.2": great-theorems-init
+
 #import "/models/language.typ": *
 #import "/proofs/setup.typ": appendix-theorem, appendix-lemma, appendix-number, proof
-#import "@preview/great-theorems:0.1.2": great-theorems-init
+
 #import "/utils.typ": load-bib, no-ref
 
 #show: no-ref
@@ -19,7 +23,7 @@ Following the compiler of @robert2013icfp, we can compile all contracts recursiv
 
 $apply(handler({effcheck^1 -> lambda \_. lambda k. ife(apply(p,v),apply(k,v),"blame")}, m:s), (lambda \_. (apply(perform(effcheck^1), unit))))$
 
-There are two main questions to this approach that when answered, it shows why this is undesired. First, do we need a different effect for each different contract?. Second, where should we put the handler? The first question is relatively yes, if we push the whole if/else clause into the handler. Which we can simplify by using tuples, or similar techniques for encoding the predicate, value, and even blame label into the first argument of handler. Using tuple, we can rewrite into:
+There are two main questions to this approach that when answered, it shows why this is undesired. First, do we need a different effect for each different contract? Second, where should we put the handler? The first question is relatively yes, if we push the whole if/else clause into the handler. Which we can simplify by using tuples, or similar techniques for encoding the predicate, value, and even blame label into the first argument of handler. Using tuple, we can rewrite into:
 
 $apply(handler({effcheck -> lambda tuple(l,tuple(p,v)). lambda k. ife(apply(p,v),apply(k,v),eblame(l))}, m:s), (lambda \_. (apply(perform(effcheck), tuple(l,tuple(p,v))))))$
 
@@ -80,22 +84,50 @@ Careful readers may aware that the handler is pulled to the outside of the [comp
   $
 ] <handler-placement-analysis>
 
-== Local Compiler
+== Formal Model
+
+Our compiler is homomorphic over expression $e$. Because it compiles from typed #langc to typed #lange, the compiler is defined through type-directed compilation. Although we have three different compiler models, two of them (Shallow and Deep) has the same compilation except for the wrapper. Therefore, we only provide two different compilers:
+
+- $compile(type(Gamma,e,tau),e',m:l)$ for local compilation
+- $compile(type(Gamma,e,tau),e')$ for non-local compilation
+
+Where the rules are similar except for monitor of flat contracts.
 
 
-== Shallow Compiler
+#rule-set(
+  prooftree(rule(
+    name: [Local-Compile-Flat],
+    $compile(type(Gamma,e_1,tau -> boolt), e_3,m:l)$,
+    $compile(type(Gamma,e_2,tau), e_4,m:l)$,
+    $compile(type(Gamma,mon(k,l,j,flat(e_1),e_2),tau), apply(handler(heffcheck,m:s), apply(perform(effcheck, tau: tau), tuple(k, tuple(e_3, e_4)))),m:l)$,
+  )),
+  prooftree(rule(
+    name: [Non-Local-Compile-Flat],
+    $compile(type(Gamma,e_1,tau -> boolt), e_3)$,
+    $compile(type(Gamma,e_2,tau), e_4)$,
+    $compile(type(Gamma,mon(k,l,j,flat(e_1),e_2),tau), apply(perform(effcheck, tau: tau), tuple(k, tuple(e_3, e_4))))$,
+  )),
+)
+
+== Contracts Hijacking (and Option Contracts)
+
+When using non-local compilers, because the handler are moved outside, users can provide a different handler scope inside the program. This handler can alternate the contract execution policy. This allows us to provide optional contracts, where the handler continue without executing the contract predicate, or executing the contract predicate but ignore the result on purpose.
+
+Consider the following example:
+
+$
+f &= mon(k,l,j,flat(e_1) -> flat(e_2), lambda x. x) \
+"main" &= apply((lambda f. ("ignore" (apply(f,1))) + (apply(f,2))),f)
+$
+
+Where $"ignore"$ is compiled into a wrapper handler that does not check ${effcheck -> Lambda alpha. lambda x. lambda k. apply(k,x)}$. During the execution of $apply(f,1)$, it is executed inside this handler context and all contract checking are ignored. In @christos2013option, the author describe the option contract that attaches to the value, and are explicitly executed. Our model for optional contracts are different, but should share the same semantics. Contracts are executed by default, but can be "turned off". Its model are closer to _Togglable Contracts_. To turn the contract on again, another handler can be injected to execute the checks. Although it brings a way to provide option contracts, this model modifies the environment rather than the contract value, which violates how contracts should work.
 
 
-== Deep Compiler
-
-
-== States without compromises
+== States (and Trace Contracts)
 
 Local compiler cannot implement contract states, since it is a one-shot handler, the contract cannot reuse anything. However, when we use the outside wrapper of shallow and deep compiler versions, we observe that it can encode states natively. In @effects-example, we demonstrated that states are encoded seemlessly by providing the initial state and the handler form is $lambda x. lambda k. lambda s. e$ where $x,k,s$ are perform value, continuation, and state respectively. Applying the same idea, we extend the handler with two new effects, $effstateget,effstateset$, representing get state and set state respecively.
 
-=== Shallow State Handler
-
-@shallow-state-handler shows the effect handler adapted to receive and handle a state variable. While executing the condition $apply(p,v)$, it can invoke effect $effstateget,effstateset$ to obtain the current state, or set the current state. However, this state is shared across all contracts. Ideally, we want each set of contracts to have access to a single state, or some states. A simple solution is to introduce hash map into the language and make the state a hash map between an identifier and its [polymorphic] value. Fortunately, it is possible to segment the states without relying on hash map. For each state that is needed, $effstateget^i,effstateset^i$ is created, and the states are provided sequencially. The compiler now must collect and name all possible contract states, then provide correct effects for them.
+We demonstrate how state(s) can be encoded effortlessly in shallow compiler version. @shallow-state-handler shows the effect handler adapted to receive and handle a state variable. While executing the condition $apply(p,v)$, it can invoke effect $effstateget,effstateset$ to obtain the current state, or set the current state. Since the state is provided as an extra argument, to obtain the result of the execution the wrapper must be a function that accepts the state(s).
 
 #figure(caption: "Shallow check handler with contract-controlled state")[
   $
@@ -105,10 +137,55 @@ Local compiler cannot implement contract states, since it is a one-shot handler,
   h_s(effstateget) &= lambda u. lambda k. lambda s.
     apply(apply(H,lambda \_. apply(k,s)),s) \
   h_s(effstateset) &= lambda s'. lambda k. lambda s.
-    apply(apply(H,lambda \_. apply(k,s')),s').
+    apply(apply(H,lambda \_. apply(k,s')),s'). \
+  kw("wrap")_s &= lambda f. apply(apply(H,(lambda \_. apply((lambda r. lambda s. r),f))),s)
   $
 ] <shallow-state-handler>
 
-When wrapping the program with this handler, the end of the execution must be a function that accepts the state(s). Therefore, the wrapper must now be:
 
-$kw("wrap")_s = lambda f. apply(apply(H,(lambda \_. apply((lambda r. lambda s. r),f))),s)$
+The current encoding of contract state is limited to a single value. It is easy to expand into multiple state variables. Since the handler always accepts three arguments (type, value, continuation), the rest can be functions. The body of the handler is changed into $lambda s_1. ... lambda s_i. e$ form, where $e$ is the main handler code. And for each state, we provide a pair of effects ($effstateget^i,effstateset^i$) that returns and updates the corresponding $s_i$. Wrapper must be updated to ignore states $s_i$ and return the result only. The wrapper must also provide all initial states to ensure execution.
+
+#figure(caption: "Shallow check handler with contract-controlled multiple states")[
+  $
+  H &= mu H. handler(h_s, m: s) \
+  h_s(effcheck) &= lambda tuple(l,tuple(p,v)). lambda k. lambda s_1. lambda s_2.
+    apply(apply(apply(H,(lambda \_. ife(apply(p,v),apply(k,v),eblame(l)))), s_1), s_2) \
+  h_s(effstateget^1) &= lambda u. lambda k. lambda s_1. lambda s_2.
+    apply(apply(H,lambda \_. apply(k,s_1)),s_1) \
+  h_s(effstateset^1) &= lambda s'_1. lambda k. lambda s_1. lambda s_2.
+    apply(apply(H,lambda \_. apply(k,s'_1)),s'_1). \
+  h_s(effstateget^2) &= lambda u. lambda k. lambda s_1. lambda s_2.
+    apply(apply(H,lambda \_. apply(k,s_2)),s_2) \
+  h_s(effstateset^2) &= lambda s'_2. lambda k. lambda s_1. lambda s_2.
+    apply(apply(H,lambda \_. apply(k,s'_2)),s'_2). \
+
+  kw("wrap")_s &= lambda f. apply(apply(apply(H,(lambda \_. apply((lambda r. lambda s_1. lambda s_2. r),f))),s_1),s_2)
+  $
+] <shallow-multi-state-handler>
+
+A slightly different encoding is to use tuples $tuple(s_1,tuple(s_2,tuple(s_3,...)))$, which is only available for languages with tuples support. If we have multiple tuple spaces and index-able projection $pi_i$, the handler can be written easier without a series of nested left/right injections.
+
+Users want to use this must define the state in their program. Assume an extension to contract to provide states in @contract-with-states, $kw("cstate")(e_1,lambda x. e_2)$ where $e_1$ is the initial value of the state, and $lambda s. e_2$ is the expression where the state will be bounded into $s$ and appears in $e'_2$. While typing $e_2$, we provide $s : kw("cstate")(tau)$ in the context so that it can only be used under contract. There are only two expressions that can use these contract state variables, $kw("cget"),kw("cset")$. Under the dynamic settings, there is a storage that watches the contract states (similarly to mutable boxes).
+
+#figure(caption: [Extend #langc with contract states])[
+#bnf(
+  Prod($tau$, {
+    Or[$...$][]
+    Or[$kw("cstate")(tau)$][]
+  }),
+  Prod($e$, {
+    Or[$...$][]
+    Or[$kw("cstate")(e,lambda x. e)$][]
+    Or[$kw("cget")(x)$][]
+    Or[$kw("cset")(x,e)$][]
+  }),
+)
+] <contract-with-states>
+
+The compiler should for each $kw("cstate")(e_1,lambda s. e_2)$ define a new effect, use $e_1$ as the initial state value and for every occurance of $s$ in $e_2$, modifies $kw("cget"),kw("cset")$ accordingly to effect calling. This compiler is not yet complete, since there are cases where $kw("cstate")$ are enclosed inside a function, so each time that function is run, the state is initialized fresh.
+
+The setup provides a possible compilation for Trace Contracts, introduced in @cameron2023trace. In trace contracts model, the collector (state) is defined as a list and it is being updated automatically. If we rewrite the handler to ${effcheck -> Lambda alpha. lambda x. lambda k. lambda s. apply((lambda \_. e), (apply(perform(effstateset),x)))}$, we obtain a closer ressemblance to trace contracts semantics.
+
+== Connection to Effectful Contracts
+
+Our compiler model shows that basic contract monitors can be compiled into an effect, and maintain the semantics with a crafted handler. Effectful contracts, @cameron2024effectful, explicitly defines contracts for effects, for which we have not defined compilation rules. Inspecting their reduction rules, effects are marked and converted into a sequence of monitors. If we can adapt this reduction to compose a way to convert effect contracts into monitors, our compiler can compile normally. The expected behavior during executing the effect is performing the check effect #effcheck on [effect's] input and [continuation's] output values.
