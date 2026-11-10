@@ -23,9 +23,10 @@ Following the compiler of @robert2013icfp, we can compile all contracts recursiv
 
 $apply(handler({effcheck^1 -> lambda \_. lambda k. ife(apply(p,v),apply(k,v),"blame")}, m:s), (lambda \_. (apply(perform(effcheck^1), unit))))$
 
-There are two main questions to this approach that when answered, it shows why this is undesired. First, do we need a different effect for each different contract? Second, where should we put the handler? The first question is relatively yes, if we push the whole if/else clause into the handler. Which we can simplify by using tuples, or similar techniques for encoding the predicate, value, and even blame label into the first argument of handler. Using tuple, we can rewrite into:
+There are two main questions to this approach that when answered, it shows why this is undesired. First, do we need a different effect for each different contract? Second, where should we put the handler? The first question is relatively no, if we push the whole if/else clause into the handler. Which we can simplify by using tuples, or similar techniques to encode the predicate, value, and even blame label into the first argument of handler. Then it becomes:
 
 $apply(handler({effcheck -> lambda tuple(l,tuple(p,v)). lambda k. ife(apply(p,v),apply(k,v),eblame(l))}, m:s), (lambda \_. (apply(perform(effcheck), tuple(l,tuple(p,v))))))$
+#v(1em)
 
 Where we write $lambda tuple(l,tuple(p,v))$ as a short hand to deconstruct the tuples, which can be done through tuple projection. After this construction, all contract checking can be unified under a single effect $effcheck$. The second question is rather hard to answer. Obviously it can be placed directly where the effect is performed. We call this a _local compilation_ (of contracts into effects). Then we experiment whether we can pull the handler far away from its local position. Without changing the handler, we try installing it at the top most place of the program. For functional contracts, this handler works. However, dependent contracts will get stuck with this handler, as shown in the example of @naive-handler-stuck.
 
@@ -104,7 +105,17 @@ f &= mon(k,l,j,flat(e_1) -> flat(e_2), lambda x. x) \
 "main" &= apply((lambda f. ("ignore" (apply(f,1))) + (apply(f,2))),f)
 $
 
-Where $"ignore"$ is compiled into a wrapper handler that does not check ${effcheck -> Lambda alpha. lambda x. lambda k. apply(k,x)}$. During the execution of $apply(f,1)$, it is executed inside this handler context and all contract checking are ignored. In @christos2013option, the author describe the option contract that attaches to the value, and are explicitly executed. Our model for optional contracts are different, but should share the same semantics. Contracts are executed by default, but can be "turned off". Its model are closer to _Togglable Contracts_. To turn the contract on again, another handler can be injected to execute the checks. Although it brings a way to provide option contracts, this model modifies the environment rather than the contract value, which violates how contracts should work.
+Where $"ignore"$ is compiled into a wrapper handler that does not check ${effcheck -> Lambda alpha. lambda x. lambda k. apply(k,x)}$. During the execution of $apply(f,1)$, it is executed inside this handler context and all contract checking are ignored. In @christos2013option, the author describe the option contract that attaches to the value, and are explicitly executed. Our model for optional contracts are different, but should share the same semantics. Contracts are executed by default, but can be "turned off". Its model are closer to _Toggle-able Contracts_. To turn the contract on again, another handler can be injected to execute the checks. Although it brings a way to provide option contracts, this model modifies the environment rather than the contract value, which violates how contracts should work. The example belows show where our modeling might disagree with the option contracts model.
+
+
+$
+f_1 & "is option contract protected" \
+f_2 & "is contract protected" \
+"choose" &= lambda a. lambda b. "randomly choose a or b" \
+"main" &= apply((lambda f. apply(f,())),"choose"(f_1,f_2))
+$
+
+Because the main program does not know which function to run, our hijacking handler cannot segment the environment between invocation of $f_1$ and $f_2$. While option contract on $f_1$ stops contract execution on $f_1$ if $"choose"(f_1,f_2) cstep1 f_1$.
 
 
 == States (and Trace Contracts) <compiler-formal-states>
@@ -172,4 +183,8 @@ The setup provides a possible compilation for Trace Contracts, introduced in @ca
 
 == Connection to Effectful Contracts
 
-Our compiler model shows that basic contract monitors can be compiled into an effect, and maintain the semantics with a crafted handler. Effectful contracts, @cameron2024effectful, explicitly defines contracts for effects, for which we have not defined compilation rules. Inspecting their reduction rules, effects are marked and converted into a sequence of monitors. If we can adapt this reduction to compose a way to convert effect contracts into monitors, our compiler can compile normally. The expected behavior during executing the effect is performing the check effect #effcheck on [effect's] input and [continuation's] output values.
+Our compiler model shows that basic contract monitors can be compiled into an effect, and maintain the semantics with a crafted handler. Effectful contracts, @cameron2024effectful, explicitly defines contracts for effects, for which we have not defined compilation rules. Following the constructions in @cameron2024effectful, let $mon(k,l,j,kappa_1 gt.closed kappa_2,e)$ be a main effect contract. That if $e$ executes an effect with value $v_1$, then $mon(k,l,j,kappa_1,v)$ is passed onto the effect handler, if the effect continues with value $v_2$, it returns $mon(l,k,j,kappa_2,v_2)$. However, because this construction can be nested, we need to collect multiple contracts on $v_1,v_2$. This semantic suggests a compilation that takes $e$ and find out all $perform(eff)$ expressions, and perform a wrap of the input value, and output value. When all effect contracts are rewritten into basic contracts, we can perform compilation rules in @compiler-rules to convert them into effects.
+
+$mon(k,l,j,kappa_1 gt.closed kappa_2,apply(perform(eff),v)) arrow.r.tail mon(l,k,j,kappa_2,apply(perform(eff),mon(k,l,j,kappa_1,v)))$
+
+The effectful contracts model also specify the contract-effect contracts, or contracts for effects invoked inside a contract. However, this requires a handler semantics for contracts' effects. #lange only supports handler semantic(s) for the whole program. For this reason, we ignore this contract-effect contracts construction.
