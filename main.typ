@@ -52,10 +52,9 @@
 #include "contents/base.typ"
 #include "contents/contracts.typ"
 #include "contents/effects.typ"
-
 #include "contents/compiler.typ"
-
 #include "contents/implementation.typ"
+#include "contents/conclusion.typ"
 
 // ==========================================
 // REFERENCES & APPENDICES
