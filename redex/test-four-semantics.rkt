@@ -8,9 +8,9 @@
 (require rackunit redex/reduction-semantics
          "contracts.rkt"
          "effects.rkt"
-                  (prefix-in outside: "compiler.rkt")
-         (prefix-in local: "compiler-local-handler.rkt")
-         (prefix-in shallow: "compiler2.rkt"))
+                  (prefix-in outside: "compiler-deep.rkt")
+         (prefix-in local: "compiler-local.rkt")
+         (prefix-in shallow: "compiler-shallow.rkt"))
 
 (define (contains? pred t)
   (or (pred t) (and (list? t) (ormap (λ (x) (contains? pred x)) t))))
@@ -22,7 +22,8 @@
 (define (observe result)
   (match result
     [(list (list e _))
-     (cond [(contains? (λ (x) (match x [`(blame ,_ ,_) #t] [`(error ,_) #t] [_ #f])) e) 'blame]
+     (cond [(or (match e [`(blame ,_) #t] [_ #f])
+                 (contains? (λ (x) (match x [`(blame ,_ ,_) #t] [_ #f])) e)) 'blame]
            [(first-order? e) e]
            [else 'procedure])]
     [_ (list 'unexpected result)]))
@@ -47,12 +48,22 @@
       (check-equal? source (term expected) (format "source: ~s" 'p))
       (check-equal? outside source (format "outer/deep handler: ~s" 'p))
       (check-equal? local source (format "local handler, run directly: ~s" 'p))
-      ;; A shallow handler does not reinstall itself around a resumed
-      ;; continuation.  A first-order check therefore agrees with the source;
-      ;; a later check exposed by resumption deliberately remains an unhandled
-      ;; effect (observed here as a procedure).
-      (check-true (or (equal? shallow source) (eq? shallow 'procedure))
-                  (format "shallow handler (result or exposed continuation): ~s" 'p))))
+      ;; The shallow continuation is bare, but the recursive clause reinstalls
+      ;; the handler around the conditional and its resumed continuation.
+      (check-equal? shallow source (format "shallow handler: ~s" 'p))))
+
+  ;; The handler around the whole conditional also covers the resumed
+  ;; continuation, so subsequent checks are handled rather than left stuck.
+  (check-equal?
+   (shallow-observation
+    (term (add (mon k l j (flat (λ x num true)) 2)
+               (mon k l j (flat (λ x num true)) 3))))
+   5)
+  (check-equal?
+   (shallow-observation
+    (term (add (mon k l j (flat (λ x num true)) 2)
+               (mon k l j (flat (λ x num false)) 3))))
+   'blame)
 
   ;; Flat contracts.
   (all-four (mon k l j (flat (λ x num true)) 7) 7)

@@ -8,10 +8,12 @@
 
 (define-extended-language Effects Base
   (K ::= * (K -> K) eff lab)
+  (modality ::= deep shallow)
 
   (ε ::= (effect ...))
 
   (τ ::= ....
+         party
          α
          (τ -> ε τ)
          (∀ α τ))
@@ -28,9 +30,10 @@
          (d-handle ε h e)
          (s-handle ε h e)
          ;; dynamic
-         (error e))
+         (blame e))
 
   (v ::= ....
+         (party p)
          (λ ε x τ e)
          (Λ α v)
          ;; d-handler reinstalls itself around a resumed continuation;
@@ -43,12 +46,14 @@
          (E τ)
          (d-handle ε h E)
          (s-handle ε h E)
-         (error E))
+         (blame E))
 
   (Σ ::= ((effect : (op -> τ) ...) ...))
 
   (α  ::= variable-not-otherwise-mentioned)
   (op ::= variable-not-otherwise-mentioned)
+  ;; Strings are atomic labels: substitution never changes a party name.
+  (p ::= string)
 
   ;; effect name
   (effect ::= variable-not-otherwise-mentioned)
@@ -57,6 +62,7 @@
   (k  ::= variable-not-otherwise-mentioned)
 
   #:binding-forms
+  (∀ α τ #:refers-to α)
   (Λ α v #:refers-to α)
   (λ ε x τ e #:refers-to x))
 
@@ -86,9 +92,12 @@
   [(bop (t v E)) (bop E)]
   [(bop (injl E)) (bop E)]
   [(bop (injr E)) (bop E)]
-  [(bop (o E e)) (bop E)]
-  [(bop (o v E)) (bop E)]
-  [(bop (o E)) (bop E)]
+  [(bop (o v ... E e ...)) (bop E)]
+  [(bop (new E)) (bop E)]
+  [(bop (get E)) (bop E)]
+  [(bop (set E e)) (bop E)]
+  [(bop (set v E)) (bop E)]
+  [(bop (blame E)) (bop E)]
   [(bop (if E e_1 e_2)) (bop E)]
 
   ;; not sure about this lol
@@ -135,8 +144,15 @@
 (define-metafunction Effects
   same-effects? : ε ε -> boolean
   [(same-effects? (effect_1 ...) (effect_2 ...))
-   ,(equal? (sort (term (effect_1 ...)) symbol<?)
-            (sort (term (effect_2 ...)) symbol<?))])
+   ,(equal? (sort (remove-duplicates (term (effect_1 ...))) symbol<?)
+            (sort (remove-duplicates (term (effect_2 ...))) symbol<?))])
+
+;; An expression may run in an ambient row containing additional effects.
+(define-metafunction Effects
+  effects-subset? : ε ε -> boolean
+  [(effects-subset? (effect_1 ...) (effect_2 ...))
+   ,(andmap (lambda (label) (if (member label (term (effect_2 ...))) #t #f))
+            (term (effect_1 ...)))])
 
 (define-metafunction Effects
   types-equiv? : τ τ -> boolean
@@ -145,6 +161,8 @@
   [(types-equiv? num num) #true]
   [(types-equiv? bool bool) #true]
   [(types-equiv? unit unit) #true]
+  [(types-equiv? party party) #true]
+  [(types-equiv? (ref τ_1) (ref τ_2)) (types-equiv? τ_1 τ_2)]
   [(types-equiv? α α) #true]
 
   ;; Arrow types (The important one!)
@@ -157,37 +175,64 @@
   [(types-equiv? (t τ_1 τ_2) (t τ_3 τ_4))
    ,(and (term (types-equiv? τ_1 τ_3))
          (term (types-equiv? τ_2 τ_4)))]
-  [(types-equiv? (∀ α τ_1) (∀ α τ_2))
-   (types-equiv? τ_1 τ_2)]
+  [(types-equiv? (∀ α_1 τ_1) (∀ α_2 τ_2))
+   (types-equiv? (substitute τ_1 α_1 α_fresh)
+                 (substitute τ_2 α_2 α_fresh))
+   (where α_fresh ,(variable-not-in (term (α_1 α_2 τ_1 τ_2)) 'fresh))]
 
   ;; Fallback
   [(types-equiv? _ _) #false])
 
+;; An operation clause receives the declared argument and a continuation from
+;; the declared result to the common handler result. Deep resumptions run
+;; outside the handled effect; shallow resumptions still have that effect.
+(define-judgment-form Effects
+  #:mode (⊢_ops/mod I I I I O O O)
+  #:contract (⊢_ops/mod modality Σ Γ ((op f) ...) τ effect ε)
+
+  [(where ((effect_list (∀ α (τ_arg -> () τ_res))) ...) ((lookup-op Σ op) ...))
+   (⊢_val Σ Γ f τ_f) ...
+   (where ((∀ α_f (τ_arg-f -> ε_first
+                     ((τ_res-f -> ε_k τ_k) -> ε_clause τ_out-f))) ...) (τ_f ...))
+   (where (effect_out effect_rest ...) (effect_list ...))
+   (where (τ_out τ_rest ...) (τ_out-f ...))
+   (where (ε_out ε_rest ...) (ε_clause ...))
+   (side-condition
+    ,(andmap values
+       (term ((types-equiv? (substitute τ_arg α α_f) τ_arg-f) ...))))
+   (side-condition
+    ,(andmap values
+       (term ((types-equiv? (substitute τ_res α α_f) τ_res-f) ...))))
+   ;; Every operation of the handled effect must have exactly one clause.
+   (side-condition
+    ,(let* ([entry (assoc (term effect_out) (term Σ))]
+            [declared (map first (cddr entry))]
+            [actual (term (op ...))])
+       (and (= (length actual) (length (remove-duplicates actual)))
+            (equal? (sort declared symbol<?) (sort actual symbol<?)))))
+   (side-condition ,(andmap values (term ((types-equiv? τ_k τ_out) ...))))
+   (side-condition ,(andmap values (term ((types-equiv? τ_rest τ_out) ...))))
+   (side-condition ,(andmap (lambda (x) (equal? x (term effect_out)))
+                            (term (effect_rest ...))))
+   (side-condition ,(andmap values (term ((same-effects? ε_rest ε_out) ...))))
+   (side-condition ,(andmap values (term ((same-effects? ε_first ε_out) ...))))
+   (where ε_resume (resume-effects modality effect_out ε_out))
+   (side-condition ,(andmap values (term ((same-effects? ε_k ε_resume) ...))))
+   --------------------------------------------------------- "T-E-Ops"
+   (⊢_ops/mod modality Σ Γ ((op f) ...) τ_out effect_out ε_out)])
+
+(define-metafunction Effects
+  resume-effects : modality effect ε -> ε
+  [(resume-effects deep effect ε) ε]
+  [(resume-effects shallow effect (effect_1 ...)) (effect effect_1 ...)])
+
+;; Preserve the original public judgment as the deep-handler variant.
 (define-judgment-form Effects
   #:mode (⊢_ops I I I O O O)
   #:contract (⊢_ops Σ Γ ((op f) ...) τ effect ε)
-
-  [(where ((effect_list (∀ α (τ_1 -> ε τ_2))) ...) ((lookup-op Σ op) ...))
-
-   (⊢_val Σ Γ f τ_f) ...
-
-   (where ((∀ α_f (τ_1f -> ε_1f ((τ_2f -> ε_2f τ_3f) -> ε_3f τ_4f))) ...) (τ_f ...))
-
-   (where (effect_out effect_rest ...) (effect_list ...))
-   (where (τ_out τ_rest ...)          (τ_4f ...))
-   (where (ε_out ε_rest ...)          (ε_3f ...))
-
-   (side-condition
-    ,(andmap (lambda (x) (equal? x (term effect_out))) (term (effect_rest ...))))
-   (side-condition
-    ,(andmap (lambda (x) (equal? x (term τ_out))) (term (τ_rest ...))))
-   (side-condition
-    ,(andmap (lambda (x) (equal? x (term ε_out))) (term (ε_rest ...))))
-
-   --------------------------------------------------------- "T-E-Ops"
-   (⊢_ops Σ Γ ((op f) ...) τ_out effect_out ε_out)]
-)
-
+  [(⊢_ops/mod deep Σ Γ h τ effect ε)
+   ----------------------------------
+   (⊢_ops Σ Γ h τ effect ε)])
 
 (define-judgment-form Effects
   #:mode (⊢_val I I I O)
@@ -203,6 +248,9 @@
 
   [------------------- "T-E-Bool"
    (⊢_val Σ Γ b bool)]
+
+  [---------------------- "T-E-Party"
+   (⊢_val Σ Γ (party p) party)]
 
   [---------------------- "T-E-Unit"
    (⊢_val Σ Γ unit unit)]
@@ -234,7 +282,7 @@
         ((substitute τ_2 α τ)
          -> (effect_1 effect ...) (substitute τ_3 α τ)))]
 
-  [(⊢_ops Σ Γ h τ effect_0 ε_ops)
+  [(⊢_ops/mod deep Σ Γ h τ effect_0 ε_ops)
    (where (effect_1 ...) ε_ops)
    (side-condition (term (same-effects? ε ε_ops)))
    ------------------------------------------- "T-E-D-Handler"
@@ -242,7 +290,7 @@
           ((unit -> (effect_0 effect_1 ...) τ)
            -> ε τ))]
 
-  [(⊢_ops Σ Γ h τ effect_0 ε_ops)
+  [(⊢_ops/mod shallow Σ Γ h τ effect_0 ε_ops)
    (where (effect_1 ...) ε_ops)
    (side-condition (term (same-effects? ε ε_ops)))
    ------------------------------------------- "T-E-S-Handler"
@@ -256,15 +304,18 @@
   #:mode (⊢ I I I O I)
   #:contract (⊢ Σ Γ e τ ε)
 
+  [(where Γ_0 (extend Γ x τ))
+   (⊢_check Σ Γ_0 e τ ε)
+   ------------------------- "T-E-Fix"
+   (⊢ Σ Γ (μ x τ e) τ ε)]
+
   [(⊢_val Σ Γ v τ)
    -------------- "T-E-Val"
    (⊢ Σ Γ v τ ε)]
 
   [(⊢ Σ Γ e_1 (τ_1 -> ε_0 τ_2) ε)
-   (⊢ Σ Γ e_2 τ_3 ε)
-
-   (side-condition (term (types-equiv? τ_1 τ_3)))
-   (side-condition (term (same-effects? ε_0 ε)))
+   (⊢_check Σ Γ e_2 τ_1 ε)
+   (side-condition ,(term (effects-subset? ε_0 ε)))
    ---------------------------- "T-E-App"
    (⊢ Σ Γ (e_1 e_2) τ_2 ε)]
 
@@ -280,15 +331,22 @@
    ----------------------------- "T-Proj-R"
    (⊢ Σ Γ (injr e) τ_2 ε)]
 
-  [(⊢ Σ Γ e_1 bool ε)
+  ;; Either branch can provide the type; a blame expression cannot synthesize one.
+  [(⊢_check Σ Γ e_1 bool ε)
    (⊢ Σ Γ e_2 τ ε)
+   (⊢_check Σ Γ e_3 τ ε)
+   ----------------------------- "T-If-Then"
+   (⊢ Σ Γ (if e_1 e_2 e_3) τ ε)]
+
+  [(⊢_check Σ Γ e_1 bool ε)
    (⊢ Σ Γ e_3 τ ε)
-   ----------------------------- "T-If"
+   (⊢_check Σ Γ e_2 τ ε)
+   ----------------------------- "T-If-Else"
    (⊢ Σ Γ (if e_1 e_2 e_3) τ ε)]
 
   ;; N-ary Operator Rule
   [(where ((τ_arg ...) τ_out) (op-type o))
-   (⊢ Σ Γ e τ_arg ε) ...
+   (⊢_check Σ Γ e τ_arg ε) ...
    -------------------------------------- "T-Op"
    (⊢ Σ Γ (o e ...) τ_out ε)]
 
@@ -302,7 +360,7 @@
    (⊢ Σ Γ (get e) τ ε)]
 
   [(⊢ Σ Γ e_1 (ref τ) ε)
-   (⊢ Σ Γ e_2 τ ε)
+   (⊢_check Σ Γ e_2 τ ε)
    ------------------------- "T-Set"
    (⊢ Σ Γ (set e_1 e_2) unit ε)]
 
@@ -311,20 +369,41 @@
    ---------------------------------- "T-E-Tuple"
    (⊢ Σ Γ (t e_1 e_2) (t τ_1 τ_2) ε)]
 
-  [(⊢_ops Σ Γ h τ effect ε_1)
-   (where (effect_0 ... ) ε_1)
-   (⊢ Σ Γ e τ ε)
-   (side-condition (term (same-effects? ε (effect effect_0 ...))))
+  [(⊢_ops/mod deep Σ Γ h τ effect ε_out)
+   (side-condition (term (same-effects? ε ε_out)))
+   (where ε_body (resume-effects shallow effect ε_out))
+   (⊢_check Σ Γ e τ ε_body)
    ----------------------------------- "T-D-Handle"
    (⊢ Σ Γ (d-handle ε h e) τ ε)]
 
-  [(⊢_ops Σ Γ h τ effect ε_1)
-   (where (effect_0 ... ) ε_1)
-   (⊢ Σ Γ e τ ε)
-   (side-condition (term (same-effects? ε (effect effect_0 ...))))
+  [(⊢_ops/mod shallow Σ Γ h τ effect ε_out)
+   (side-condition (term (same-effects? ε ε_out)))
+   (where ε_body (resume-effects shallow effect ε_out))
+   (⊢_check Σ Γ e τ ε_body)
    ----------------------------------- "T-S-Handle"
    (⊢ Σ Γ (s-handle ε h e) τ ε)]
 )
+
+;; Checking has an input result type, so blame does not need to enumerate
+;; arbitrary types. Checking conditionals directly also handles two blame arms.
+(define-judgment-form Effects
+  #:mode (⊢_check I I I I I)
+  #:contract (⊢_check Σ Γ e τ ε)
+
+  [(⊢_check Σ Γ e party ε)
+   ------------------------------ "T-Check-Blame"
+   (⊢_check Σ Γ (blame e) τ ε)]
+
+  [(⊢_check Σ Γ e_1 bool ε)
+   (⊢_check Σ Γ e_2 τ ε)
+   (⊢_check Σ Γ e_3 τ ε)
+   ------------------------------ "T-Check-If"
+   (⊢_check Σ Γ (if e_1 e_2 e_3) τ ε)]
+
+  [(⊢ Σ Γ e τ_actual ε)
+   (side-condition ,(term (types-equiv? τ τ_actual)))
+   ------------------------------ "T-Check-Synth"
+   (⊢_check Σ Γ e τ ε)])
 
 ;; during evaluation we can ignore types and effects
 ;; just inherit reduction rules from base
@@ -359,9 +438,9 @@
 
          (side-condition (term (unhandled op E)))
          (side-condition (term (in-handler op h)))
-         (where (τ_2 f) (find-op-in-handler op h))
+         (where ((τ_arg -> ε_k τ_answer) f) (find-op-in-handler op h))
          ;; A deep handler remains active while its continuation runs.
-         (where e (λ y (substitute τ_2 α τ) (d-handle ε h (in-hole E y))))
+         (where e (λ ε_k y (substitute τ_arg α τ) (d-handle ε h (in-hole E y))))
          D-HANDLE-OP]
 
     [==> (s-handle ε h (in-hole E ((perform ε_1 op τ) v)))
@@ -369,10 +448,16 @@
 
          (side-condition (term (unhandled op E)))
          (side-condition (term (in-handler op h)))
-         (where (τ_2 f) (find-op-in-handler op h))
+         (where ((τ_arg -> ε_k τ_answer) f) (find-op-in-handler op h))
          ;; A shallow handler is consumed by its operation: no reinstallation.
-         (where e (λ y (substitute τ_2 α τ) (in-hole E y)))
+         (where e (λ ε_k y (substitute τ_arg α τ) (in-hole E y)))
          S-HANDLE-OP]
+
+    ;; A completed blame aborts all surrounding frames, including handlers.
+    ;; Excluding hole makes the terminal blame configuration irreducible.
+    [--> ((in-hole E (blame (party p))) σ) ((blame (party p)) σ)
+     (side-condition (not (equal? (term E) (term hole))))
+     BLAME-PROPAGATE]
 
     with
     [(--> ((in-hole E before) σ) ((in-hole E after) σ))
@@ -382,11 +467,85 @@
 (define-term mteff ())
 
 (module+ test
-  (define-term h-dup ((dup (Λ α (λ () x α (λ () k α (k (add x x)))))) ))
+  (require rackunit)
+
+  ;; Fixed points check their body at the declared type, including blame.
+  (check-true (judgment-holds (⊢_check () () (μ x num x) num ())))
+  (check-true (judgment-holds (⊢_check () () (μ x num (blame (party "p"))) num ())))
+  (check-false (judgment-holds (⊢_check () () (μ x num true) num ())))
+
+  (define-term Σ-check
+    ((con : (check -> (∀ α ((t party (t (α -> (con) bool) α)) -> () α))))))
+  (define-term check-deep
+    ((check (Λ β (λ (con) x (t party (t (β -> (con) bool) β))
+                      (λ (con) k (β -> (con) num) (k (injr (injr x)))))))))
+  (define-term check-bad-arg
+    ((check (Λ β (λ (con) x num
+                      (λ (con) k (β -> (con) num) (k 1)))))))
+  (define-term check-bad-result
+    ((check (Λ β (λ (con) x (t party (t (β -> (con) bool) β))
+                      (λ (con) k (bool -> (con) num) (k true)))))))
+  (check-true (judgment-holds (⊢_ops/mod deep Σ-check () check-deep num con (con))))
+  (check-false (judgment-holds (⊢_ops/mod deep Σ-check () check-bad-arg num con (con))))
+  (check-false (judgment-holds (⊢_ops/mod deep Σ-check () check-bad-result num con (con))))
+  (check-true (judgment-holds (⊢_val Σ-check () (perform () check num)
+    ((t party (t (num -> (con) bool) num)) -> (con) num))))
+  (check-true (term (same-effects? (con con) (con))))
+
+  ;; Deep resumes eliminate the handled effect; shallow resumes retain it.
+  (define-term Σ-ping ((ping-eff : (ping -> (∀ α (num -> () num))))))
+  (define-term ping-deep
+    ((ping (Λ α (λ () x num (λ () k (num -> () num) (k x)))))))
+  (define-term ping-shallow
+    ((ping (Λ α (λ () x num (λ () k (num -> (ping-eff) num) 0))))))
+  (check-true (judgment-holds (⊢_ops/mod deep Σ-ping () ping-deep num ping-eff ())))
+  (check-false (judgment-holds (⊢_ops/mod shallow Σ-ping () ping-deep num ping-eff ())))
+  (check-true (judgment-holds (⊢_ops/mod shallow Σ-ping () ping-shallow num ping-eff ())))
+  (check-false (judgment-holds (⊢_ops/mod deep Σ-ping () ping-shallow num ping-eff ())))
+  (check-true (judgment-holds (⊢_check Σ-ping ()
+     (d-handle () ping-deep ((perform () ping num) 1)) num ())))
+  (check-false (judgment-holds (⊢_check Σ-ping ()
+     (d-handle () ping-shallow ((perform () ping num) 1)) num ())))
+
+  ;; Labels are data, not variables; labels can also be computed at run time.
+  (test-equal (judgment-holds (⊢ () () (party "client") τ ()) τ) (term (party)))
+  (check-true (judgment-holds (⊢_check () () (blame (party "client")) num ())))
+  (check-true (judgment-holds (⊢_check () () (blame (party "client")) bool ())))
+  (check-false (judgment-holds (⊢_check () () (blame 1) num ())))
+  (check-false (judgment-holds (⊢_check () () (party "client") num ())))
+  (check-true (judgment-holds (⊢_check () ()
+                             (if true (blame (party "a")) (blame (party "b"))) num ())))
+  (test-equal (judgment-holds (⊢ () () (if true (blame (party "a")) 3) τ ()) τ)
+              (term (num)))
+  (test-equal (judgment-holds (⊢ () () (if true 3 (blame (party "a"))) τ ()) τ)
+              (term (num)))
+  (check-true (judgment-holds (⊢_check () () (add (blame (party "a")) 1) num ())))
+  (check-true (judgment-holds (⊢_check () ()
+                             ((λ () x num x) (blame (party "a"))) num ())))
+  (test-->> ->effects
+            (term ((add 1 (blame (injl (t (party "client") 42)))) ()))
+            (term ((blame (party "client")) ())))
+  (test-->> ->effects
+            (term (((λ () label party (blame label)) (party "client")) ()))
+            (term ((blame (party "client")) ())))
+  (test-->> ->effects
+            (term ((blame (blame (party "inner"))) ()))
+            (term ((blame (party "inner")) ())))
+  (test-->> ->effects
+            (term ((d-handle () () (if true (blame (party "client")) 1)) ((cell 9))))
+            (term ((blame (party "client")) ((cell 9)))))
+  (check-equal? (apply-reduction-relation ->effects (term ((blame (party "client")) ()))) '())
+  ;; Party names are constants, even when a binder has the same spelling.
+  (test-->> ->effects
+            (term (((λ client num (blame (party "client"))) 7) ()))
+            (term ((blame (party "client")) ())))
+  (check-true (judgment-holds (⊢_check () () (blame (party "client"))
+                                       (num -> () bool) (con))))
+  (define-term h-dup ((dup (Λ α (λ () x α (λ () k (α -> () num) (k (add x x)))))) ))
   (define-term h-get ((get (Λ α (λ () x α (λ () k α (λ () s num ((k s) s))))))))
   (define-term h-set ((set (Λ α (λ () x α (λ () k α (λ () s num ((k x) s))))))))
 
-  (define-term h-dummy ((dummy (Λ α (λ () x α (λ () k α (k x)))))))
+  (define-term h-dummy ((dummy (Λ α (λ () x α (λ () k (α -> () num) (k x)))))))
 
   (test-match Effects
     ((op f) ...)
@@ -572,15 +731,15 @@
 
 
   (define-term h-check
-    ((Check (Λ α (λ () x α (λ () k α
+    ((Check (Λ α (λ () x α (λ () k (α -> () num)
                                    (if ((injl (injr x)) (injr (injr x)))
                                    (k (injr (injr x)))
-                                   (error 111))))))))
+                                   (blame (party "test")))))))))
 
   (test-match Effects h (term h-check))
   (test-->> ->effects
           (term ((d-handle (check) h-check ((perform () Check α) (t 123 (t (λ () x num false) 1)))) ()))
-          (term ((error 111) ())))
+          (term ((blame (party "test")) ())))
 
   (test-->> ->effects
           (term ((d-handle (check) h-check ((perform () Check α) (t 123 (t (λ () x num true) 1)))) ()))

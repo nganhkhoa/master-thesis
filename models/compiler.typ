@@ -41,39 +41,48 @@
         $compile(type(Gamma,e_w,(tau_1 -> tau_2) -> (tau_1 -> tau_2)), e_3)$,
         $compile(type(Gamma,mon(k,l,j,dep(kappa_1, lambda y. kappa_2),e_1),tau_1 -> tau_2),apply(e_3, e_2))$,
       )),
-      prooftree(rule(
-        name: [Compile-Tuple],
-        $x in.not "dom"(Gamma)$,
-        $compile(type(Gamma\,x:tuple(tau_1,tau_2),mon(k,l,j,kappa_1,injl(x)),tau_1), e_1)$,
+      // prooftree(rule(
+      //   name: [Compile-Tuple],
+      //   $x in.not "dom"(Gamma)$,
+      //   $compile(type(Gamma\,x:tuple(tau_1,tau_2),mon(k,l,j,kappa_1,injl(x)),tau_1), e_1)$,
 
-        $compile(type(Gamma\,x:tuple(tau_1,tau_2),mon(k,l,j,kappa_2,injr(x)),tau_2), e_2)$,
-        $compile(type(Gamma,e,tuple(tau_1,tau_2)),e_3)$,
-        $compile(type(Gamma,mon(k,l,j,tuple(kappa_1,kappa_2),e),tuple(tau_1,tau_2)), apply((lambda x. tuple(e_1,e_2)),e_3))$,
-      )),
+      //   $compile(type(Gamma\,x:tuple(tau_1,tau_2),mon(k,l,j,kappa_2,injr(x)),tau_2), e_2)$,
+      //   $compile(type(Gamma,e,tuple(tau_1,tau_2)),e_3)$,
+      //   $compile(type(Gamma,mon(k,l,j,tuple(kappa_1,kappa_2),e),tuple(tau_1,tau_2)), apply((lambda x. tuple(e_1,e_2)),e_3))$,
+      // )),
     ),
     v(2em),
     line(length: 100%),
     v(2em),
-    grid(
-      columns: (auto,auto,auto),
-      gutter: 1.5em,
-
-      [$heffcheck : lab$],
-      [$=$],
-      grid.cell(align: left,
-        [${effcheck -> forall alpha. tuple(blab, tuple(alpha -> boolt, alpha)) -> alpha}$]),
-
-      [$kw("wrap")$], [$=$],
-      grid.cell(align: left,
-        [$mu w : forall alpha. ((teff((), chevron.l heffcheck chevron.r, alpha)) -> alpha). Lambda alpha. med lambda f: (teff((),chevron.l heffcheck chevron.r,alpha)).$]
-      ),
-
-      [], [],
-      [$apply(handler({effcheck -> lambda tuple(l,tuple(e,v)). lambda k. ife(apply(w[kw("bool")], (lambda \_. apply(e,v))),apply(k,v),eblame(l))}, m: d), f)$],
-      [], grid.cell(colspan: 2, align: right,
-        [where $lambda tuple(l,tuple(e,v))$ deconstructs the argument as tuple pattern]),
+    rule-set(
+      prooftree(rule(
+        name: [Local-Compile-Flat],
+        $compile(type(Gamma,e_1,tau -> boolt), e_3,m:l)$,
+        $compile(type(Gamma,e_2,tau), e_4,m:l)$,
+        $compile(type(Gamma,mon(k,l,j,flat(e_1),e_2),tau), apply(handler(heffcheck,m:s), apply(perform(effcheck, tau: tau), tuple(k, tuple(e_3, e_4)))),m:l)$,
+      )),
     ),
     v(2em),
+    // grid(
+    //   columns: (auto,auto,auto),
+    //   gutter: 1.5em,
+
+    //   [$heffcheck : lab$],
+    //   [$=$],
+    //   grid.cell(align: left,
+    //     [${effcheck -> forall alpha. tuple(blab, tuple(alpha -> boolt, alpha)) -> alpha}$]),
+
+    //   [$kw("wrap")$], [$=$],
+    //   grid.cell(align: left,
+    //     [$mu w : forall alpha. ((teff((), chevron.l heffcheck chevron.r, alpha)) -> alpha). Lambda alpha. med lambda f: (teff((),chevron.l heffcheck chevron.r,alpha)).$]
+    //   ),
+
+    //   [], [],
+    //   [$apply(handler({effcheck -> lambda tuple(l,tuple(e,v)). lambda k. ife(apply(w[kw("bool")], (lambda \_. apply(e,v))),apply(k,v),eblame(l))}, m: d), f)$],
+    //   [], grid.cell(colspan: 2, align: right,
+    //     [where $lambda tuple(l,tuple(e,v))$ deconstructs the argument as tuple pattern]),
+    // ),
+    // v(2em),
   ),
   caption: [Compiler Rules]
 ) <compiler-rules>

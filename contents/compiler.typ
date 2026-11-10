@@ -86,28 +86,12 @@ Careful readers may aware that the handler is pulled to the outside of the [comp
 
 == Formal Model
 
-Our compiler is homomorphic over expression $e$. Because it compiles from typed #langc to typed #lange, the compiler is defined through type-directed compilation. Although we have three different compiler models, two of them (Shallow and Deep) has the same compilation except for the wrapper. Therefore, we only provide two different compilers:
+Our compiler is homomorphic over expression $e$. Because it compiles from typed #langc to typed #lange, the compiler is defined through type-directed compilation. Although we have three different compiler models, two of them (Shallow and Deep) has the same compilation except for the wrapper. Therefore, we only provide two different compilers. The interesting contract compilation rules are provided in @compiler-rules.
 
 - $compile(type(Gamma,e,tau),e',m:l)$ for local compilation
 - $compile(type(Gamma,e,tau),e')$ for non-local compilation
 
-Where the rules are similar except for monitor of flat contracts.
-
-
-#rule-set(
-  prooftree(rule(
-    name: [Local-Compile-Flat],
-    $compile(type(Gamma,e_1,tau -> boolt), e_3,m:l)$,
-    $compile(type(Gamma,e_2,tau), e_4,m:l)$,
-    $compile(type(Gamma,mon(k,l,j,flat(e_1),e_2),tau), apply(handler(heffcheck,m:s), apply(perform(effcheck, tau: tau), tuple(k, tuple(e_3, e_4)))),m:l)$,
-  )),
-  prooftree(rule(
-    name: [Non-Local-Compile-Flat],
-    $compile(type(Gamma,e_1,tau -> boolt), e_3)$,
-    $compile(type(Gamma,e_2,tau), e_4)$,
-    $compile(type(Gamma,mon(k,l,j,flat(e_1),e_2),tau), apply(perform(effcheck, tau: tau), tuple(k, tuple(e_3, e_4))))$,
-  )),
-)
+#include "/models/compiler.typ"
 
 == Contracts Hijacking (and Option Contracts)
 
@@ -123,7 +107,7 @@ $
 Where $"ignore"$ is compiled into a wrapper handler that does not check ${effcheck -> Lambda alpha. lambda x. lambda k. apply(k,x)}$. During the execution of $apply(f,1)$, it is executed inside this handler context and all contract checking are ignored. In @christos2013option, the author describe the option contract that attaches to the value, and are explicitly executed. Our model for optional contracts are different, but should share the same semantics. Contracts are executed by default, but can be "turned off". Its model are closer to _Togglable Contracts_. To turn the contract on again, another handler can be injected to execute the checks. Although it brings a way to provide option contracts, this model modifies the environment rather than the contract value, which violates how contracts should work.
 
 
-== States (and Trace Contracts)
+== States (and Trace Contracts) <compiler-formal-states>
 
 Local compiler cannot implement contract states, since it is a one-shot handler, the contract cannot reuse anything. However, when we use the outside wrapper of shallow and deep compiler versions, we observe that it can encode states natively. In @effects-example, we demonstrated that states are encoded seemlessly by providing the initial state and the handler form is $lambda x. lambda k. lambda s. e$ where $x,k,s$ are perform value, continuation, and state respectively. Applying the same idea, we extend the handler with two new effects, $effstateget,effstateset$, representing get state and set state respecively.
 

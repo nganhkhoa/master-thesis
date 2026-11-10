@@ -5,11 +5,9 @@
 
 (require redex/reduction-semantics rackunit)
 
-;; (require "base.rkt")
 (require "contracts.rkt")
-;; Each flat monitor installs a fresh one-shot handler.  Use the shallow effect
-;; semantics: after it handles its own check, the captured continuation resumes
-;; without reinstalling that handler.  Later checks bring their own handlers.
+;; Each flat monitor installs a recursive wrapper around a shallow handler.
+;; The wrapper reinstalls the handler when its captured continuation resumes.
 (require "effects.rkt")
 
 (define-union-language CompilerLocalHandler (C: Contracts) (E: Effects))
@@ -22,6 +20,19 @@
 (define-metafunction CompilerLocalHandler
   lookup : C:Γ C:x -> C:τ
   [(lookup ((C:x_1 C:τ_1) ... (C:x C:τ) (C:x_2 C:τ_2) ...) C:x) C:τ])
+
+;; Local checks are handled at their point of use, so translated source
+;; functions have no latent effects.  Translate annotations recursively.
+(define-metafunction CompilerLocalHandler
+  translate-type : C:τ -> E:τ
+  [(translate-type (C:τ_1 -> C:τ_2))
+   ((translate-type C:τ_1) -> () (translate-type C:τ_2))]
+  [(translate-type (t C:τ_1 C:τ_2))
+   (t (translate-type C:τ_1) (translate-type C:τ_2))]
+  [(translate-type (ref C:τ)) (ref (translate-type C:τ))]
+  [(translate-type num) num]
+  [(translate-type bool) bool]
+  [(translate-type unit) unit])
 
 (define-metafunction CompilerLocalHandler
   op-type : C:o -> ((C:τ ...) C:τ)
@@ -49,11 +60,6 @@
   #:mode (compile I I O O)
   #:contract (compile C:Γ C:e C:τ E:e)
 
-
-
-
-
-
   [(where C:τ (lookup C:Γ C:x))
    (where E:x ,(term C:x))
    ---------------------------- "C-VAR"
@@ -68,21 +74,19 @@
   [----------------------------- "C-UNIT"
    (compile C:Γ unit unit unit)]
 
-  ;; [(where E:loc ,(term C:loc))
-  ;;  ------------------------------------ "C-LOC"
-  ;;  (compile C:Γ C:loc (ref τ) E:loc)]
-
   [(where C:Γ_new (extend C:Γ C:x C:τ_1))
    (compile C:Γ_new C:e C:τ_2 E:e_body)
    (where E:x ,(term C:x))
+   (where E:τ_1 (translate-type C:τ_1))
    ------------------------------------------------------------------------ "C-Lambda"
-   (compile C:Γ (λ C:x C:τ_1 C:e) (C:τ_1 -> C:τ_2) (λ () E:x C:τ_1 E:e_body))]
+   (compile C:Γ (λ C:x C:τ_1 C:e) (C:τ_1 -> C:τ_2) (λ () E:x E:τ_1 E:e_body))]
 
   [(where C:Γ_new (extend C:Γ C:x C:τ))
    (compile C:Γ_new C:e C:τ E:e_body)
    (where E:x ,(term C:x))
+   (where E:τ (translate-type C:τ))
    ------------------------------------------------------------------------ "C-Fix"
-   (compile C:Γ (μ C:x C:τ C:e) C:τ (μ E:x C:τ E:e_body))]
+   (compile C:Γ (μ C:x C:τ C:e) C:τ (μ E:x E:τ E:e_body))]
 
   [(compile C:Γ C:e_1 C:τ_1 E:e_1)
    (compile C:Γ C:e_2 C:τ_2 E:e_2)
@@ -116,30 +120,30 @@
 
   [(compile C:Γ C:e_1 (C:τ -> bool) E:e_1)
    (compile C:Γ C:e_2 C:τ E:e_2)
+   (where E:p ,(symbol->string (term C:k)))
+   (where E:τ (translate-type C:τ))
+   ;; Avoid capturing source variables in either the handler or its thunks.
+   (where (E:x_h E:x_payload E:x_k E:x_ignored E:x_resume E:α)
+          ,(variables-not-in (term (C:Γ C:e_1 C:e_2 E:e_1 E:e_2 E:τ))
+                             '(h payload k ignored resume β)))
    ----------------------------------------------------- "C-Mon-Flat"
-   ;; The local `effcheck` handler receives x = (e, v).  It directly tests
-   ;; (e v), resumes the captured continuation with v when that test succeeds,
-   ;; and signals blame when it fails.  In particular, it has no recursive `w`
-   ;; wrapper: handling is local because the compiler puts this handler around
-   ;; every flat-contract `perform`.
+   ;; Shallow resumptions retain 𝒞, so recursively handle the resumed thunk.
    (compile C:Γ (mon C:k C:l C:j (flat C:e_1) C:e_2) C:τ
-            ((s-handler (𝒞)
-               ((𝒞
-                 (Λ β (λ (𝒞) x β (λ (𝒞) k β
-                   (if ((injl x) (injr x))
-                       (k (injr x))
-                       (error 99991))))))))
-             (λ (𝒞) ignored unit
-               ((perform (𝒞) 𝒞 C:τ) (t E:e_1 E:e_2))))) ]
+            ((μ E:x_h ((unit -> (𝒞) E:τ) -> () E:τ)
+               (s-handler ()
+                 ((𝒞
+                   (Λ E:α
+                     (λ () E:x_payload (t party (t (E:α -> () bool) E:α))
+                       (λ () E:x_k (E:α -> (𝒞) E:τ)
+                         (if ((injl (injr E:x_payload)) (injr (injr E:x_payload)))
+                             (E:x_h (λ (𝒞) E:x_resume unit
+                                      (E:x_k (injr (injr E:x_payload)))))
+                             (blame (injl E:x_payload))))))))))
+             (λ (𝒞) E:x_ignored unit
+               ((perform () 𝒞 E:τ) (t (party E:p) (t E:e_1 E:e_2))))))]
 
-  [(compile C:Γ C:e (C:τ_1 -> C:τ_2) E:e_compiled) ;; get τ_1
-   (where (C:x C:x_1) ,(variables-not-in (term (C:Γ C:e)) '(x x_1)))
-   ;; (where C:Γ_new (extend C:Γ C:x C:τ_1))
-   ;; (where C:Γ_f (extend C:Γ_new C:x_1 (C:τ_1 -> C:τ_2)))
-
-   ;; (compile C:Γ_new (mon C:l C:k C:j C:κ_1 C:x) C:τ_1 E:e_1)
-   ;; (compile C:Γ_f (mon C:k C:l C:j C:κ_2 (C:x_1 C:x)) C:τ_2 E:e_2)
-
+  [(compile C:Γ C:e (C:τ_1 -> C:τ_2) E:e_compiled)
+   (where (C:x C:x_1) ,(variables-not-in (term (C:Γ C:e C:κ_1 C:κ_2)) '(x x_1)))
    (compile C:Γ
             (λ C:x_1 (C:τ_1 -> C:τ_2)
               (λ C:x C:τ_1
@@ -148,13 +152,11 @@
             ((C:τ_1 -> C:τ_2) -> (C:τ_1 -> C:τ_2))
             E:e_4)
 
-   ;; (where E:e_3 (substitute E:e_2 C:x E:e_1))
    --------------------------------------------------------------- "C-Mon-Func"
    (compile C:Γ
             (mon C:k C:l C:j (C:κ_1 -> C:κ_2) C:e)
             (C:τ_1 -> C:τ_2)
             ;; remember to evaluate the contract expression first
-            ;; ((λ C:x_1 (C:τ_1 -> C:τ_2) (λ C:x C:τ_1 E:e_3)) E:e_compiled))]
             (E:e_4 E:e_compiled))]
 
   ;; ((guard k l j (κ_1 ->i y κ_2) f) v)
@@ -181,16 +183,17 @@
             (C:τ_1 -> C:τ_2)
             (E:e_4 E:e_compiled))]
 
-  [(where C:x ,(variable-not-in (term (C:Γ C:e)) 'x))
+  [(where C:x ,(variable-not-in (term (C:Γ C:e C:κ_1 C:κ_2)) 'x))
    (compile C:Γ C:e (t C:τ_1 C:τ_2) E:e_3)
    (where C:Γ_0 (extend C:Γ C:x (t C:τ_1 C:τ_2)))
-   (compile C:Γ_0 (mon C:k C:l C:j C:κ_1 (injl C:x)) C:τ E:e_1)
-   (compile C:Γ_0 (mon C:k C:l C:j C:κ_2 (injr C:x)) C:τ E:e_2)
+   (compile C:Γ_0 (mon C:k C:l C:j C:κ_1 (injl C:x)) C:τ_1 E:e_1)
+   (compile C:Γ_0 (mon C:k C:l C:j C:κ_2 (injr C:x)) C:τ_2 E:e_2)
+   (where E:τ (translate-type (t C:τ_1 C:τ_2)))
    ------------------------------------------------------------------ "C-Mon-Tuple"
    (compile C:Γ
             (mon C:k C:l C:j (t C:κ_1 C:κ_2) C:e)
             (t C:τ_1 C:τ_2)
-            ((λ C:x (t C:τ_1 C:τ_2) (t E:e_1 E:e_2)) E:e_3))]
+            ((λ () C:x E:τ (t E:e_1 E:e_2)) E:e_3))]
 )
 
 (define-metafunction CompilerLocalHandler
@@ -210,9 +213,26 @@
   (apply-reduction-relation* ->effects (term (,compiled ()))))
 
 (module+ test
+  ;; Exact blamed party: flat and range blame the provider; domain blames
+  ;; the client.  Passing checks resume with the original value.
+  (for ([case (in-list
+               (list (list (term (mon provider client site (flat (λ x num false)) 7))
+                           (term ((blame (party "provider")) ())))
+                     (list (term ((mon provider client site
+                                       ((flat (λ x num false)) -> (flat (λ x num true)))
+                                       (λ x num x)) 7))
+                           (term ((blame (party "client")) ())))
+                     (list (term ((mon provider client site
+                                       ((flat (λ x num true)) -> (flat (λ x num false)))
+                                       (λ x num x)) 7))
+                           (term ((blame (party "provider")) ())))
+                     (list (term (mon provider client site (flat (λ x num true)) 7))
+                           (term (7 ())))))])
+    (test-equal (compile-and-run/local-handler (first case)) (list (second case))))
+
   ;; Compilation tests cover both passing and failing predicates.  A failure
-  ;; is represented by `false` at compile time; its `error` is decided by
-  ;; h-check at execution time.
+  ;; is represented by `false` at compile time; the local handler signals
+  ;; `blame` at execution time.
   (define-syntax-rule (compiles source expected-type)
     ;; `expected-type` documents the source result type for each regression.
     ;; The compiler rules are intentionally relational, so this test asks that
@@ -289,4 +309,23 @@
                 (list (term (7 ()))))
   (check-equal? (compile-and-run/local-handler
                  (term (mon k l j (flat (λ x num false)) 7)))
-                (list (term ((error 99991) ())))))
+                (list (term ((blame (party "k")) ()))))
+
+  ;; Recursive translation covers function, product, and reference annotations.
+  (check-equal? (term (translate-type ((t (num -> bool) (ref (bool -> num))) -> (num -> num))))
+                (term ((t (num -> () bool) (ref (bool -> () num))) -> () (num -> () num))))
+  (check-true (alpha-equivalent? CompilerLocalHandler
+                                 (term (run-compiler (λ f (num -> bool) f)))
+                                 (term (λ () f (num -> () bool) f))))
+  (check-true (alpha-equivalent? CompilerLocalHandler
+                                 (term (run-compiler (μ f (num -> bool) f)))
+                                 (term (μ f (num -> () bool) f))))
+  ;; Names used by the generated handler must not capture free source variables.
+  (check-equal? (compile-and-run/local-handler
+                 (term ((λ h num (mon k l j (flat (λ payload num (eq payload h))) h)) 7)))
+                (list (term (7 ()))))
+  (check-equal? (compile-and-run/local-handler
+                 (term (mon k l j
+                            (t (flat (λ x num true)) (flat (λ x bool true)))
+                            (t 7 true))))
+                (list (term ((t 7 true) ())))))
