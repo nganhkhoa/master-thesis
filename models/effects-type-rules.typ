@@ -16,85 +16,97 @@
 #let prf = [perform]
 
 #figure(
-  grid(
-    columns: 2,
-    column-gutter: 2em,
-    row-gutter: 3em,
-    align: center + horizon,
+  stack(
+    grid(
+      columns: 2,
+      column-gutter: 2em,
+      row-gutter: 3em,
+      align: center + horizon,
 
-    // Row 1
-    prooftree(rule(
-      name: "T-E-Var",
-      $x : tau in Gamma$,
-      type($Gamma$, $x$, $tau$, type: "val"),
-    )),
+      // Row 1
+      prooftree(rule(
+        name: "T-E-Var",
+        $x : tau in Gamma$,
+        type($Gamma$, $x$, $tau$, type: "val"),
+      )),
 
-    prooftree(rule(
-      name: "T-E-Abs",
-      type($Gamma\,x:tau_1$, $e$, $tau_2$, eff: $epsilon$),
-      type($Gamma$, $lambda^epsilon x:tau_1 . e$, $tau_1 attach(->, tr: epsilon) tau_2$, type: "val"),
-    )),
+      prooftree(rule(
+        name: "T-E-Abs",
+        type($Gamma\,x:tau_1$, $e$, $tau_2$, eff: $epsilon$),
+        type($Gamma$, $lambda^epsilon x:tau_1 . e$, $tau_1 attach(->, tr: epsilon) tau_2$, type: "val"),
+      )),
 
-    // Row 2
-    prooftree(rule(
-      name: "T-E-Val",
-      type($Gamma$, $v$, $tau$, type: "val"),
-      type($Gamma$, $v$, $tau$, eff: $epsilon$),
-    )),
+      // Row 2
+      prooftree(rule(
+        name: "T-E-Val",
+        type($Gamma$, $v$, $tau$, type: "val"),
+        type($Gamma$, $v$, $tau$, eff: $epsilon$),
+      )),
 
-    prooftree(rule(
-      name: "T-E-TAbs",
-      $k != lab$,
-      type($Gamma$, $v$, $tau$, type: "val"),
-      type($Gamma$, $Lambda alpha^k . v$, $forall alpha^k . tau$, type: "val"),
-    )),
+      prooftree(rule(
+        name: "T-E-TAbs",
+        $k != lab$,
+        type($Gamma$, $v$, $tau$, type: "val"),
+        type($Gamma$, $Lambda alpha^k . v$, $forall alpha^k . tau$, type: "val"),
+      )),
 
-    // Row 3
-    prooftree(rule(
-      name: "T-E-App",
-      type($Gamma$, $e_1$, $teff(tau_1,epsilon,tau_2)$, eff: $epsilon$),
-      type($Gamma$, $e_2$, $tau_1$, eff: $epsilon$),
-      type($Gamma$, $apply(e_1,e_2)$, $tau$, eff: $epsilon$),
-    )),
+      // Row 3
+      prooftree(rule(
+        name: "T-E-App",
+        type($Gamma$, $e_1$, $teff(tau_1,epsilon,tau_2)$, eff: $epsilon$),
+        type($Gamma$, $e_2$, $tau_1$, eff: $epsilon$),
+        type($Gamma$, $apply(e_1,e_2)$, $tau$, eff: $epsilon$),
+      )),
 
-    prooftree(rule(
-      name: "T-E-Tapp",
-      $attach(tack.r.short, br: "wf") tau : k$,
-      type($Gamma$, $e$, $forall alpha^k . tau_1$, eff: $epsilon$),
-      type($Gamma$, $e[tau]$, $tau_1[alpha:=tau]$, eff: $epsilon$),
-    )),
+      prooftree(rule(
+        name: "T-E-Tapp",
+        $attach(tack.r.short, br: "wf") tau : k$,
+        type($Gamma$, $e$, $forall alpha^k . tau_1$, eff: $epsilon$),
+        type($Gamma$, $e[tau]$, $tau_1[alpha:=tau]$, eff: $epsilon$),
+      )),
 
-    // Row 4
-    grid.cell(colspan: 2, prooftree(rule(
-      name: "T-E-Perform",
-      $op : forall alpha . tau_1 -> tau_2 in Sigma(l)$,
-      $alpha in.not "ftv"(Gamma)$,
-      type($Gamma$, $#ekw("perform")^epsilon op tau$, $teff(tau_1[alpha:=tau],chevron.l l|epsilon chevron.r,tau_2[alpha:=tau])$, type: "val"),
-    ))),
+      // Row 4
+      grid.cell(colspan: 2, prooftree(rule(
+        name: "T-E-Perform",
+        $op : forall alpha . tau_1 -> tau_2 in Sigma(l)$,
+        $alpha in.not "ftv"(Gamma)$,
+        type($Gamma$, $#ekw("perform")^epsilon op tau$, $teff(tau_1[alpha:=tau],chevron.l l|epsilon chevron.r,tau_2[alpha:=tau])$, type: "val"),
+      ))),
 
-    // Row 5
-    grid.cell(colspan: 2, prooftree(rule(
-      name: "T-E-Ops",
-      $op_i : forall alpha . tau_1 -> tau_2 in Sigma(l)$,
-      $alpha in.not "ftv"(epsilon,tau)$,
-      type($Gamma$, $f_i$, $forall alpha . teff(tau_1,epsilon,(teff((teff(tau_2,epsilon,tau)), epsilon, tau)))$, type: "val"),
-      type($Gamma$, ${op_1 -> f_1, dots, op_n -> f_n}$, $tau$, type: "ops", eff: $l | epsilon$),
-    ))),
+      // Row 5
+      grid.cell(colspan: 2, prooftree(rule(
+        name: "T-E-Ops-Deep",
+        $op_i : forall alpha . tau_1 -> tau_2 in Sigma(l)$,
+        $alpha in.not "ftv"(epsilon,tau)$,
+        $type(Gamma, f_i, forall alpha . teff(tau_1,epsilon,(teff((teff(tau_2,epsilon,tau)), epsilon, tau))), type: "val")$,
+        $type(Gamma, d : {op_1 -> f_1, dots, op_n -> f_n}, tau, type: "ops", eff: l | epsilon)$,
+      ))),
 
-    // Row 6
-    grid.cell(colspan: 2, prooftree(rule(
-      name: "T-E-Handler",
-      type($Gamma$, $h$, $tau$, type: "ops", eff: $l | epsilon$),
-      type($Gamma$, $handler(h, m: m, eff: epsilon)$, $teff((teff(unit,chevron.l l|epsilon chevron.r,tau)),epsilon,tau)$, type: "val"),
-    ))),
+      // Row 5
+      grid.cell(colspan: 2, prooftree(rule(
+        name: "T-E-Ops-Shallow",
+        $op_i : forall alpha . tau_1 -> tau_2 in Sigma(l)$,
+        $alpha in.not "ftv"(epsilon,tau)$,
+        $type(Gamma, f_i, forall alpha . teff(tau_1,epsilon,(teff((teff(tau_2,effs(l,epsilon),tau)), epsilon, tau))), type: "val")$,
+        $type(Gamma, s : {op_1 -> f_1, dots, op_n -> f_n}, tau, type: "ops", eff: l | epsilon)$,
+      ))),
 
-    // Row 7
-    grid.cell(colspan: 2, prooftree(rule(
-      name: "T-E-Handle",
-      type($Gamma$, $h$, $tau$, type: "ops", eff: $l | epsilon$),
-      type($Gamma$, $e$, $tau$, eff: $chevron.l l|epsilon chevron.r$),
-      type($Gamma$, $handle(h,e,m: m, eff: epsilon)$, $tau$, eff: $epsilon$),
-    )))
+      // Row 6
+      grid.cell(colspan: 2, prooftree(rule(
+        name: "T-E-Handler",
+        $type(Gamma, m : h, tau, type: "ops", eff: l | epsilon)$,
+        $type(Gamma, handler(h, m: m, eff: epsilon), teff((teff(unit,chevron.l l|epsilon chevron.r,tau)),epsilon,tau), type: "val")$,
+      ))),
+
+      // Row 7
+      grid.cell(colspan: 2, prooftree(rule(
+        name: "T-E-Handle",
+        $type(Gamma, m : h, tau, type: "ops", eff: l | epsilon)$,
+        $type(Gamma, e, tau, eff: chevron.l l|epsilon chevron.r)$,
+        $type(Gamma, handle(h,e,m: m, eff: epsilon), tau, eff: epsilon)$,
+      )))
+    ),
+    v(2em),
   ),
   caption: [Type Rules for #lange]
 ) <effects-type-rules>

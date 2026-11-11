@@ -82,6 +82,7 @@
 #let lab = ekw("lab")
 #let blab = ekw("blab")
 #let eblame(p) = $attach(ekw("error"), br: #p)$
+#let effextr(E) = $ceil.l #E ceil.r^l$
 // Every handler records its resumption mode: `d` (deep) or `s` (shallow).
 // Deep is the default so existing figures remain compact; a shallow use writes
 // `m: s`.  The rendered syntax always displays the mode as the first argument.
@@ -122,8 +123,8 @@
 #let cstepx1 = $attach(cstepx, tr:*)$
 #let estep = $arrow.r.double.long$
 #let estep1 = $attach(arrow.r.double.long, tr: *)$
-#let estepx = $arrow.r.filled$
-#let estepx1 = $attach(estepx, tr: *)$
+#let estepx = $thin arrow.r.filled thin$
+#let estepx1 = $thin attach(estepx, tr: *) thin$
 #let compiles-into = $arrow.r.tail$
 
 #let langb = $kw("Base")$

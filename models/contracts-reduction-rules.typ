@@ -49,6 +49,11 @@
         $e_1 cstepx e_2$,
         $E[e_1] cstep E[e_2]$
       )),
+      prooftree(rule(
+        name: [Step-C-Base],
+        $e_1 stepx e_2$,
+        $E[e_1] cstep E[e_2]$
+      )),
     ),
     v(1em),
   ),

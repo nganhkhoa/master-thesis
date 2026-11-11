@@ -39,7 +39,7 @@
         name: [Step-E-Perform-Shallow],
         $op in.not bop(E) and (op -> f) in h$,
         $op : forall alpha. tau_1 -> tau_2 in Sigma(l)$,
-        $k = lambda^epsilon x : tau_2[alpha:=tau] . E[x]$,
+        $k = lambda^effs(l,epsilon) x : tau_2[alpha:=tau] . E[x]$,
         $ehandle(h, E[eapply(eperform(op, tau: tau, eff: epsilon_p), v)], m: s, eff: epsilon) quad estepx quad apply(apply(f[tau], v), k)$
       )),
     ),
@@ -48,12 +48,17 @@
       prooftree(rule(
         name: [Step-E-Error],
         $E != square.stroked$,
-        $E[eblame(p)], sigma estep eblame(p), sigma$
+        $E[eblame(p)] estep eblame(p)$
       )),
       prooftree(rule(
         name: [Step-E],
         $e_1 estepx e_2$,
-        $E[e_1], sigma estep E[e_2], sigma$
+        $E[e_1] estep E[e_2]$
+      )),
+      prooftree(rule(
+        name: [Step-E-Base],
+        $e_1 stepx e_2$,
+        $E[e_1] estep E[e_2]$
       )),
     ),
     v(2em),

@@ -72,11 +72,11 @@
   [(in-handler _ _) #false])
 
 (define-metafunction Effects
-  find-op-in-handler : op h -> (τ f)
+  find-op-in-handler : op h -> (τ α f)
   [(find-op-in-handler
      op
      ((op_1 f_1) ... (op (Λ α (λ ε_1 x τ_1 (λ ε_2 k τ_2 e)))) (op_2 f_2) ...))
-   (τ_2 (Λ α (λ ε_1 x τ_1 (λ ε_2 k τ_2 e))))])
+   (τ_2 α (Λ α (λ ε_1 x τ_1 (λ ε_2 k τ_2 e))))])
 
 (define-metafunction Effects
   append-ops : (op ...) (op ...) -> (op ...)
@@ -183,9 +183,17 @@
   ;; Fallback
   [(types-equiv? _ _) #false])
 
-;; An operation clause receives the declared argument and a continuation from
-;; the declared result to the common handler result. Deep resumptions run
-;; outside the handled effect; shallow resumptions still have that effect.
+;; Deep resumptions use the outer row; shallow resumptions retain the handled effect.
+;; Effect rows contain concrete labels, so freshness only needs to inspect types.
+(define (free-type-vars t)
+  (match t
+    [`(∀ ,a ,body) (remove a (free-type-vars body))]
+    [`(,a -> ,_ ,b) (append (free-type-vars a) (free-type-vars b))]
+    [`(,a -> ,b) (append (free-type-vars a) (free-type-vars b))]
+    [`(t ,a ,b) (append (free-type-vars a) (free-type-vars b))]
+    [`(ref ,a) (free-type-vars a)]
+    [(? symbol? a) (if (member a '(num bool unit party)) '() (list a))]
+    [_ '()]))
 (define-judgment-form Effects
   #:mode (⊢_ops/mod I I I I O O O)
   #:contract (⊢_ops/mod modality Σ Γ ((op f) ...) τ effect ε)
@@ -216,6 +224,9 @@
                             (term (effect_rest ...))))
    (side-condition ,(andmap values (term ((same-effects? ε_rest ε_out) ...))))
    (side-condition ,(andmap values (term ((same-effects? ε_first ε_out) ...))))
+   (side-condition
+    ,(andmap (lambda (a) (not (member a (free-type-vars (term τ_out)))))
+             (term (α_f ...))))
    (where ε_resume (resume-effects modality effect_out ε_out))
    (side-condition ,(andmap values (term ((same-effects? ε_k ε_resume) ...))))
    --------------------------------------------------------- "T-E-Ops"
@@ -438,9 +449,11 @@
 
          (side-condition (term (unhandled op E)))
          (side-condition (term (in-handler op h)))
-         (where ((τ_arg -> ε_k τ_answer) f) (find-op-in-handler op h))
-         ;; A deep handler remains active while its continuation runs.
-         (where e (λ ε_k y (substitute τ_arg α τ) (d-handle ε h (in-hole E y))))
+         (where ((τ_arg -> ε_k τ_answer) α f) (find-op-in-handler op h))
+         ;; The deep continuation runs the reinstated handler in the outer row.
+         (where x_fresh ,(variable-not-in (term (E h τ)) 'resume))
+         (where e (λ ε x_fresh (substitute τ_arg α τ)
+                       (d-handle ε h (in-hole E x_fresh))))
          D-HANDLE-OP]
 
     [==> (s-handle ε h (in-hole E ((perform ε_1 op τ) v)))
@@ -448,9 +461,10 @@
 
          (side-condition (term (unhandled op E)))
          (side-condition (term (in-handler op h)))
-         (where ((τ_arg -> ε_k τ_answer) f) (find-op-in-handler op h))
+         (where ((τ_arg -> ε_k τ_answer) α f) (find-op-in-handler op h))
          ;; A shallow handler is consumed by its operation: no reinstallation.
-         (where e (λ ε_k y (substitute τ_arg α τ) (in-hole E y)))
+         (where x_fresh ,(variable-not-in (term (E h τ)) 'resume))
+         (where e (λ ε_k x_fresh (substitute τ_arg α τ) (in-hole E x_fresh)))
          S-HANDLE-OP]
 
     ;; A completed blame aborts all surrounding frames, including handlers.
@@ -506,6 +520,31 @@
      (d-handle () ping-deep ((perform () ping num) 1)) num ())))
   (check-false (judgment-holds (⊢_check Σ-ping ()
      (d-handle () ping-shallow ((perform () ping num) 1)) num ())))
+
+  ;; The operation rule instantiates the clause's bound type variable in the
+  ;; captured continuation. The continuation binder must also avoid capture.
+  (define-term Σ-poly ((poly-eff : (poly -> (∀ α (α -> () α))))))
+  (define-term poly-deep
+    ((poly (Λ α (λ () x α (λ () k (α -> () num) 7))))))
+  (define-term poly-shallow
+    ((poly (Λ α (λ () x α (λ () k (α -> (poly-eff) num) 7))))))
+  (for ([mode '(deep shallow)] [handle '(d-handle s-handle)]
+        [clause (list (term poly-deep) (term poly-shallow))])
+    (check-true (judgment-holds (⊢_ops/mod ,mode Σ-poly () ,clause num poly-eff ())))
+    (define start (term (,handle () ,clause
+                                  (add resume ((perform () poly num) 1)))))
+    (define steps (apply-reduction-relation ->effects (term (,start ()))))
+    (check-equal? (length steps) 1)
+    (match-define (list (list reduct _)) steps)
+    (match-define `(,_ (λ ,row ,binder num ,_)) reduct)
+    (check-not-equal? binder 'resume)
+    (check-equal? row (if (eq? mode 'deep) '() '(poly-eff))))
+
+  ;; Deep operation reduction preserves typing with its outer-row continuation.
+  (define deep-start (term (d-handle () poly-deep ((perform () poly num) 1))))
+  (check-true (judgment-holds (⊢_check Σ-poly () ,deep-start num ())))
+  (define deep-next (first (apply-reduction-relation ->effects (term (,deep-start ())))))
+  (check-true (judgment-holds (⊢_check Σ-poly () ,(first deep-next) num ())))
 
   ;; Labels are data, not variables; labels can also be computed at run time.
   (test-equal (judgment-holds (⊢ () () (party "client") τ ()) τ) (term (party)))
