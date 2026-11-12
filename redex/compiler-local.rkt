@@ -81,13 +81,6 @@
    ------------------------------------------------------------------------ "C-Lambda"
    (compile C:Γ (λ C:x C:τ_1 C:e) (C:τ_1 -> C:τ_2) (λ (𝒞) E:x E:τ_1 E:e_body))]
 
-  [(where C:Γ_new (extend C:Γ C:x C:τ))
-   (compile C:Γ_new C:e C:τ E:e_body)
-   (where E:x ,(term C:x))
-   (where E:τ (translate-type C:τ))
-   ------------------------------------------------------------------------ "C-Fix"
-   (compile C:Γ (μ C:x C:τ C:e) C:τ (μ E:x E:τ E:e_body))]
-
   [(compile C:Γ C:e_1 C:τ_1 E:e_1)
    (compile C:Γ C:e_2 C:τ_2 E:e_2)
    -------------------------------------------------------------- "C-Tuple"
@@ -317,9 +310,6 @@
   (check-true (alpha-equivalent? CompilerLocalHandler
                                  (term (run-compiler (λ f (num -> bool) f)))
                                  (term (λ (𝒞) f (num -> (𝒞) bool) f))))
-  (check-true (alpha-equivalent? CompilerLocalHandler
-                                 (term (run-compiler (μ f (num -> bool) f)))
-                                 (term (μ f (num -> (𝒞) bool) f))))
   ;; Names used by the generated handler must not capture free source variables.
   (check-equal? (compile-and-run/local-handler
                  (term ((λ h num (mon k l j (flat (λ payload num (eq payload h))) h)) 7)))

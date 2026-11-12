@@ -49,11 +49,6 @@
         $type(Gamma, lambda x : tau_1. e, tau_1 -> tau_2)$
       )),
       prooftree(rule(
-        name: [T-Fix],
-        $type(Gamma\, x : tau, e, tau)$,
-        $type(Gamma, mu x : tau. e, tau)$
-      )),
-      prooftree(rule(
         name: [T-App],
         $type(Gamma, e_1, tau_1 -> tau_2)$,
         $type(Gamma, e_2, tau_1)$,

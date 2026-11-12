@@ -16,7 +16,6 @@
       columns: (auto,auto,auto, auto),
       gutter: 1.5em,
       [$apply(lambda x. e, v)$], [$stepx$], [$e[x:=v]$], [S-App],
-      [$mu x. e$], [$stepx$], [$e[x:=mu x. e]$], [S-Fix],
       [$ife(trueb, e_1,e_2)$], [$stepx$], [$e_1$], [S-If-True],
       [$ife(falseb, e_1,e_2)$], [$stepx$], [$e_2$], [S-If-False],
       [$injl(tuple(v_1,v_2))$], [$stepx$], [$v_1$], [S-Inj-Left],

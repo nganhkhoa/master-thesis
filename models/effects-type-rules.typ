@@ -36,6 +36,12 @@
         type($Gamma$, $lambda^epsilon x:tau_1 . e$, $tau_1 attach(->, tr: epsilon) tau_2$, type: "val"),
       )),
 
+      prooftree(rule(
+        name: "T-E-Fix",
+        type($Gamma\,x:tau_1$, $v$, $tau$, type: "val"),
+        type($Gamma$, $mu x:tau_1 . v$, $tau$, type: "val"),
+      )),
+
       // Row 2
       prooftree(rule(
         name: "T-E-Val",
@@ -64,6 +70,8 @@
         type($Gamma$, $e$, $forall alpha^k . tau_1$, eff: $epsilon$),
         type($Gamma$, $e[tau]$, $tau_1[alpha:=tau]$, eff: $epsilon$),
       )),
+
+      [],
 
       // Row 4
       grid.cell(colspan: 2, prooftree(rule(

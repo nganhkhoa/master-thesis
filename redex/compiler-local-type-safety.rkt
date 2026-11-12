@@ -31,7 +31,6 @@
     (list (term (mon k l j (t (flat (λ x num (pos? x)))
                               (flat (λ b bool b))) (t 1 true)))
           (term (t num bool)) (list (term (t num bool))))
-    (list (term (μ x num x)) (term num) (list (term num)))
 ))
   ;; The shared checker currently rejects these nested generated frames.
   ;; T-{S,D}-Handle checks the body under (𝒞 𝒞); recursive handler

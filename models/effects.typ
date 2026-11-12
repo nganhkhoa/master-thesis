@@ -69,6 +69,7 @@
           Or[$...$][]
           Or[$lambda^epsilon x : tau. e$][]
           Or[$Lambda alpha^k. v$][]
+          Or[$mu x : tau. v$][]
           Or[$handler(h, m: m, eff: epsilon)$][]
           Or[$perform(op, tau: tau, eff: epsilon)$][]
           Or[$eblame(l)$][]

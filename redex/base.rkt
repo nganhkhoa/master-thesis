@@ -4,7 +4,7 @@
 (require redex/reduction-semantics)
 
 (define-language Base
-  (e ::= v (μ x τ e)
+  (e ::= v
          (t e e) (e e)
          (injl e) (injr e)
          (o e ...)
@@ -38,8 +38,7 @@
   (σ ::= ((loc v) ...))
 
   #:binding-forms
-  (λ x τ e #:refers-to x)
-  (μ x τ e #:refers-to x))
+  (λ x τ e #:refers-to x))
 
 (define-metafunction Base
   extend : Γ x τ -> Γ
@@ -181,10 +180,6 @@
          (substitute e x v)
          App]
 
-    [==> (μ x τ e)
-         (substitute e x (μ x τ e))
-         Fix]
-
     [==> (injl (t v_1 v_2)) v_1
          Proj-Left]
 
@@ -221,6 +216,9 @@
      (==> before after)]))
 
 (module+ test
+  ;; Recursive expressions are not part of Base.
+  (test-equal (redex-match? Base e (term (μ x num x))) #f)
+
   (test-->> ->base
             (term ( (add 1 2) () ))
             (term ( 3 () )))

@@ -57,7 +57,6 @@
     (list (term (mon k l j ((flat (λ b bool true)) ->i b
                             (flat (λ r bool (or b r))))
                      (λ b bool b))) (term (bool -> bool)))
-    (list (term (μ x num x)) (term num))
     ))
   (for ([case (in-list cases)])
     (match-define (list source expected-source) case)

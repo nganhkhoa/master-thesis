@@ -35,7 +35,7 @@
         }),
         Prod($e$, {
           Or[$n | b | unit | tuple(e,e) | x$][]
-          Or[$lambda x : tau . e | mu x : tau . e$][]
+          Or[$lambda x : tau . e$][]
           Or[$e + e | e - e | e and e | e or e$][]
           Or[$apply(e, e) | ife(e, e, e)$][]
           Or[$iszero(e)$][]

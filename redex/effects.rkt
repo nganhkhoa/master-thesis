@@ -18,11 +18,18 @@
          (τ -> ε τ)
          (∀ α τ))
 
+  ;; Recursive annotations have an explicit eliminable outer constructor.
+  (T ::= (τ -> ε τ) (∀ α τ))
+
   (h ::= ((op f) ...))
 
-  (f ::= (Λ α (λ ε x_1 τ_1 (λ ε k τ_2 e))))
+  ;; The two clause rows are compared extensionally by the typing rule;
+  ;; requiring the same syntax here rejects equivalent reordered rows.
+  (f ::= (Λ α (λ ε_1 x_1 τ_1 (λ ε_2 k τ_2 e))))
 
-  (e ::= ....
+  ;; Recursion is provided only by the value grammar below.
+  (e ::= v (t e e) (e e) (injl e) (injr e) (o e ...)
+         (if e e e) (new e) (get e) (set e e)
          ;; surface
          (λ ε x τ e) ;; added epsilon here
          (e τ)
@@ -33,6 +40,7 @@
          (blame e))
 
   (v ::= ....
+         (μ x T v)
          (party p)
          (λ ε x τ e)
          (Λ α v)
@@ -64,6 +72,7 @@
   #:binding-forms
   (∀ α τ #:refers-to α)
   (Λ α v #:refers-to α)
+  (μ x T v #:refers-to x)
   (λ ε x τ e #:refers-to x))
 
 (define-metafunction Effects
@@ -271,6 +280,12 @@
    ------------------------------------ "T-E-Tuple"
    (⊢_val Σ Γ (t v_1 v_2) (t τ_1 τ_2))]
 
+  [(where Γ_0 (extend Γ x T))
+   (⊢_val Σ Γ_0 v τ_body)
+   (side-condition ,(term (types-equiv? T τ_body)))
+   ------------------------------------ "T-E-Rec"
+   (⊢_val Σ Γ (μ x T v) T)]
+
   [(where Γ_0 (extend Γ x τ_1))
    (⊢ Σ Γ_0 e τ_2 ())
    ---------------------------------------- "T-E-Abs-pure"
@@ -314,11 +329,6 @@
 (define-judgment-form Effects
   #:mode (⊢ I I I O I)
   #:contract (⊢ Σ Γ e τ ε)
-
-  [(where Γ_0 (extend Γ x τ))
-   (⊢_check Σ Γ_0 e τ ε)
-   ------------------------- "T-E-Fix"
-   (⊢ Σ Γ (μ x τ e) τ ε)]
 
   [(⊢_val Σ Γ v τ)
    -------------- "T-E-Val"
@@ -420,6 +430,15 @@
 ;; just inherit reduction rules from base
 (define ->effects
   (extend-reduction-relation ->base Effects
+    ;; Recursive values unfold only when eliminated.
+    [==> ((μ x (τ_1 -> ε τ_2) v_body) v_arg)
+         ((substitute v_body x (μ x (τ_1 -> ε τ_2) v_body)) v_arg)
+         Fix]
+
+    [==> ((μ x (∀ α τ_body) v_body) τ_arg)
+         ((substitute v_body x (μ x (∀ α τ_body) v_body)) τ_arg)
+         REC-TAPP]
+
     [==> ((λ ε x τ e) v)
          (substitute e x v)
          APP-EFFECT]
@@ -483,10 +502,61 @@
 (module+ test
   (require rackunit)
 
-  ;; Fixed points check their body at the declared type, including blame.
-  (check-true (judgment-holds (⊢_check () () (μ x num x) num ())))
-  (check-true (judgment-holds (⊢_check () () (μ x num (blame (party "p"))) num ())))
-  (check-false (judgment-holds (⊢_check () () (μ x num true) num ())))
+  ;; Recursion is a value, restricted to arrow/forall annotations and bodies
+  ;; that are values; it unfolds only in the corresponding elimination form.
+  (define-term rec-id (μ f (num -> () num) (λ () x num x)))
+  (define-term rec-poly (μ f (∀ α (α -> () α)) (Λ α (λ () x α x))))
+  (check-true (redex-match? Effects v (term rec-id)))
+  (check-false (redex-match? Effects e (term (μ x num x))))
+  (check-false (redex-match? Effects e (term (μ f (num -> () num) (blame (party "p"))))))
+  (check-true (judgment-holds (⊢_val () () rec-id (num -> () num))))
+  (check-true (judgment-holds (⊢_val () () rec-poly (∀ α (α -> () α)))))
+  (check-false (judgment-holds (⊢_val () ()
+    (μ f (num -> () num) (λ () x num true)) (num -> () num))))
+  (check-equal? (apply-reduction-relation ->effects (term (rec-id ()))) '())
+  (test-->> ->effects (term ((rec-id 7) ())) (term (7 ())))
+  (test-->> ->effects (term (((rec-poly num) 7) ())) (term (7 ())))
+  ;; Self-reference is substituted capture-avoidantly, and recursion can
+  ;; itself be the body of a recursive value (including a diverging one).
+  (check-true (judgment-holds (⊢_val () ()
+    (μ f (num -> () num) f) (num -> () num))))
+  (define looping-rec (term (((μ f (num -> () num) f) 1) ())))
+  (define looping-steps (apply-reduction-relation ->effects looping-rec))
+  (check-equal? (length looping-steps) 1)
+  (check-true (alpha-equivalent? Effects (first looping-steps) looping-rec))
+  (test-->> ->effects
+    (term (((μ f (num -> () num)
+               (λ () x num (if (zero? x) 0 (f (sub x 1))))) 2) ()))
+    (term (0 ())))
+  ;; The recursive binder scopes over the body, not its annotation.  Test
+  ;; substitution through it with a colliding free variable and type name.
+  (define rec-capture-step
+    (first (apply-reduction-relation ->effects
+      (term (((λ () x (num -> () num)
+                 (μ y (num -> () num) (λ () z num x))) y) ())))))
+  (check-true (alpha-equivalent? Effects rec-capture-step
+    (term ((μ fresh (num -> () num) (λ () z num y)) ()))))
+  (define rec-type-step
+    (first (apply-reduction-relation ->effects
+      (term (((Λ α (μ x (α -> () α) (λ () z α x))) num) ())))))
+  (check-true (alpha-equivalent? Effects rec-type-step
+    (term ((μ x (num -> () num) (λ () z num x)) ()))))
+  ;; A recursive value with a free variable under a same-named lambda must
+  ;; remain free after self-unfolding.
+  (define unfold-capture-step
+    (first (apply-reduction-relation ->effects
+      (term (((μ f (num -> () num)
+                  (λ () y num (if true w ((λ () w num (f y)) 0)))) 1) ())))))
+  (check-true (alpha-equivalent? Effects unfold-capture-step
+    (term (((λ () y num
+               (if true w ((λ () fresh num
+                              ((μ f (num -> () num)
+                                  (λ () y num (if true w ((λ () w num (f y)) 0)))) y)) 0)))
+            1) ()))))
+  ;; A recursive value in an argument is passed without first unfolding it.
+  (test-->> ->effects
+            (term (((λ () f (num -> () num) 9) rec-id) ()))
+            (term (9 ())))
 
   (define-term Σ-check
     ((con : (check -> (∀ α ((t party (t (α -> (con) bool) α)) -> () α))))))
@@ -499,6 +569,22 @@
   (define-term check-bad-result
     ((check (Λ β (λ (con) x (t party (t (β -> (con) bool) β))
                       (λ (con) k (bool -> (con) num) (k true)))))))
+  ;; Substitution through a handler clause must respect all three binders,
+  ;; while preserving the restricted f grammar.
+  (define handler-capture-step
+    (first (apply-reduction-relation ->effects
+      (term (((λ () x num
+                 (d-handler () ((check (Λ α (λ () y num (λ () k num x)))))))
+              y) ())))))
+  (check-true (redex-match? Effects v (first handler-capture-step)))
+  (check-true (alpha-equivalent? Effects handler-capture-step
+    (term ((d-handler () ((check (Λ α (λ () fresh num (λ () k num y)))))) ()))))
+  ;; Equivalent but syntactically different clause effect rows are allowed.
+  (define-term check-reordered
+    ((check (Λ β (λ (con other) x (t party (t (β -> (con) bool) β))
+                      (λ (other con) k (β -> (con other) num) (k (injr (injr x)))))))))
+  (check-true (redex-match? Effects h (term check-reordered)))
+  (check-true (judgment-holds (⊢_ops/mod deep Σ-check () check-reordered num con (other con))))
   (check-true (judgment-holds (⊢_ops/mod deep Σ-check () check-deep num con (con))))
   (check-false (judgment-holds (⊢_ops/mod deep Σ-check () check-bad-arg num con (con))))
   (check-false (judgment-holds (⊢_ops/mod deep Σ-check () check-bad-result num con (con))))

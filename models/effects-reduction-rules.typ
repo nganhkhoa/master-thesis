@@ -22,9 +22,24 @@
     grid(
       columns: (auto,auto,auto, auto),
       gutter: 1.5em,
+      // [$apply((mu x. v_1),v_2)$], [$estepx$], [$apply(v_1[x:=mu x. v_1],v_2)$], [Step-E-Fix],
+      // [$(mu x. v)[tau]$], [$estepx$], [$v[x:=mu x.v][tau]$], [Step-E-TApp-Fix],
       [$(Lambda alpha^k. v)[tau]$], [$estepx$], [$v[alpha:=tau]$], [Step-E-TApp],
       [$apply(handler(h, m: m, eff: epsilon), v)$],[$estepx$],[$handle(h, apply(v,()), m: m, eff: epsilon)$], [Step-E-Handler],
       [$handle(h, v, m: m, eff: epsilon)$],[$estepx$],[$v$], [Step-E-Return],
+    ),
+    v(2em),
+    rule-set(
+      prooftree(rule(
+        name: [Step-E-Fix],
+        $tau = teff(tau_1, epsilon, tau_2)$,
+        $apply((mu x : tau . v_1),v_2) estepx apply(v_1[x:=mu x : tau . v_1],v_2)$
+      )),
+      prooftree(rule(
+        name: [Step-E-TApp-Fix],
+        $tau_1 = forall alpha^k . tau_3$,
+        $(mu x : tau_1 . v)[tau_2] estepx v[x:=mu x : tau_1. v][tau_2]$
+      )),
     ),
     v(2em),
     rule-set(

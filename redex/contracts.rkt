@@ -95,6 +95,8 @@
      (==> before after)]))
 
 (module+ test
+  ;; Contracts inherits Base's nonrecursive expression grammar.
+  (test-equal (redex-match? Contracts e (term (μ x num x))) #f)
   (test-match Contracts e (term (λ x num true)))
   (test-match Contracts κ (term (flat (λ x num true))))
   (test-match Contracts
