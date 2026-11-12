@@ -6,8 +6,7 @@
 (require redex/reduction-semantics rackunit)
 
 (require "contracts.rkt")
-;; Each flat monitor installs a recursive wrapper around a shallow handler.
-;; The wrapper reinstalls the handler when its captured continuation resumes.
+;; Every flat monitor installs a shallow handler at its point of use.
 (require "effects.rkt")
 
 (define-union-language CompilerLocalHandler (C: Contracts) (E: Effects))
@@ -21,12 +20,13 @@
   lookup : C:Γ C:x -> C:τ
   [(lookup ((C:x_1 C:τ_1) ... (C:x C:τ) (C:x_2 C:τ_2) ...) C:x) C:τ])
 
-;; Local checks are handled at their point of use, so translated source
-;; functions have no latent effects.  Translate annotations recursively.
+;; Use the conservative 𝒞 row throughout: a shallow resumption retains 𝒞,
+;; so both modalities need this outer row for identical, typable clauses.
+;; Translate annotations recursively.
 (define-metafunction CompilerLocalHandler
   translate-type : C:τ -> E:τ
   [(translate-type (C:τ_1 -> C:τ_2))
-   ((translate-type C:τ_1) -> () (translate-type C:τ_2))]
+   ((translate-type C:τ_1) -> (𝒞) (translate-type C:τ_2))]
   [(translate-type (t C:τ_1 C:τ_2))
    (t (translate-type C:τ_1) (translate-type C:τ_2))]
   [(translate-type (ref C:τ)) (ref (translate-type C:τ))]
@@ -79,7 +79,7 @@
    (where E:x ,(term C:x))
    (where E:τ_1 (translate-type C:τ_1))
    ------------------------------------------------------------------------ "C-Lambda"
-   (compile C:Γ (λ C:x C:τ_1 C:e) (C:τ_1 -> C:τ_2) (λ () E:x E:τ_1 E:e_body))]
+   (compile C:Γ (λ C:x C:τ_1 C:e) (C:τ_1 -> C:τ_2) (λ (𝒞) E:x E:τ_1 E:e_body))]
 
   [(where C:Γ_new (extend C:Γ C:x C:τ))
    (compile C:Γ_new C:e C:τ E:e_body)
@@ -122,26 +122,26 @@
    (compile C:Γ C:e_2 C:τ E:e_2)
    (where E:p ,(symbol->string (term C:k)))
    (where E:τ (translate-type C:τ))
-   ;; Avoid capturing source variables in either the handler or its thunks.
-   (where (E:x_h E:x_payload E:x_k E:x_ignored E:x_resume E:α)
+   ;; The operation clause runs outside the handler.  For shallow handling,
+   ;; its continuation has row (𝒞); giving both modalities that same outer
+   ;; row makes their generated clauses identical (rows are sets).
+   ;; Keep the original payload inside the direct handler frame.
+   (where (E:x_payload E:x_k E:α)
           ,(variables-not-in (term (C:Γ C:e_1 C:e_2 E:e_1 E:e_2 E:τ))
-                             '(h payload k ignored resume β)))
+                             '(payload k β)))
    ----------------------------------------------------- "C-Mon-Flat"
-   ;; Shallow resumptions retain 𝒞, so recursively handle the resumed thunk.
    (compile C:Γ (mon C:k C:l C:j (flat C:e_1) C:e_2) C:τ
-            ((μ E:x_h ((unit -> (𝒞) E:τ) -> () E:τ)
-               (s-handler ()
-                 ((𝒞
-                   (Λ E:α
-                     (λ () E:x_payload (t party (t (E:α -> () bool) E:α))
-                       (λ () E:x_k (E:α -> (𝒞) E:τ)
-                         (if ((injl (injr E:x_payload)) (injr (injr E:x_payload)))
-                             (E:x_h (λ (𝒞) E:x_resume unit
-                                      (E:x_k (injr (injr E:x_payload)))))
-                             (blame (injl E:x_payload))))))))))
-             (λ (𝒞) E:x_ignored unit
-               ((perform () 𝒞 E:τ) (t (party E:p) (t E:e_1 E:e_2))))))]
+            (s-handle (𝒞)
+              ((𝒞
+                (Λ E:α
+                  (λ (𝒞) E:x_payload (t party (t (E:α -> (𝒞) bool) E:α))
+                    (λ (𝒞) E:x_k (E:α -> (𝒞) E:τ)
+                      (if ((injl (injr E:x_payload)) (injr (injr E:x_payload)))
+                          (E:x_k (injr (injr E:x_payload)))
+                          (blame (injl E:x_payload))))))))
+              ((perform () 𝒞 E:τ) (t (party E:p) (t E:e_1 E:e_2)))))]
 
+  ;; GUARD-FUNC swaps the domain parties, just like GUARD-DEP.
   [(compile C:Γ C:e (C:τ_1 -> C:τ_2) E:e_compiled)
    (where (C:x C:x_1) ,(variables-not-in (term (C:Γ C:e C:κ_1 C:κ_2)) '(x x_1)))
    (compile C:Γ
@@ -193,7 +193,7 @@
    (compile C:Γ
             (mon C:k C:l C:j (t C:κ_1 C:κ_2) C:e)
             (t C:τ_1 C:τ_2)
-            ((λ () C:x E:τ (t E:e_1 E:e_2)) E:e_3))]
+            ((λ (𝒞) C:x E:τ (t E:e_1 E:e_2)) E:e_3))]
 )
 
 (define-metafunction CompilerLocalHandler
@@ -207,14 +207,14 @@
    (where (C:τ_out C:τ_extra ...) ,(judgment-holds (compile () C:e_in C:τ E:e) C:τ))
    (side-condition (= 1 (length (term (C:τ_out C:τ_extra ...)))))])
 
-;; No wrapper is needed: every flat monitor contains its own handler.
+;; No recursive or global wrapper is needed: each flat monitor has a frame.
 (define (compile-and-run/local-handler source)
   (define compiled (term (run-compiler ,source)))
   (apply-reduction-relation* ->effects (term (,compiled ()))))
 
 (module+ test
-  ;; Exact blamed party: flat and range blame the provider; domain blames
-  ;; the client.  Passing checks resume with the original value.
+  ;; GUARD-FUNC blames the client for domain failures and the provider for range failures.
+  ;; Passing checks resume with the original value.
   (for ([case (in-list
                (list (list (term (mon provider client site (flat (λ x num false)) 7))
                            (term ((blame (party "provider")) ())))
@@ -313,13 +313,13 @@
 
   ;; Recursive translation covers function, product, and reference annotations.
   (check-equal? (term (translate-type ((t (num -> bool) (ref (bool -> num))) -> (num -> num))))
-                (term ((t (num -> () bool) (ref (bool -> () num))) -> () (num -> () num))))
+                (term ((t (num -> (𝒞) bool) (ref (bool -> (𝒞) num))) -> (𝒞) (num -> (𝒞) num))))
   (check-true (alpha-equivalent? CompilerLocalHandler
                                  (term (run-compiler (λ f (num -> bool) f)))
-                                 (term (λ () f (num -> () bool) f))))
+                                 (term (λ (𝒞) f (num -> (𝒞) bool) f))))
   (check-true (alpha-equivalent? CompilerLocalHandler
                                  (term (run-compiler (μ f (num -> bool) f)))
-                                 (term (μ f (num -> () bool) f))))
+                                 (term (μ f (num -> (𝒞) bool) f))))
   ;; Names used by the generated handler must not capture free source variables.
   (check-equal? (compile-and-run/local-handler
                  (term ((λ h num (mon k l j (flat (λ payload num (eq payload h))) h)) 7)))

@@ -50,7 +50,7 @@
           Or[$...$][]
           Or[$lambda^epsilon x : tau. e$][]
           Or[$e[tau]$][]
-          Or[$handle(h, e, m: m)$][]
+          Or[$handle(h, e, eff:epsilon, m: m)$][]
           Or[$eblame(p)$][]
         }),
         Prod($h$, {

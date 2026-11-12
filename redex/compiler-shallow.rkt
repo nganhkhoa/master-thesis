@@ -157,6 +157,7 @@
    (compile C:Γ (mon C:k C:l C:j (flat C:e_1) C:e_2) C:τ
             ((perform () 𝒞 E:τ) (t (party E:p) (t E:e_1 E:e_2))))]
 
+  ;; GUARD-FUNC swaps the domain parties, just like GUARD-DEP.
   [(compile C:Γ C:e (C:τ_1 -> C:τ_2) E:e_compiled)
    (where (C:x C:x_1) ,(variables-not-in (term (C:Γ C:e C:κ_1 C:κ_2)) '(x x_1)))
 
@@ -372,8 +373,8 @@
            (lambda (a b) (alpha-equivalent? Effects a b))))
   (check-equal? (term (translate-type (ref (t (num -> bool) unit))))
                 (term (ref (t (num -> (con) bool) unit))))
-  ;; Exact blamed party: flat and range blame the provider; domain blames
-  ;; the client.  Passing checks resume with the original value.
+  ;; GUARD-FUNC blames the client for domain failures and the provider for range failures.
+  ;; Passing checks resume with the original value.
   (for ([case (in-list
                (list (list (term (mon provider client site (flat (λ x num false)) 7))
                            (term ((blame (party "provider")) ())))

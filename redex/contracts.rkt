@@ -49,7 +49,7 @@
          MON-GUARD]
 
     [==> ((guard k l j (κ_1 -> κ_2) v_1) v_2)
-         (mon k l j κ_2 (v_1 (mon k l j κ_1 v_2)))
+         (mon k l j κ_2 (v_1 (mon l k j κ_1 v_2)))
          GUARD-FUNC]
 
     [==> ((guard k l j (κ_1 ->i x κ_2) v_1) v_2)

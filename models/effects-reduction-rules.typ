@@ -33,14 +33,14 @@
         $op in.not bop(E) and (op -> f) in h$,
         $op : forall alpha. tau_1 -> tau_2 in Sigma(l)$,
         $k = lambda^epsilon x : tau_2[alpha:=tau] . ehandle(h, E[x], m: d, eff: epsilon)$,
-        $ehandle(h, E[eapply(eperform(op, tau: tau, eff: epsilon_p), v)], m: d, eff: epsilon) quad estepx quad apply(apply(f[tau], v), k)$
+        $ehandle(h, E[eapply(perform(op, tau: tau), v)], m: d, eff: epsilon) quad estepx quad apply(apply(f[tau], v), k)$
       )),
       prooftree(rule(
         name: [Step-E-Perform-Shallow],
         $op in.not bop(E) and (op -> f) in h$,
         $op : forall alpha. tau_1 -> tau_2 in Sigma(l)$,
         $k = lambda^effs(l,epsilon) x : tau_2[alpha:=tau] . E[x]$,
-        $ehandle(h, E[eapply(eperform(op, tau: tau, eff: epsilon_p), v)], m: s, eff: epsilon) quad estepx quad apply(apply(f[tau], v), k)$
+        $ehandle(h, E[eapply(perform(op, tau: tau), v)], m: s, eff: epsilon) quad estepx quad apply(apply(f[tau], v), k)$
       )),
     ),
     v(2em),
