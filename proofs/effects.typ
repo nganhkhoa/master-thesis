@@ -61,7 +61,7 @@ First we redefine some "operations" and rules that change when when adding the a
 
 - $ceil.l E ceil.r^l$ extracts all labels $l$ from a context in reverse order:
 
-  $ceil.l F_0 dot handle(h_1, dot,m:m) dot F_1 dot ... dot handle(h_n, dot,m:m) dot F_n ceil.r^l = chevron.l l_n, ..., l_1 chevron.r "iff" h_i : Sigma(l_i)$
+  $ceil.l F_0 dot handle(h_1, dot,m:m) dot F_1 dot ... dot handle(h_n, dot,m:m) dot F_n ceil.r^l eq.delta chevron.l l_n, ..., l_1 chevron.r "iff" h_i : Sigma(l_i)$
 
   Adapted to include both shallow and deep handle.
 
@@ -94,23 +94,120 @@ First we redefine some "operations" and rules that change when when adding the a
 
 #lemma(title: "Evaluation Context Typing")[
 
-If $type(dot, E, tau_1 -> tau, eff:epsilon,type:"ec")$ and $type(dot,e,tau_1,eff:effs(effextr(E),epsilon))$ then $type(dot,E[e],tau,eff:epsilon)$
+If $type(Gamma, E, tau_1 -> tau, eff:epsilon,type:"ec")$ and $type(Gamma,e,tau_1,eff:effs(effextr(E),epsilon))$ then $type(Gamma,E[e],tau,eff:epsilon)$
 ] <lange-evaluation-context-typing>
+
+#proof[
+
+Induction on the evaluation context typing $type(Gamma, E, tau_1 -> tau, eff:epsilon, type:"ec")$.
+
+- Case $E = square.stroked$ trivial
+
+- Case $E = apply(E_0,e_0)$
+
+  #derivation((
+    ($type(Gamma, apply(E_0,e_0), tau_1 -> tau, eff:epsilon, type:"ec")$, [Given]),
+    ($type(Gamma, E_0, tau_1 -> teff(tau_3, epsilon, tau), eff:epsilon, type:"ec")$, [#rn("CAPP1")]),
+    ($type(Gamma, e_0, tau_3, eff:epsilon)$, [#rn("CAPP1")]),
+    ($effextr(E) eq.delta effextr(apply(E_0,e_0)) eq.delta effextr(E_0)$, []),
+    ($type(Gamma,e,tau_1,eff:effs(effextr(E_0),epsilon))$, [Given]),
+    ($type(Gamma, E_0[e], teff(tau_3, epsilon, tau), eff:epsilon)$, [I.H.]),
+    ($type(Gamma, apply(E_0[e], e_0), tau, eff:epsilon)$, [#rn("T-E-App")]),
+  ))
+
+- Case $E = handle(h, E_0, eff:epsilon,m:m)$
+
+  #derivation((
+    ($type(Gamma, handle(h, E_0, eff:epsilon,m:m), tau_1 -> tau, eff:epsilon, type:"ec")$, [Given]),
+    ($type(Gamma, m : h, tau, eff:l | epsilon, type:"ops")$, [#rn("CHANDLE")]),
+    ($type(Gamma, E_0, tau_1 -> tau, eff:effs(l,epsilon), type:"ec")$, [#rn("CHANDLE")]),
+    ($effextr(E) eq.delta effextr(handle(h, E_0, eff:epsilon,m:m)) eq.delta effs(l,effextr(E_0)) = effs(effextr(E_0), l)$, []),
+    ($type(Gamma,e,tau_1,eff:effs(effextr(E_0),l,epsilon))$, [Given]),
+    ($type(Gamma, E_0[e], tau_1 -> tau, eff:effs(l,epsilon))$, [I.H.]),
+    ($type(Gamma, handle(h, E_0[e], eff:epsilon, m:m), tau, eff:epsilon)$, [#rn("T-E-Handle")]),
+  ))
+
+- Other cases follow similarly.
+]
 
 #lemma(title: "Effect corresponds to the evaluation context")[
 
 If $type(dot,E[e],tau,eff:epsilon)$ then there exists $tau_1$ such that $type(dot,E,tau_1->tau,eff:epsilon,type:"ec")$ and $type(dot,e,tau_1,eff:effs(effextr(E),epsilon))$
 ] <lange-effect-correspondence>
 
+#proof[
+
+By induction on $E$.
+
+- Case $E = square.stroked$ trivial. $tau_1 = tau$
+
+- Case $E = apply(E_0,e_0)$
+
+  #derivation((
+    ($type(dot, (apply(E_0,e_0))[e],tau,eff:epsilon)$, [Given]),
+    ($type(dot, apply(E_0[e],e_0),tau,eff:epsilon)$, []),
+    ($type(dot, E_0[e],tau_2 -> tau,eff:epsilon)$, [#rn("T-E-App")]),
+    ($type(dot, e_0,tau_2,eff:epsilon)$, [#rn("T-E-App")]),
+    ($type(dot, E_0,tau_3 -> (tau_2 -> tau),eff:epsilon,type:"ec")$, [I.H.]),
+    ($type(dot, e, tau_3, eff:effs(effextr(E_0),epsilon))$, [I.H.]),
+    ($effextr(E) eq.delta effextr(apply(E_0,e_0)) eq.delta effextr(E_0)$, []),
+    ($type(dot, e, tau_3, eff:effs(effextr(E),epsilon))$, [I.H.]),
+    ($type(dot, E,tau_3 -> tau,eff:epsilon,type:"ec")$, [#rn("CAPP1")]),
+    ($tau_1 = tau_3$, [Choose]),
+  ))
+
+- Case $E = handle(h, E_0, eff:epsilon,m:m)$
+
+  #derivation((
+    ($type(dot, handle(h, E_0, eff:epsilon,m:m)[e],tau,eff:epsilon)$, [Given]),
+    ($type(dot, handle(h, E_0[e], eff:epsilon,m:m),tau,eff:epsilon)$, []),
+    ($type(dot, m : h, tau, eff:l | epsilon, type:"ops")$, [#rn("T-E-Handle")]),
+    ($type(dot, E_0[e],tau,eff:effs(l,epsilon))$, [#rn("T-E-Handle")]),
+    ($type(dot, E_0,tau_2 -> tau,eff:effs(l,epsilon),type:"ec")$, [I.H.]),
+    ($type(dot, e,tau_2,eff:effs(effextr(E_0),l,epsilon))$, [I.H.]),
+    ($effextr(E) eq.delta effextr(handle(h, E_0, eff:epsilon,m:m)) eq.delta effs(l,effextr(E_0)) = effs(effextr(E_0), l)$, []),
+    ($type(dot, e,tau_2,eff:effs(effextr(E),epsilon))$, [I.H.]),
+    ($type(dot, handle(h, E_0,eff:epsilon,m:m),tau_2 -> tau,eff:epsilon,type:"ec")$, [#rn("CHANDLE")]),
+    ($tau_1 = tau_2$, [Choose]),
+  ))
+
+- Other cases follow similarly.
+]
+
 #lemma(title: "Well typed operations are handled")[
 
 If $type(dot,E[apply(perform(op,tau:overline(tau)),v)],tau,eff:mteff)$ then $E$ has the form $E_1 dot handle(h,dot,m:m,eff:epsilon) dot E_2$ with $op in.not bop(E_2)$ and $op -> f in h$.
+] <lange-well-typed-handled>
+
+#proof[
+  #derivation((
+    ($type(dot,E[apply(perform(op,tau:overline(tau)),v)],tau,eff:mteff)$, [Given]),
+    ($type(dot,apply(perform(op,tau:overline(tau)),v),tau_1,eff:effextr(E))$, [@lange-effect-correspondence]),
+    ($type(dot,perform(op,tau:overline(tau)),teff(tau_2,effextr(E),tau_1),eff:effextr(E))$, [#rn("T-E-App")]),
+    ($type(dot,perform(op,tau:overline(tau)),teff(tau_2,effextr(E),tau_1),type:"val")$, [#rn("T-E-Val")]),
+    ($l in effextr(E)$, [$effextr(E) = effs(l,epsilon')$]),
+    ($E = E_1 dot handle(h,dot,eff:epsilon) dot E_2$, [Definition of $effextr(E)$]),
+    ($op -> f in h$, []),
+    ($op in.not bop(E_2)$, [Let $handle(h,dot,eff:epsilon)$ be the inner most one]),
+  ))
 ]
 
 #lemma(title: "Effects types are meaningful")[
 
 If $type(dot,E[apply(perform(op,tau:overline(tau)),v)],tau,eff:epsilon)$ with $op in.not bop(E)$, then $op in Sigma(l)$ and $l in epsilon$, i.e. effect types cannot be discarded without a handler.
 ] <lange-meaningful-effect-type>
+
+#proof[
+  #derivation((
+    ($type(dot,E[apply(perform(op,tau:overline(tau)),v)],tau,eff:epsilon)$, [Given]),
+    ($type(dot,apply(perform(op,tau:overline(tau)),v),tau_1,eff:effs(effextr(E),epsilon))$, [@lange-effect-correspondence]),
+    ($type(dot,perform(op,tau:overline(tau)),teff(tau_2,effs(effextr(E),epsilon),tau_1),eff:effs(effextr(E),epsilon))$, [#rn("T-E-App")]),
+    ($type(dot,perform(op,tau:overline(tau)),teff(tau_2,effs(effextr(E),epsilon),tau_1),type:"val")$, [#rn("T-E-Val")]),
+    ($l in effs(effextr(E),epsilon)$, [$effs(effextr(E),epsilon) = effs(l,epsilon')$]),
+    ($op in.not bop(E)$, [Given]),
+    ($l in epsilon$, []),
+  ))
+]
 
 == Type Safety Theorem
 
@@ -297,18 +394,30 @@ If $type(dot, e_1, tau, eff: epsilon)$ and $e_1 estepx e_2$ then $type(dot, e_2,
       ($type(dot, v[alpha:=tau_0], tau, eff: epsilon)$, rn("T-E-Val")),
     ))
 
-  - Case $mu x : tau. e estepx e[x:=mu x : tau. e]$.
-
-    TODO: Fix this, redex/value problem. Cannot substitute.
+  - Case $apply((mu x : tau_1. v_1),v_2) estepx apply(v_1[x:=mu x : tau_1. v_1],v_2)$, where $tau_1 = teff(tau_2,epsilon,tau)$.
 
     #derivation((
-      ($type(dot, mu x: tau. e, tau, eff:epsilon)$, [Given]),
-      // ($type(dot, mu x: tau. e, tau, type: "val")$, [#rn("T-E-Val")]),
-      // ($type(dot, mu x : tau_f. v, tau_f, type: "val")$, [#rn("T-E-App"), #rn("T-E-Val")]),
-      // ($type(dot, v_0, tau_1, eff: epsilon)$, rn("T-E-App")),
-      // ($type(x : tau_f, v, tau_f, type: "val")$, rn("T-E-Fix")),
-      // ($type(dot, v[x:=mu x : tau_f. v], tau_f, type: "val")$, [@lange-var-substitution]),
-      // ($type(dot, apply(v[x:=mu x : tau_f. v], v_0), tau, eff: epsilon)$, [#rn("T-E-Val"), #rn("T-E-App")]),
+      ($type(dot, apply((mu x : tau_1. v_1),v_2), tau, eff:epsilon)$, [Given]),
+      ($type(dot, mu x : tau_1. v_1, tau_1, eff:epsilon)$, [#rn("T-E-App")]),
+      ($type(dot, v_2, tau_2, eff:epsilon)$, [#rn("T-E-App")]),
+      ($type(dot, mu x : tau_1. v_1, tau_1, type:"val")$, [#rn("T-E-Val")]),
+      ($type(x : tau_1, v_1, tau_1, type:"val")$, [#rn("T-E-Fix")]),
+      ($type(dot, v_1[x:=mu x : tau_1 . v_1], tau_1, type:"val")$, [@lange-var-substitution]),
+      ($type(dot, v_1[x:=mu x : tau_1 . v_1], tau_1, eff:epsilon)$, rn("T-E-Val")),
+      ($type(dot, apply(v_1[x:=mu x : tau_1 . v_1],v_2), tau, eff:epsilon)$, rn("T-E-App")),
+    ))
+
+  - Case $(mu x : tau_1. v)[tau_2] estepx (v[x:=mu x : tau_1. v])[tau_2]$, where $tau_1 = forall alpha^k. tau_3$.
+
+    #derivation((
+      ($type(dot, (mu x : tau_1. v)[tau_2], tau_3[alpha:=tau_2], eff:epsilon)$, [Given]),
+      ($attach(tack.r.short, br: "wf") tau_2 : k$, [#rn("T-E-Tapp")]),
+      ($type(dot, mu x : tau_1. v, tau_1, eff:epsilon)$, [#rn("T-E-Tapp")]),
+      ($type(dot, mu x : tau_1. v, tau_1, type:"val")$, [#rn("T-E-Val")]),
+      ($type(x : tau_1, v, tau_1, type:"val")$, [#rn("T-E-Fix")]),
+      ($type(dot, v[x:=mu x : tau_1. v], tau_1, type:"val")$, [@lange-var-substitution]),
+      ($type(dot, v[x:=mu x : tau_1. v], tau_1, eff:epsilon)$, rn("T-E-Val")),
+      ($type(dot, (v[x:=mu x : tau_1. v])[tau_2], tau_3[alpha:=tau_2], eff:epsilon)$, rn("T-E-Tapp")),
     ))
 
   - Case $apply(handler(h,eff:epsilon,m:m),v) estepx handle(h, apply(v, unit), eff:epsilon,m:m)$.
@@ -374,7 +483,7 @@ If $type(dot, e_1, tau, eff: epsilon)$ and $e_1 estepx e_2$ then $type(dot, e_2,
       ($type(dot, apply(apply(f[tau_0], v), k), tau, eff:epsilon)$, rn("T-E-App")),
     ))
 
-  - Cases S-If-True, S-If-False, S-Inj-Left, S-Inj-Right, S-Op, S-Zero. As in @langb-redex-preservation, with every judgment at effect $epsilon$.
+  - Other cases follows similarly to the above and @langb-redex-preservation, with every judgment under effect $epsilon$.
 ]
 
 

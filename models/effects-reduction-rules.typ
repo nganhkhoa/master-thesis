@@ -73,7 +73,7 @@
       prooftree(rule(
         name: [Step-E-Base],
         $e_1 stepx e_2$,
-        $E[e_1] estep E[e_2]$
+        $e_1 estepx e_2$
       )),
     ),
     v(2em),
