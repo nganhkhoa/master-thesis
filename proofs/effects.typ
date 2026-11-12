@@ -487,23 +487,214 @@ If $type(dot, e_1, tau, eff: epsilon)$ and $e_1 estepx e_2$ then $type(dot, e_2,
 ]
 
 
+The following proofs assume capture-avoiding substitution, weakening, and well-scoped type abstraction. The freshness condition for #rn("T-E-TAbs") is not yet shown in the rule.
+
 #lemma(title: "Variable Substitution")[
 
-If $type(Gamma_1\,x:tau_1\,Gamma_2, e, tau, eff:epsilon)$ and $type(Gamma_1\,Gamma_2,v,tau_1,type:"val")$ then $type(Gamma_1\,Gamma_2, e[x:=v], tau, eff:epsilon)$
+If $type(Gamma_1\,Gamma_2,v,tau_1,type:"val")$ then the following hold:
+
+- If $type(Gamma_1\,x:tau_1\,Gamma_2,e,tau,eff:epsilon)$, then $type(Gamma_1\,Gamma_2,e[x:=v],tau,eff:epsilon)$.
+- If $type(Gamma_1\,x:tau_1\,Gamma_2,v_0,tau,type:"val")$, then $type(Gamma_1\,Gamma_2,v_0[x:=v],tau,type:"val")$.
+- If $type(Gamma_1\,x:tau_1\,Gamma_2,m : h,tau,type:"ops",eff:l | epsilon)$, then $type(Gamma_1\,Gamma_2,m : h[x:=v],tau,type:"ops",eff:l | epsilon)$.
 ] <lange-var-substitution>
 
 #proof[
+By mutual induction on typing, following Lemma 18 of @ningning2020effect. Rename bound variables fresh as needed.
+
+- Case $v_0 = x$.
+  #derivation((
+    ($type(Gamma_1\,x:tau_1\,Gamma_2,x,tau_1,type:"val")$, [Given]),
+    ($type(Gamma_1\,Gamma_2,v,tau_1,type:"val")$, [Given]),
+    ($type(Gamma_1\,Gamma_2,x[x:=v],tau_1,type:"val")$, [Substitution]),
+  ))
+
+- Case $v_0 = y$, where $y != x$.
+  #derivation((
+    ($type(Gamma_1\,x:tau_1\,Gamma_2,y,tau,type:"val")$, [Given]),
+    ($y : tau in Gamma_1\,Gamma_2$, rn("T-E-Var")),
+    ($type(Gamma_1\,Gamma_2,y[x:=v],tau,type:"val")$, rn("T-E-Var")),
+  ))
+
+- Case $e = v_0$.
+  #derivation((
+    ($type(Gamma_1\,x:tau_1\,Gamma_2,v_0,tau,eff:epsilon)$, [Given]),
+    ($type(Gamma_1\,x:tau_1\,Gamma_2,v_0,tau,type:"val")$, rn("T-E-Val")),
+    ($type(Gamma_1\,Gamma_2,v_0[x:=v],tau,type:"val")$, [I.H.]),
+    ($type(Gamma_1\,Gamma_2,v_0[x:=v],tau,eff:epsilon)$, rn("T-E-Val")),
+  ))
+
+- Case $e = apply(e_1,e_2)$.
+  #derivation((
+    ($type(Gamma_1\,x:tau_1\,Gamma_2,apply(e_1,e_2),tau,eff:epsilon)$, [Given]),
+    ($type(Gamma_1\,x:tau_1\,Gamma_2,e_1,teff(tau_2,epsilon,tau),eff:epsilon)$, rn("T-E-App")),
+    ($type(Gamma_1\,x:tau_1\,Gamma_2,e_2,tau_2,eff:epsilon)$, rn("T-E-App")),
+    ($type(Gamma_1\,Gamma_2,e_1[x:=v],teff(tau_2,epsilon,tau),eff:epsilon)$, [I.H.]),
+    ($type(Gamma_1\,Gamma_2,e_2[x:=v],tau_2,eff:epsilon)$, [I.H.]),
+    ($type(Gamma_1\,Gamma_2,apply(e_1[x:=v],e_2[x:=v]),tau,eff:epsilon)$, rn("T-E-App")),
+  ))
+
+- Case $e = e_1[tau_2]$.
+  #derivation((
+    ($type(Gamma_1\,x:tau_1\,Gamma_2,e_1[tau_2],tau[alpha:=tau_2],eff:epsilon)$, [Given]),
+    ($type(Gamma_1\,x:tau_1\,Gamma_2,e_1,forall alpha^k. tau,eff:epsilon)$, rn("T-E-Tapp")),
+    ($attach(tack.r.short, br: "wf") tau_2 : k$, rn("T-E-Tapp")),
+    ($type(Gamma_1\,Gamma_2,e_1[x:=v],forall alpha^k. tau,eff:epsilon)$, [I.H.]),
+    ($type(Gamma_1\,Gamma_2,(e_1[x:=v])[tau_2],tau[alpha:=tau_2],eff:epsilon)$, rn("T-E-Tapp")),
+  ))
+
+- Case $v_0 = lambda^epsilon y:tau_2. e$. Choose $y$ fresh for $v$.
+  #derivation((
+    ($type(Gamma_1\,x:tau_1\,Gamma_2,lambda^epsilon y:tau_2. e,teff(tau_2,epsilon,tau),type:"val")$, [Given]),
+    ($type(Gamma_1\,x:tau_1\,Gamma_2\,y:tau_2,e,tau,eff:epsilon)$, rn("T-E-Abs")),
+    ($type(Gamma_1\,Gamma_2\,y:tau_2,v,tau_1,type:"val")$, [Given, weakening]),
+    ($type(Gamma_1\,Gamma_2\,y:tau_2,e[x:=v],tau,eff:epsilon)$, [I.H.]),
+    ($type(Gamma_1\,Gamma_2,lambda^epsilon y:tau_2. e[x:=v],teff(tau_2,epsilon,tau),type:"val")$, rn("T-E-Abs")),
+  ))
+
+- Case $v_0 = Lambda alpha^k. v_1$. Choose $alpha$ fresh for the context and $v$.
+  #derivation((
+    ($type(Gamma_1\,x:tau_1\,Gamma_2,Lambda alpha^k. v_1,forall alpha^k. tau,type:"val")$, [Given]),
+    ($type(Gamma_1\,x:tau_1\,Gamma_2,v_1,tau,type:"val")$, rn("T-E-TAbs")),
+    ($type(Gamma_1\,Gamma_2,v_1[x:=v],tau,type:"val")$, [I.H.]),
+    ($type(Gamma_1\,Gamma_2,Lambda alpha^k. v_1[x:=v],forall alpha^k. tau,type:"val")$, rn("T-E-TAbs")),
+  ))
+
+- Case $v_0 = mu y:tau_2. v_1$. Choose $y$ fresh for $v$.
+  #derivation((
+    ($type(Gamma_1\,x:tau_1\,Gamma_2,mu y:tau_2. v_1,tau,type:"val")$, [Given]),
+    ($type(Gamma_1\,x:tau_1\,Gamma_2\,y:tau_2,v_1,tau,type:"val")$, rn("T-E-Fix")),
+    ($type(Gamma_1\,Gamma_2\,y:tau_2,v,tau_1,type:"val")$, [Given, weakening]),
+    ($type(Gamma_1\,Gamma_2\,y:tau_2,v_1[x:=v],tau,type:"val")$, [I.H.]),
+    ($type(Gamma_1\,Gamma_2,mu y:tau_2. v_1[x:=v],tau,type:"val")$, rn("T-E-Fix")),
+  ))
+
+- Case $h = {op_1 -> f_1, dots, op_n -> f_n}$.
+  #derivation((
+    ($type(Gamma_1\,x:tau_1\,Gamma_2,m : {op_1 -> f_1, dots, op_n -> f_n},tau,type:"ops",eff:l | epsilon)$, [Given]),
+    ($type(Gamma_1\,Gamma_2,m : {op_1 -> f_1[x:=v], dots, op_n -> f_n [x:=v]},tau,type:"ops",eff:l | epsilon)$, [I.H.]),
+  ))
+
+- Case $v_0 = handler(h,eff:epsilon,m:m)$.
+  #derivation((
+    ($type(Gamma_1\,x:tau_1\,Gamma_2,handler(h,eff:epsilon,m:m),teff((teff(unit,chevron.l l | epsilon chevron.r,tau)),epsilon,tau),type:"val")$, [Given]),
+    ($type(Gamma_1\,x:tau_1\,Gamma_2,m : h,tau,type:"ops",eff:l | epsilon)$, rn("T-E-Handler")),
+    ($type(Gamma_1\,Gamma_2,m : h[x:=v],tau,type:"ops",eff:l | epsilon)$, [I.H.]),
+    ($type(Gamma_1\,Gamma_2,handler(h[x:=v],eff:epsilon,m:m),teff((teff(unit,chevron.l l | epsilon chevron.r,tau)),epsilon,tau),type:"val")$, rn("T-E-Handler")),
+  ))
+
+- Case $e = handle(h,e_0,eff:epsilon,m:m)$.
+  #derivation((
+    ($type(Gamma_1\,x:tau_1\,Gamma_2,handle(h,e_0,eff:epsilon,m:m),tau,eff:epsilon)$, [Given]),
+    ($type(Gamma_1\,x:tau_1\,Gamma_2,m : h,tau,type:"ops",eff:l | epsilon)$, rn("T-E-Handle")),
+    ($type(Gamma_1\,x:tau_1\,Gamma_2,e_0,tau,eff:chevron.l l | epsilon chevron.r)$, rn("T-E-Handle")),
+    ($type(Gamma_1\,Gamma_2,m : h[x:=v],tau,type:"ops",eff:l | epsilon)$, [I.H.]),
+    ($type(Gamma_1\,Gamma_2,e_0[x:=v],tau,eff:chevron.l l | epsilon chevron.r)$, [I.H.]),
+    ($type(Gamma_1\,Gamma_2,handle(h[x:=v],e_0[x:=v],eff:epsilon,m:m),tau,eff:epsilon)$, rn("T-E-Handle")),
+  ))
+
+- Other cases follow similarly.
 ]
 
 #lemma(title: "Type Variable Substitution")[
 
-If $type(Gamma,e,tau,eff:epsilon)$ and $attach(tack.r.short, br: "wf") tau_1 : k$ then $type(Gamma[alpha^k := tau_1], e[alpha^k := tau_1], tau[alpha^k := tau_1], eff:epsilon)$
+If $attach(tack.r.short, br: "wf") tau_1 : k_1$, then the following hold:
+
+- If $type(Gamma,e,tau,eff:epsilon)$, then $type(Gamma[alpha:=tau_1],e[alpha:=tau_1],tau[alpha:=tau_1],eff:epsilon[alpha:=tau_1])$.
+- If $type(Gamma,v,tau,type:"val")$, then $type(Gamma[alpha:=tau_1],v[alpha:=tau_1],tau[alpha:=tau_1],type:"val")$.
+- If $type(Gamma,m : h,tau,type:"ops",eff:l | epsilon)$, then $type(Gamma[alpha:=tau_1],m : h[alpha:=tau_1],tau[alpha:=tau_1],type:"ops",eff:l | epsilon[alpha:=tau_1])$.
 ] <lange-type-var-substitution>
 
 #proof[
+By mutual induction on typing, following Lemma 20 of @ningning2020effect. Rename bound variables fresh as needed; effect labels are constants and operation signatures are closed except for their bound variables.
+
+- Case $e = v$.
+  #derivation((
+    ($type(Gamma,v,tau,eff:epsilon)$, [Given]),
+    ($type(Gamma,v,tau,type:"val")$, rn("T-E-Val")),
+    ($type(Gamma[alpha:=tau_1],v[alpha:=tau_1],tau[alpha:=tau_1],type:"val")$, [I.H.]),
+    ($type(Gamma[alpha:=tau_1],v[alpha:=tau_1],tau[alpha:=tau_1],eff:epsilon[alpha:=tau_1])$, rn("T-E-Val")),
+  ))
+
+- Case $e = apply(e_1,e_2)$.
+  #derivation((
+    ($type(Gamma,apply(e_1,e_2),tau,eff:epsilon)$, [Given]),
+    ($type(Gamma,e_1,teff(tau_2,epsilon,tau),eff:epsilon)$, rn("T-E-App")),
+    ($type(Gamma,e_2,tau_2,eff:epsilon)$, rn("T-E-App")),
+    ($type(Gamma[alpha:=tau_1],e_1[alpha:=tau_1],(teff(tau_2,epsilon,tau))[alpha:=tau_1],eff:epsilon[alpha:=tau_1])$, [I.H.]),
+    ($type(Gamma[alpha:=tau_1],e_2[alpha:=tau_1],tau_2[alpha:=tau_1],eff:epsilon[alpha:=tau_1])$, [I.H.]),
+    ($type(Gamma[alpha:=tau_1],apply(e_1[alpha:=tau_1],e_2[alpha:=tau_1]),tau[alpha:=tau_1],eff:epsilon[alpha:=tau_1])$, rn("T-E-App")),
+  ))
+
+- Case $e = e_1[tau_2]$. Choose $beta$ fresh for $alpha$ and $tau_1$.
+  #derivation((
+    ($type(Gamma,e_1[tau_2],tau[beta:=tau_2],eff:epsilon)$, [Given]),
+    ($type(Gamma,e_1,forall beta^k. tau,eff:epsilon)$, rn("T-E-Tapp")),
+    ($attach(tack.r.short, br: "wf") tau_2 : k$, rn("T-E-Tapp")),
+    ($type(Gamma[alpha:=tau_1],e_1[alpha:=tau_1],forall beta^k. tau[alpha:=tau_1],eff:epsilon[alpha:=tau_1])$, [I.H.]),
+    ($attach(tack.r.short, br: "wf") tau_2[alpha:=tau_1] : k$, [Kind substitution]),
+    ($type(Gamma[alpha:=tau_1],(e_1[alpha:=tau_1])[tau_2[alpha:=tau_1]],(tau[alpha:=tau_1])[beta:=tau_2[alpha:=tau_1]],eff:epsilon[alpha:=tau_1])$, rn("T-E-Tapp")),
+    ($type(Gamma[alpha:=tau_1],(e_1[tau_2])[alpha:=tau_1],\ quad (tau[beta:=tau_2])[alpha:=tau_1],eff:epsilon[alpha:=tau_1])$, [Substitution composition]),
+  ))
+
+- Case $v = lambda^epsilon y:tau_2. e$.
+  #derivation((
+    ($type(Gamma,lambda^epsilon y:tau_2. e,teff(tau_2,epsilon,tau),type:"val")$, [Given]),
+    ($type(Gamma\,y:tau_2,e,tau,eff:epsilon)$, rn("T-E-Abs")),
+    ($type(Gamma[alpha:=tau_1]\,y:tau_2[alpha:=tau_1],e[alpha:=tau_1],tau[alpha:=tau_1],eff:epsilon[alpha:=tau_1])$, [I.H.]),
+    ($type(Gamma[alpha:=tau_1],(lambda^epsilon y:tau_2. e)[alpha:=tau_1],(teff(tau_2,epsilon,tau))[alpha:=tau_1],type:"val")$, rn("T-E-Abs")),
+  ))
+
+- Case $v = Lambda beta^k. v_0$. Choose $beta != alpha$ fresh for $tau_1$ and $Gamma$.
+  #derivation((
+    ($type(Gamma,Lambda beta^k. v_0,forall beta^k. tau,type:"val")$, [Given]),
+    ($type(Gamma,v_0,tau,type:"val")$, rn("T-E-TAbs")),
+    ($type(Gamma[alpha:=tau_1],v_0[alpha:=tau_1],tau[alpha:=tau_1],type:"val")$, [I.H.]),
+    ($type(Gamma[alpha:=tau_1],(Lambda beta^k. v_0)[alpha:=tau_1],(forall beta^k. tau)[alpha:=tau_1],type:"val")$, rn("T-E-TAbs")),
+  ))
+
+- Case $v = mu y:tau_2. v_0$.
+  #derivation((
+    ($type(Gamma,mu y:tau_2. v_0,tau,type:"val")$, [Given]),
+    ($type(Gamma\,y:tau_2,v_0,tau,type:"val")$, rn("T-E-Fix")),
+    ($type(Gamma[alpha:=tau_1]\,y:tau_2[alpha:=tau_1],v_0[alpha:=tau_1],tau[alpha:=tau_1],type:"val")$, [I.H.]),
+    ($type(Gamma[alpha:=tau_1],(mu y:tau_2. v_0)[alpha:=tau_1],tau[alpha:=tau_1],type:"val")$, rn("T-E-Fix")),
+  ))
+
+- Case $h = {op_1 -> f_1, dots, op_n -> f_n}$. Choose the signature-bound variables fresh.
+  #derivation((
+    ($type(Gamma,m : {op_1 -> f_1, dots, op_n -> f_n},tau,type:"ops",eff:l | epsilon)$, [Given]),
+    ($type(Gamma[alpha:=tau_1],m : {op_1 -> f_1[alpha:=tau_1], dots, op_n -> f_n[alpha:=tau_1]},\ quad tau[alpha:=tau_1],type:"ops",eff:l | epsilon[alpha:=tau_1])$, [I.H.]),
+  ))
+
+- Case $v = handler(h,eff:epsilon,m:m)$.
+  #derivation((
+    ($type(Gamma,handler(h,eff:epsilon,m:m),teff((teff(unit,chevron.l l | epsilon chevron.r,tau)),epsilon,tau),type:"val")$, [Given]),
+    ($type(Gamma,m : h,tau,type:"ops",eff:l | epsilon)$, rn("T-E-Handler")),
+    ($type(Gamma[alpha:=tau_1],m : h[alpha:=tau_1],tau[alpha:=tau_1],type:"ops",eff:l | epsilon[alpha:=tau_1])$, [I.H.]),
+    ($type(Gamma[alpha:=tau_1],handler(h[alpha:=tau_1],eff:epsilon[alpha:=tau_1],m:m),\ quad (teff((teff(unit,chevron.l l | epsilon chevron.r,tau)),epsilon,tau))[alpha:=tau_1],type:"val")$, rn("T-E-Handler")),
+  ))
+
+- Case $e = handle(h,e_0,eff:epsilon,m:m)$.
+  #derivation((
+    ($type(Gamma,handle(h,e_0,eff:epsilon,m:m),tau,eff:epsilon)$, [Given]),
+    ($type(Gamma,m : h,tau,type:"ops",eff:l | epsilon)$, rn("T-E-Handle")),
+    ($type(Gamma,e_0,tau,eff:chevron.l l | epsilon chevron.r)$, rn("T-E-Handle")),
+    ($type(Gamma[alpha:=tau_1],m : h[alpha:=tau_1],tau[alpha:=tau_1],type:"ops",eff:l | epsilon[alpha:=tau_1])$, [I.H.]),
+    ($type(Gamma[alpha:=tau_1],e_0[alpha:=tau_1],tau[alpha:=tau_1],eff:chevron.l l | epsilon[alpha:=tau_1] chevron.r)$, [I.H.]),
+    ($type(Gamma[alpha:=tau_1],handle(h[alpha:=tau_1],e_0[alpha:=tau_1],eff:epsilon[alpha:=tau_1],m:m),tau[alpha:=tau_1],eff:epsilon[alpha:=tau_1])$, rn("T-E-Handle")),
+  ))
+
+- Other cases follow similarly, using kind preservation and type-substitution composition.
 ]
 
 #lemma(title: "Values take any effect")[
 
-If $type(Gamma,v,tau,type:"val")$ then $type(Gamma,v,tau,eff:epsilon)$
+If $type(Gamma,v,tau,type:"val")$ then $type(Gamma,v,tau,eff:epsilon)$, for any well-formed effect $epsilon$.
 ] <lange-values-any-effect>
+
+#proof[
+  #derivation((
+    ($type(Gamma,v,tau,type:"val")$, [Given]),
+    ($type(Gamma,v,tau,eff:epsilon)$, rn("T-E-Val")),
+  ))
+]
