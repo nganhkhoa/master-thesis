@@ -139,13 +139,6 @@ Each binary operator $o in {+, -, and, or}$ has a signature $o : tau_a times tau
       ($type(Gamma, e[x:=v], tau)$, [@langb-substitution]),
     ))
 
-  - Case S-Fix, $mu x : tau. e stepx e[x:=mu x : tau. e]$.
-    #derivation((
-      ($type(Gamma\, x : tau, e, tau)$, rn("T-Fix")),
-      ($type(Gamma, mu x : tau. e, tau)$, "Given"),
-      ($type(Gamma, e[x:=mu x : tau. e], tau)$, [@langb-substitution]),
-    ))
-
   - Other cases are trivial.
 ]
 
@@ -177,8 +170,6 @@ Each binary operator $o in {+, -, and, or}$ has a signature $o : tau_a times tau
       ($type(Gamma\, y : tau_2, e_2[x:=e_1], tau_3)$, [I.H.]),
       ($type(Gamma, lambda y : tau_2. e_2[x:=e_1], tau_2 -> tau_3)$, rn("T-Lambda")),
     ))
-
-  - Case T-Fix with $e = mu y : tau. e_2$. Same as T-Lambda.
 
   - Case T-App with $e = apply(e_2, e_3)$.
     #derivation((

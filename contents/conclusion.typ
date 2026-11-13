@@ -35,6 +35,14 @@ In the non-local compiler, we actually have three different wrappers instead of 
 
 We proved that regardless of local or non-local compiler, shallow and deep handlers provide the same equivalence to #langc semantics with some [minimal] overhead when using deep handlers. However, as previously stated, deep handlers are more practical and implemented widely. Users should implement our compilation model using shallow handlers, and use deep handlers only if the language only supports deep handlers, for example the Koka language.
 
+== Recursion handlers
+
+For non-local compiler wrappers, a recursive handler (shallow) or a recursive wrapper (deep) are used. Both of these install recursive functions onto the handler code, this might not work, for example in Koka#footnote(link("https://github.com/koka-lang/koka/discussions/824")[https://github.com/koka-lang/koka/discussions/824]). If recursion is not supported, then the user can only use local compiler, which provides the same contracts semantics without the extras.
+
+== System $F^epsilon$ and CBPV
+
+#lange is based on System $F^epsilon$ and not Call-By-Push-Value (CBPV) and it may not correctly formulate the full effect handlers calculus. In @lukas2020doo, the effect handlers calculus, Frank, is modeled in CBPV and it has support for recursive handlers. These two languages, System $F^epsilon$ and Frank, based on two different core calculus that adapting the compiler to Frank may not be easy. Regardless, they share the same effect handlers semantics, and System $F^epsilon$ is closer to common programming languages.
+
 == Effectful Contracts
 
 Our formal models can model simple contracts into effects, but it cannot assert any certainty whether it can also model effectful contracts. Effectful contracts requires contracts for two types of effects, main program effects, and contract effects. The effectful contract model manipulates the contracts by installing contract dynamically, which can be a hurdle to model those contracts into effects. Although a simple observation that effectful contracts basically install checks at effect's entry and effect's exit (continuation invocation), we are unsure if such compilation is possible.
