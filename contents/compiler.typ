@@ -17,7 +17,7 @@
 #let theorem = appendix-theorem
 #let lemma = appendix-lemma
 
-= Compiler
+= Compiler <chapter-compiler>
 
 Following the compiler of @robert2013icfp, we can compile all contracts recursively by padding a new lambda for functional contracts, unfolding until flat contract. Through observation, instead of compiling flat contracts into $ife(apply(p,v),v,"blame")$, this phrase is pushed into the handler and an effect is performed. Immediately, we can see an easy compilation strategy.
 

@@ -17,7 +17,7 @@
 #let theorem = appendix-theorem
 #let lemma = appendix-lemma
 
-= Conclusion
+= Conclusion <chapter-conclusion>
 
 == Contract checking as Effects is Possible
 

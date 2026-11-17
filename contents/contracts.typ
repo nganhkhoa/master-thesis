@@ -6,7 +6,7 @@
 
 #show: no-ref
 
-= #langc Language
+= #langc Language <chapter-contracts>
 
 == Example
 

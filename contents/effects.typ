@@ -10,7 +10,7 @@
 #let effget = $scr("G")$
 #let effset = $scr("S")$
 
-= #lange Language
+= #lange Language <chapter-effects>
 
 == Example <effects-example>
 

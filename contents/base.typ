@@ -3,7 +3,7 @@
 
 #import "/models/language.typ": *
 
-== #langb Language
+= #langb Language <section-base>
 
 We define #langb language and its syntax in @base-syntax. The language extends the PCF language with tuples. It has no mutable cells. This will be the base language for both #langc and #lange.
 

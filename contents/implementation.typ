@@ -13,7 +13,7 @@
 
 #show: no-ref
 
-= Implementation
+= Implementation <chapter-implementation>
 
 Our formal models are implemented in Redex and in OCaml. While the Redex models are closer to the formal compiler models, the OCaml implementation is more practical.
 
