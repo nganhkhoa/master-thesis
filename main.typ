@@ -49,12 +49,7 @@
 // ==========================================
 
 #include "contents/intro.typ"
-
-= Background <chapter-background>
-#include "contents/base.typ"
-#include "contents/contracts.typ"
-#include "contents/effects.typ"
-
+#include "contents/backgrounds.typ"
 #include "contents/compiler.typ"
 #include "contents/implementation.typ"
 #include "contents/conclusion.typ"
