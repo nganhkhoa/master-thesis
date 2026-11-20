@@ -10,9 +10,11 @@
 #let effget = $scr("G")$
 #let effset = $scr("S")$
 
-= #lange Language <chapter-effects>
+== #lange Language <chapter-effects>
 
-== Example <effects-example>
+
+
+=== Example <effects-example>
 
 In @handler-example-1, we present a simple example: a program wants to compute $(effdup 2) + 1$ is registered with a handler $h$ for effect #effdup, basically _duplicating_ its input. When an effect is perform, the main program pauses the execution, and push everything later into a continuation $k = lambda y. handle(h, (y + 1), m: d)$, at (i). Here, the continuation registers the handler $h$ again, in case the rest of the program uses $effdup$. When the program is a value, the handler removes itself (ii).
 
@@ -120,40 +122,46 @@ The second approach is to use _parameterized handlers_ @leijen2017type, which pu
   caption: [Handler with state]
 ) <handler-example-2>
 
-== Language Model
+=== Language Model
 
-#lange, inspired by @ningning2020effect, equips #langb with effects and effect handlers. We extend the type system into a kinded type system based on System $F_omega$, mainly to separate between effect types and normal types. System $F_omega$ also provides polymorphism. The type system adapts its syntax of functions into $teff(tau_1,epsilon,tau_2)$ denotes an effect $epsilon$ (may) occurs during the execution of the function. The language supports recursive functions through $mu x : tau . v$ as a value. Reduction of recursive function happens during term applications or type applications.
+We introduce #lange by extending #langb into System $F^epsilon$ by @ningning2020effect. Because System $F^epsilon$ is based on System $F_omega$, the type system is evolved into kinded system, with type constructors and effect kinds. By System $F_omega$, the language is equipped with type abstractions $Lambda alpha. v$ and type applications $e[tau]$. Function types are annotated with effect $epsilon$ showing possible effects during the invocation of function, $teff(tau_1,epsilon,tau_2)$. We also add recursive functions $mu x. v$ to the language as a value, instead of an expression.
 
-Following @ningning2020effect, effects are group of "operations", distinct by its label. An operation $scr("O")$ of effect $epsilon$ is invoked by applying $perform(scr("O"), tau: tau)$ with an argument, and produces an effect $epsilon$. Given an expression $e$ that would perform some effect $epsilon$, a handler $h$ providing all definitions for operations of $epsilon$ must be installed. Each handler is tagged with a semantic identifier $m in {d,s}$ where $d$ denotes deep handler semantic and $s$ uses shallow handler semantic. The main difference between these two handler semantics is that the continuation automatically registers the handler again (deep) or not (shallow). The language provides two ways to install a handler, $handle(h,e,m: m)$ and $apply(handler(h,m: m),(lambda \_. e))$. The former is the base syntax, during evaluation of $e$, the handler $h$ is used. The other syntax is useful for suspending a computation, and run it only when a handler is applied, providing flexibility such as different handlers.
+Before discussing about handlers, #lange triggers an effect $op$ by invoking $perform(op)$ with an argument, similarly to function application. System $F^epsilon$ only has deep handlers. To deliver a full picture for our translation, we also extend System $F^epsilon$ with shallow handlers. A handler $handler(h, m:m)$ value, has a mode $m in {d,s}$ to annotate deep or shallow. This handler value is typed as a function, and acts as a function waiting for an argument. If $e$ has a $perform(op)$ application, that is $e$ invokes an effect, users write
 
-A handler is a mapping between operation names and their definitions. An operation is a function with the template $Lambda alpha. lambda x : tau_1. lambda k : tau_2. e$. The polymorphic type variable $alpha$ is used to make operations polymorphic. The argument $x$ is the operation argument. The argument $k$ is the _continuation_ or _resumption_, enclosing the rest of the program after the operation invocation. When $k$ is called, the program resumes with the argument provided to $k$.
+$apply(handler(h,m:m), (lambda \_ : unit. e))$ to install the handler $h$ when executing $e$.
 
-Because $k$ is a function, a handler can return $k$ and let the program use continuation anyhow the programer wants. This is described in @ningning2020effect as "undesirable in practice" and define a restriction named _scoped resumption_. Our language also follows the same principle and does not allow returning the continuation $k$ (directly or indirectly through closure). However, we do not enforce this and left out for the language implementators.
+At runtime, handler expressions turn into a handle expressions $handle(h,e,m:m)$ which are responsible for handling effects invocation during execution of $e$. With handler and handle expressions defined, the next step is to define the concrete handler $h$. A handler is a groupped mapping of operations to functions $op -> f$, for example ${"Get" -> f_1; "Set" -> f_2}$ denotes a handler of two operations $"Get"$ and $"Set"$, with their respective handler functions $f_1,f_2$. Each handler should belong to a single effect, for example the $"Get","Set"$ handler belongs to the $"State"$ effect. The list of effects is given by the users through $Sigma$, a mapping between effect name to handler operation signature set. For $"State"$ effect, $"Get" : tau_"get" in Sigma("State")$ and $"Set" : tau_"set" in Sigma("State")$.
 
+#lange must define the semantics for recursive functions, which was not included in System $F^epsilon$, and handlers. For recursive functions, because $mu x. v$ is a value, it is dormant and reduces on term or type applications. Ignoring types, the rules are as below,
 
-#v(1em)
+$apply((mu x. v_1),v_2) estepx apply(v_1[x:=mu x. v_1],v_2)$, and
+
+$(mu x. v)[tau] estepx v[x:=mu x. v][tau]$,
+
+Consider this program $handle(h_1, handle(h_2, handle(..., apply(perform(op),v),m:m),m:m),m:m)$, effect perform should be caught by some handler in $h_1,h_2,...$. Assumes that $op : tau in Sigma(l)$. If handler $h = {op -> f; ...}$ implements effect $l$, it should catch it. Rewriting the program into,
+
+$E_1[handle(h,E_2[apply(perform(op),v,)], m:m)]$.
+
+Then if the handler is shallow, it captures the continuation $E_2$, and applies $f$ with $v$ and continuation $k = lambda x. E_2[x]$,
+
+$E_1[handle(h,E_2[apply(perform(op),v,)], m:s)] estep E_1[apply(apply(f,v),(lambda x. E_2[x]))]$.
+
+If the handler is deep, it captures the continuation $E_2$, and applies $f$ with $v$ and continuation $k = lambda x. handle(h,E_2[x],m:d)$. By re-installing the handler into the continuation, it satisfies the deep handler semantics,
+
+$E_1[handle(h,E_2[apply(perform(op),v,)], m:d)] estep E_1[apply(apply(f,v),(lambda x. handle(h,E_2[x],m:d)))]$.
+
+In typed version, an effect invocation is can be polymorphic. An operation $op$ can be invoked with values of different types. Therefore, the syntax is adjusted to allow type specification on perform and during handler reduction, $apply(apply(perform(op), tau), v)$ and $apply(apply(apply(f,tau),v),k)$.
+
+Before we discuss the typing judgement for #lange, we define how to annotate effect list. A function may invoke multiple effects, for example writing to the console (first effect, $"Console"$) and accessing the internet (second effect, $"Network"$). For that reason, $effs("Console","Network")$ denotes the use of two effects. The syntax can be nested, however they should be considered equivalent to its flatten representation. Moreover, effect's order is not important.
+
+$effs(l_1,l_2,...,l_n) eq.triple effs(l_1,effs(l_2,effs(...,l_n)))$ and $effs(l_1,l_2) eq.triple effs(l_2,l_1)$.
+
+We use $epsilon$ to denote effect lists, and $mteff$ to denote an empty effect list.
+
+Typing judgement for #lange is defined using $type(Gamma,e,tau,eff:epsilon)$, read as "under context $Gamma$, expression $e$ has type $tau$ and might produce effects in $epsilon$". While type is derived, effects is provided as part of context. Typing a program in #lange starts with $mteff$, $type(dot,e,tau,eff:mteff)$. To validate the effects that may occur during the program, the following expressions are augmented with effects, $lambda^epsilon x : tau. e$, $handler(h,m:m,eff:epsilon)$, $handle(h,e,m:m,eff:epsilon)$, and $perform(op,tau:tau,eff:epsilon)$. Effects annotation are mostly kept, except during handle expression, where it can add new effect because a new effect handler is in scope. Handler $h$ has a separated typing judgement, $type(Gamma, m : h, tau, eff:l \| epsilon, type:"ops")$ read as "under context $Gamma$, handler type $m$, the hander $h$ has type $tau$, handles effects $l$ and left out effects $epsilon$". This judgement can rule out effect $l$ that is handled by handler $h$. Another typing judgement is used for values, $type(Gamma,e,tau,type:"val")$, this includes normal values as well as $perform(op,tau:tau,eff:epsilon)$ and $handler(h)$. Because a value cannot invoke effects, this judgement is defined to separate typing of expressions and values.
+
+Most typing rules are trivial, we select the two typing rules for handlers which require some explanations. A handler $type(Gamma, m : {op_1 -> f_1, ..., op_n -> f_n},tau, eff: l \| epsilon,type:"ops")$ must first have all the $op_i$ defined in $Sigma(l)$. Type of $op_i : forall alpha. tau_1 -> tau_2$ is a polymorphic function between the effect to be invoked value type $tau_1$ and effect output type $tau_2$. Then handler functions $f_i : forall alpha. tau_v -> tau_k -> tau_r$ is also a polymorphic function, as previously shown it receives three arguments, the type $alpha$, the value of type $tau_v$, the continuation of type $tau_k$ and returns value of type $tau_r$. Unifying them one by one: first, the operation's signature $tau_1 = tau_v$ because it describes the input type to perform; second, $tau_k = tau_2 -> ?$ because the continuation receives the effect output type; third, $tau_k = tau_2 -> tau_r$ because $f$ must invokes $k$ at the last step therefore, what $k$ returns is what $f$ returns; forth, continuation preserve at least the effects $epsilon$. If the handler is typed for deep handler, the effect of continuation is $tau_k = teff(tau_1,epsilon,tau_r)$ because the handler is re-installed inside the continuation therefore all effects $l$ invocation are resolved. However, when the handler is typed as shallow, the continuation type is $tau_k = teff(tau_1,effs(l, epsilon),tau_r)$ because the continuation (the rest of the program) can execute the effect $l$.
+
 #include "/models/effects.typ"
-#v(1em)
-
-A function can use multiple effects, and are represented as rows with equivalence up to reordering. An empty effect is represented as $mteff$. Effects can be concatenated by $effs(l,epsilon)$ where effect row $epsilon$ is extended with effect $l$. For ease of writing, we allow writing $effs(l_1,l_2,...,l_n)$ as shorthand instead of $effs(l_1,effs(l_2,...effs(l_n)))$. We let effect equivalence is up to same size, and ordering, that is $effs(l_1,l_2) eq.triple effs(l_2,l_1)$. Effects are checked during type derivations, by passing inwards. Therefore, functions can state it has more effect than their bodies do.
-
-The language is explicit about the effects. Lambdas are annotated with effects, as well as perform (operation invocation), and handler installation. These effect annotations are used only during type checking, they do not affect the execution.
-
-Typing for an effect language requires some consideration. Following the works in @ningning2020effect, we define the type judgement relationship $type(Gamma,e,tau,eff: epsilon)$ between a type context $Gamma$, an expression $e$ and assert it against type $tau$ with some possible effects $epsilon$. Variables and base values do not have effects, they can take any effects. For this reason, we define $type(Gamma,v,tau,type: "val")$. Handlers are typed using $type(Gamma,m : h,tau,eff: l | epsilon,type: "ops")$, that it handles a _single_ effect $l$, other effects in $epsilon$ remains unhandled, and all operations returns $tau$, and there are two different rules depending on the handler semantics $m$. All effects signatures are defined in a global set $Sigma$ for fast accessing the type of the operations. This set can be built by going through all handlers, and its existence is assumed during the start of type checking. All type rules unique to #lange is presented in @effects-type-rules.
-
-#v(1em)
 #include "/models/effects-type-rules.typ"
-#v(1em)
-
-Lastly the semantic model of #lange is presented in @effects-reduction-rules. A handler can be installed to a function as a shorthand, where it applies the function with a unit argument, which is ignored. The mode determines how its resumption behaves: a deep handler (when $m=d$) re-installs $handle(h,dots,m: d)$ around the captured continuation $E$, while a shallow handler (when $m=s$) resumes directly with the captured evaluation context and does not reinstall itself. In shallow handler, the continuation $k$ might invoke the effect of the current handler so it must be denoted with the extra effect $l$ where $op -> f in h$ and $op in Sigma(l)$.
-
-
-#v(1em)
-#pad(left: 2em)[
-  In @ningning2020effect and the Koka language, of which we based our #lange language, the authors explicitly use deep handlers and ignore semantics for shallow handlers. We provide shallow handler semantic because the compilation [from #langc to #lange] benefits from having shallow handlers.
-]
-#v(1em)
-
-#v(1em)
 #include "/models/effects-reduction-rules.typ"
-#v(1em)

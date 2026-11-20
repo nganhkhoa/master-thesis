@@ -22,6 +22,7 @@
       #h(6pt)
       extends #langb
     ],
+    align(left)[*Surface syntax*],
     grid(
       columns: (auto, auto),
       bnf(
@@ -31,9 +32,7 @@
         }),
         Prod($e$, {
           Or[$...$][]
-          Or[$mon(k,l, j, kappa, e)$][]
-          Or[$check(k, j, e, v)$][]
-          Or[$blame(l,p)$][]
+          Or[$mon(k,l,j,kappa,e)$][]
         }),
       ),
       bnf(
@@ -41,14 +40,27 @@
           Or[$flat(e)$][]
           Or[$kappa -> kappa | dep(kappa,lambda x: tau. kappa)$][]
         }),
+      ),
+    ),
+    align(left)[*Evaluation syntax*],
+    grid(
+      columns: (auto, auto),
+      bnf(
+        Prod($e$, {
+          Or[$...$][]
+          Or[$check(k,j,e,v)$][]
+          Or[$blame(k,j)$][]
+        }),
         Prod($v$, {
           Or[$...$][]
-          Or[$guard(v, kappa, k, l, j)$][]
+          Or[$guard(v,kappa,k,l,j)$][]
         }),
+      ),
+      bnf(
         Prod($E$, {
           Or[$...$][]
-          Or[$mon(k, l, j, kappa, E)$][]
-          Or[$check(k, j, E, v)$][]
+          Or[$mon(k,l,j,kappa,E)$][]
+          Or[$check(k,j,E,v)$][]
         }),
       ),
     ),

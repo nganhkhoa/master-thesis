@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <style xmlns="http://purl.org/net/xbiblio/csl" class="in-text" version="1.0" demote-non-dropping-particle="sort-only" default-locale="en-US">
   <info>
-    <title>Association for Computing Machinery</title>
-    <title-short>ACM</title-short>
+    <title>Author-year citations with ACM bibliography</title>
+    <title-short>Author-year</title-short>
     <id>http://www.zotero.org/styles/association-for-computing-machinery</id>
     <link href="http://www.zotero.org/styles/association-for-computing-machinery" rel="self"/>
     <link href="http://www.zotero.org/styles/acm-sigchi-proceedings" rel="template"/>
@@ -15,7 +15,7 @@
       <name>Junliang Hu</name>
       <email>vtta0124@gmail.com</email>
     </contributor>
-    <category citation-format="numeric"/>
+    <category citation-format="author-date"/>
     <category field="engineering"/>
     <updated>2024-01-24T11:32:48+00:00</updated>
     <rights license="http://creativecommons.org/licenses/by-sa/3.0/">This work is licensed under a Creative Commons Attribution-ShareAlike 3.0 License</rights>
@@ -104,24 +104,26 @@
       </else-if>
     </choose>
   </macro>
-  <citation collapse="citation-number">
-    <sort>
-      <key variable="citation-number"/>
-    </sort>
-    <layout prefix="[" suffix="]" delimiter=", ">
-      <group delimiter=":">
-        <text variable="citation-number"/>
-        <text variable="locator"/>
+  <citation et-al-min="3" et-al-use-first="1" disambiguate-add-year-suffix="true">
+    <layout delimiter="; ">
+      <group delimiter=" ">
+        <names variable="author">
+          <name form="short" and="text" delimiter=", "/>
+          <substitute><names variable="editor"/><text variable="title"/></substitute>
+        </names>
+        <group prefix="[" suffix="]" delimiter=", ">
+          <date variable="issued"><date-part name="year"/></date>
+          <text variable="locator"/>
+        </group>
       </group>
     </layout>
   </citation>
-  <bibliography second-field-align="flush" entry-spacing="0">
+  <bibliography entry-spacing="0">
     <sort>
       <key macro="author"/>
       <key variable="issued"/>
     </sort>
     <layout>
-      <text variable="citation-number" prefix="[" suffix="]"/>
       <group delimiter=". " suffix=". ">
         <text macro="author"/>
         <text macro="year"/>

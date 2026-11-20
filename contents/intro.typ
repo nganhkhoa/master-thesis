@@ -18,83 +18,87 @@
 Software correctness depends not only on the types of values, but also on properties
 of those values. For example, a function that accepts an integer may require that
 number to be in some range, and its result must resonates with the input. _Software
-contracts_ can express these requirements and constraint them during runtime using
+contracts_ can express these requirements and constrain them during runtime using
 _monitors_. A monitor is attached to a value, and when that value is passed on as a
 function argument, function return, or function invocation, it validates and reports
 violations. Implementing monitors requires checks to be inserted at the appropriate
-location. Monitors for higher-order functions @robert2013icfp create monitors for
-function-like arguments, and dependent monitors must create monitors for inputs to
-be used during result's monitor execution.
+location. @robert2013icfp introduced monitors and provided a semantics for higher-order
+functional contracts. The authors also provided monitors for dependent contracts where
+function's result contracts can use the function's input, and must be constrained.
 
 In addition to value validations, monitors must also report blame. Each monitor is
-appended with labels, where each labels represent a party, for use when blame is
-reported. In @christos2011on, these labels are provided and exchanged during monitor
-execution such that it reports the correct party responsible for the violation.
+appended with labels, where each label represents a party, for use when a blame is
+reported. @christos2011on instructed what these labels are and how should them be
+exchanged during monitor execution such that it reports the correct party responsible
+for the violation.
 
-The above construction is mostly local, a monitor can only observe a single execution.
-Trying to remove this limitation, a monitor on a function called multiple times may
-use previous invocation information to benefit itself. Previously, @cameron2023trace
-introduced Trace Contracts attempted this problem by providing a global queue every
-time a _trace monitor_ is invoked. In their derived work, @cameron2024effectful,
-monitors are built on top of effect handlers, and capable of providing more useful
-constraints such as restricted exceptions, or union contracts.
+Functional contracts are restricted to its own execution and this limitation restricts
+several contract types where interaction between them is crucial. For example,
+protocol conformance requires knowing if the previous steps have been conducted;
+or a [strictly] recursive function requires each recursive step's input to reduce.
+Multiple works attempted this problem, of which the work by @cameron2023trace stands out.
+The authors introduced Trace Contracts which provide monitors with a global state queue
+where different contracts can use to communicate.
 
-Effects and effect handlers, introduced in @gordon2003algebraic, model side-effects,
-as a two-fold: effect invocations and handlers. Effect invocations are modeled as
-functions with dynamic body. Function bodies are defined only if there is a handler
-already installed. Each handler can be designed to create a different context, which
-implements mutable states without explicit mutable boxes. Handlers come in two flavors,
-deep and shallow, where the difference is that deep handler automatically reinstall
-the handler again, so that subsequent code can still invoke the effect and be handled
-by the same handler. Practically deep handlers are more useful, for example, a
-print effect can be invoked multiple times. At the time of writing, the only mainstream
-language supports effect handlers by default is OCaml 5 @k2021retrofitting.
+Functions may trigger side-effects, such as exceptions, and one wishes to constrains them,
+either to allow some exceptions, or restrict pure functions. Recently, @cameron2024effectful
+adapted monitors to effects in a language with effect handlers. Their work, Effectful
+Contracts, superseeded Trace Contracts. Not only can these contracts provide contract
+interaction, but also restrict side-effects. To understand their work, one should get
+familiar with effects and effect handlers.
 
-Stated previously, contract with effects (and effect handlers) bring tremendous benefits
-from plain/higher-order contract systems. Our work asks whether contract checking itself
-can be an effect. In particular, instead of inlining contract checking code, these checks
-are deferred in handler(s). Based on the construction and semantics preservation, we can
-argue about the expressiveness of effect handlers over contracts. During our work, it shows
-that such construction exists and our thesis follows:
+Effects and their handlers model side-effects systems using two basic constructions:
+perform, and handlers. Effects are named with their definitions provided through a
+handler previously installed. A simple analogy, effects are functions where their
+body can be changed depending on the environment. Using some specific structures,
+effect handlers can be used to model states without using mutable boxes.
+
+== Thesis
+
+Through observations, contracts are similar to side-effects, and it proposes an idea:
+implementing contracts using effects and effect handlers. While Effectful Contracts
+create a new contract type for effects, our idea treats contracts as if they are
+side-effects, contract checking is performing a checking effect. Our claim is that
+if contracts can be modeled into effects and effect handlers, and effectful contracts
+can build highly complex contract specifications, then effects and effect handlers
+by itself can provide these specifications. Our thesis is therefore:
 
 #pad(left: 3em)[
   #emph[
-    While encoding contracts as effects does not increase the expressiveness of effects, delicate handler constructions make it possible to unify contracts into a single context. This unification enables contract states and communication between contracts without relying on mutable boxes.
+    It is sufficient to express multiple contract specifications with only effects and effect handlers.
   ]
 ]
 
+In particular, the basic specifications that must be met are functional, and
+dependent contracts. Other specifications that are of interest are those related
+to contract's state, and side-effects.
+
 == Contributions
 
-This dissertation contributes the following:
+We validated our thesis by defining formal models of contracts (monitors), and effect
+handlers, called #langc and #lange respectively. Then we provide a translation from
+#langc into #lange, erasing all contracts. Using simulation proof, we prove that any
+translated program maintain their contracts semantics. In particular, our contributations are:
 
-- An extension of effect handlers language, System $F^epsilon$ @ningning2020effect,
-  with recursive functions.
+- Three compilation schemes from #langc to #lange, each correponses to different compilation
+  strategy based on different capabilities of #lange.
 
-- Three compilation schemes based off of the type-directed compilations addressing
-  the handler location. The two type-directed compilations of contract monitors into
-  effects are: local and non-local. Local compilation compiles flat contracts with
-  handler, and non-local does not.
+- Formal simulation proofs for the three compilation schemes, ensuring semantics equivalance.
+  Equivalance is understood as outputing a similar value, or same blame party if source program
+  blames. Accompanied these formal proofs are Redex models with examples.
 
-- Simulation proofs for all three compilation schemes, showing that they preserves
-  the contract semantics. If the source program reaches a value, then the target
-  program reaches a value; if the source program reaches a blame of party, then
-  the target program reaches an error labeled the same blame party.
-
-- Suggested extension to the compilation schemes to support option contracts
-  @christos2013option, trace contracts @cameron2023trace, effect contracts
-  @cameron2024effectful.
-
-- Redex models for the compilation schemes as a runable formal model.
-
-- OCaml implementation of the formal model. The implementation provides
-  option contracts, and trace contracts.
+- An OCaml implementation following a formal compilation scheme, with extensions to
+  non-basic contract specifications, including adaptations of option contracts by
+  @christos2013option, trace contracts by @cameron2023trace, and effectful contracts
+  by @cameron2024effectful.
 
 == Organization
 
-This dissertation is organized in the following order. First, we define the #langb
-in @chapter-base, which is the base for #langc, introduced in @chapter-contracts, and
-#lange, introduced in @chapter-effects. Subsequently, an analysis of compiler construction
-and the three compiler schemes is discussed in @chapter-compiler. Following the formal
-compiler, @chapter-implementation presents the Redex models, and the OCaml implementation.
-Finally, @chapter-conclusion concludes our remarks based on the results obtained from
-experiments, and observations. Formal proofs are provided in the appendices.
+The rest of this dissertation is organized as follows. @chapter-background introduces
+the PCF language (called #langb), with its extension to contracts as CPCF (called #langc),
+and a model of effect handler language (called #lange). @chapter-compiler describes the
+analytical process designing translations from #langc to #lange. Following the formal
+model in the previous chapter, @chapter-implementation shows how it is implemented in
+Redex, and OCaml. Finally, @chapter-conclusion gives the final remarks based on the results
+obtained from our experiements, and some observations. All formal proofs are provided in
+the appendices.

@@ -6,9 +6,9 @@
 
 #show: no-ref
 
-= #langb Language <chapter-base>
+== #langb Language <chapter-base>
 
-This chapter reintroduces the some parts of the PCF language @gordon1977lcf as #langb.
+This chapter re-introduces the some parts of the PCF language @gordon1977lcf as #langb.
 The language is a call-by-value semantics with three types, numbers, booleans, tuples,
 unit, and functions. Unit types' purpose is to delay execution of a computation by
 encapsulating them under a lambda accepting an argument of unit type. #langb follows

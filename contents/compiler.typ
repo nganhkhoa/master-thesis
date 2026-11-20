@@ -188,3 +188,64 @@ Our compiler model shows that basic contract monitors can be compiled into an ef
 $mon(k,l,j,kappa_1 gt.closed kappa_2,apply(perform(eff),v)) arrow.r.tail mon(l,k,j,kappa_2,apply(perform(eff),mon(k,l,j,kappa_1,v)))$
 
 The effectful contracts model also specify the contract-effect contracts, or contracts for effects invoked inside a contract. However, this requires a handler semantics for contracts' effects. #lange only supports handler semantic(s) for the whole program. For this reason, we ignore this contract-effect contracts construction.
+
+== Option Contracts
+
+#let option(kappa,e) = $ckw("option")(#kappa,#e)$
+#let optionv(k,l,j,kappa,e) = $ckw("O")^(#k,#l)_#j (#kappa,#e)$
+#let exercise(o) = $ckw("exercise")(#o)$
+
+In @christos2013option, the authors define option contracts. A value attached with an option contract is dormant, unless it is being forced to execute. The option contract, $option(dep(kappa_1,lambda x. kappa_2),e)$, is two-phase validation when applied under the monitor. First the monitor ensures the value matches some preliminary checking $e$. Once the preliminary check completes, it converts to an option check value, $optionv(k,l,j,kappa,v)$. This option check value acts as a faded monitor. Only when it is being forced, would it become a working monitor and starts checking contracts,
+
+$exercise(optionv(k,l,j,kappa,v)) cstep mon(k,l,j,kappa,v)$
+
+== Trace Contracts
+
+#let trace(v_1,v_2) = $ckw("tr") #v_1 med #v_2$
+#let co(alpha,v) = $ckw("co") #alpha med #v$
+
+#pad(left: 2em)[
+Disclaimer: This section adapts the formal model loosely for demonstration purposes.
+]
+
+
+@cameron2023trace describes a novel contract type that deals with states. A trace contract $trace(v_b,v_p)$ has an initializer $v_b$, and a predicate $v_p$. The initializer takes a collector $co(alpha,v_p)$ and returns a contract. The idea is that $v_b$ is the contract of the protected value, but because it requires a collector, it must receives the collector to bind it in the contract scope. The collector itself is a contract that runs every input against the predicate $v_p$. The collector is generated on-the-fly during monitor execution,
+
+$mon(k,l,j,trace(v_b,v_p),e) cstep mon(k,l,j,apply(v_b,(co(alpha,v_p))),e)$, where $alpha$ is a new address.
+
+With the collector, when the monitor is used/applied with an argument, it is added into the colletor. Then the predicate checks the collector list,
+
+$apply(mon(k,l,j,co(alpha,v_p),f),v) cstep apply(mon(k,l,j,apply(v_p,("add!" alpha med v)),f),v)$,
+
+where $("add!" alpha med v) cstep alpha$, and updates the global list with $alpha |-> v$
+
+During run-time, a global list of addresses is maintained. It is repsonsible for the generation of $alpha$ address each time the collector is created. Using this global list, predicate trace contract predicate $v_p$ can access previous contracts invoked values.
+
+== Effectful Contracts
+
+#pad(left: 2em)[
+Disclaimer 1: This section uses some terminologies of effect handlers. Readers are advised to read @chapter-effects to understand about effect handlers before reading this section.
+]
+
+#pad(left: 2em)[
+Disclaimer 2: This section adapts the formal model loosely for demonstration purposes.
+]
+
+#let coneff(kappa_1,kappa_2) = $#kappa_1 gt.closed #kappa_2$
+
+@cameron2024effectful shows how contracts should be updated to integrate them into effect handlers languages. First, a contract to constrain effects. Since effects invocation is similarly to function application, the effect contract $coneff(kappa_1,kappa_2)$ inserts checks around the effect invocation,
+
+$
+handle(h, mon(k,l,j,coneff(kappa_1,kappa_2),E[apply(perform(op),v)]), m:d) \
+quad cstep apply(apply(f,mon(k,l,j,kappa_1,v)),(lambda x. handle(h,E[mon(l,k,j,kappa_2,x)],m:d))), \
+#text[where $op -> f in h$]
+$
+
+As can be seen, the handler body $f$ is invoked with a monitor protected value, and the continuation protects the result of the handler. However, this only cares for one monitor. Generalized, users can write programs with nested effectful contracts,
+
+$mon(k,l,j,coneff(kappa_1,kappa_2), mon(m,n,o,coneff(kappa_3,kappa_4), v))$.
+
+During effect perform, all contracts will be merged, so the value input is protected with $mon(l,k,j,kappa_1,mon(n,m,o,kappa_3,v))$, and similarly for the effect result. The reduction rule above assumes all effects are intercepted the same, which is not desired. The reduction can be extended to include effect filtering, either by marking monitor with allowed effects, or contracts bind the effect when called. Regardless, this requires effect name as a value.
+
+But the program code is not the only place where effects can be invoked, contracts can invoke them too. The author suggests a different handler semantics for effects inside contract, and provide a special contract that installs this contract-effect-handler. This construction ensures that if the contract requires a separated handler (for state management), it is given a separated context, and program code cannot intefere with the context. However, contracts can still invoke program's effects.
+
