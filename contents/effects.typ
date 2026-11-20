@@ -22,7 +22,7 @@ A program is given definitions of possible effects, for example $"Console"$ deno
 
 Writing programs using effects and effect handlers streamlines the coding process. A module dealing with inputs/outputs can specify an effect $"Process"$ with two operations $"Input","Output"$ and be ignorant to the actual implementation. A different model then defines a handler providing $"Input","Output"$ as file-backed or network-backed or database-backed read/write. Moreover, handlers can encode states, without using mutable boxes.
 
-In the subsequent sections, we give some examples for effect handler usage under the #lange language introduced in @effects-model.
+In the subsequent sections, we give some examples for effect handler usage under the #lange language.
 
 === Example <effects-example>
 
@@ -132,7 +132,7 @@ The second approach is to use _parameterized handlers_ @leijen2017type, which pu
   caption: [Handler with state]
 ) <handler-example-2>
 
-=== Language Model <effect-model>
+=== Language Model
 
 We introduce #lange by extending #langb into System $F^epsilon$ by @ningning2020effect. Because System $F^epsilon$ is based on System $F_omega$, the type system is evolved into kinded system, with type constructors and effect kinds. By System $F_omega$, the language is equipped with type abstractions $Lambda alpha. v$ and type applications $e[tau]$. Function types are annotated with effect $epsilon$ showing possible effects during the invocation of function, $teff(tau_1,epsilon,tau_2)$. We also add recursive functions $mu x. v$ to the language as a value, instead of an expression. We give the full syntax extension in @effects-syntax.
 
