@@ -21,23 +21,34 @@
 
 == Contract checking as Effects is Possible
 
-Our formal models have proven that contracts checking can be compiled into a effects, and with an appropriate handler wrapper installed to the whole compiled program, the semantics are preserved. From the results obtained, we can conclude two facts, (1) contracts semantics can be emulated using effects and effect handlers, and (2) contracts do not bring extra expressiveness to effect handlers. The first fact is a direct result from the simulation proof(s) given by compilation of local, shallow, and deep handlers. The second fact is from the local compilation. While contracts do not add more expressiveness [to effects and effect handlers], the local compilation model is not useful. We have suggested modeling for the option contracts, and trace contracts under the shallow wrapper non-local compilation. Therefore, the expressiveness argument is both correct and incorrect.
+Our formal development studies translations of flat, functional, and dependent
+contracts into effects and handlers. It gives simulation results for three
+variants: an in-place handler and shallow and deep whole-program handlers. These
+results concern the modeled contract system and the outcomes covered by the
+proofs; they are not a general expressiveness comparison between languages.
 
-While the compilation preserves semantics, it is not considered the "correct" contract behavior. Contracts provide guards around a value, when that value is used the contract is triggered. The compilations provide the similar behavior, but breaks when it models option contracts. Option contracts wrap around a value, while our method overrides the environment to disable the check instead of wrapping the check around the value or function. A simple distinction is when there are two values protected under option contracts, but only one is executed. Option contract semantics can control which one is executed because it attaches to the contract. Our method must create two different scope for these values at their executing place. This scope creation is hard when we consider both values as functions, and used in a complex, intertwined manner.
+The whole-program handler approach also provides a basis for exploring other
+checking policies. For example, a dynamically scoped handler can skip checks,
+and a handler can carry state across checks. The OCaml implementation illustrates
+behaviors inspired by option, trace, and effectful contracts. These examples do
+not establish a translation or semantic equivalence for those richer systems.
+In particular, disabling checks within a dynamic scope is not the same as an
+option contract attached to a particular value: the distinction matters when
+values with different contracts are used in intertwined computations.
 
 == Shallow or Deep handlers
 
-We introduced three different compilation strategies, two of which use shallow handlers, and one uses deep handlers. It is widely agreed that the use of deep handlers is more useful, because effects might be invoked multiple times. Therefore, having a single handler that automatically re-installs itself after each invocation aligns with how programmers view effects. We analyzed the local and non-local compilation strategies and see which handler type should we used.
+We introduced three different compilation strategies, two of which use shallow handlers, and one uses deep handlers. It is widely agreed that the use of deep handlers is more useful, because effects might be invoked multiple times. Therefore, having a single handler that automatically re-installs itself after each invocation aligns with how programmers view effects. We analyzed the in-place and whole-program handler placement strategies and see which handler type should we used.
 
-In the local compiler, the shallow handler is the better choice. By analyzing the perform site, $handle(h, apply(perform(heffcheck), v), m:m)$ captures the context $E = square.stroked$. Therefore, the continuation is $k_1 = lambda x. handle(h, x)$ for deep handler, and $k_2 = lambda x. x$ for shallow handler. The continuation is invoked with $v$ yields $apply(k_1,v) estep1 v$ and $apply(k_2,v) estep1 v$. The handler disappear immediately, although deep handler may take an extra step for discarding handler with a value. Performance wise, shallow handler is more optimal. To be precise, for each contract executed, the deep handler version takes an extra step. As a result, the reduction step count increments the more contract the program executes.
+With an in-place handler, the shallow handler is the better choice. By analyzing the perform site, $handle(h, apply(perform(heffcheck), v), m:m)$ captures the context $E = square.stroked$. Therefore, the continuation is $k_1 = lambda x. handle(h, x)$ for deep handler, and $k_2 = lambda x. x$ for shallow handler. The continuation is invoked with $v$ yields $apply(k_1,v) estep1 v$ and $apply(k_2,v) estep1 v$. The handler disappear immediately, although deep handler may take an extra step for discarding handler with a value. Performance wise, shallow handler is more optimal. To be precise, for each contract executed, the deep handler version takes an extra step. As a result, the reduction step count increments the more contract the program executes.
 
-In the non-local compiler, we actually have three different wrappers instead of introduced two. The other unmentioned wrapper is similarly to the shallow wrapper it wraps the whole if else clause but using the wrapper of deep non-local compiler. Let call them by compiler I (shallow wrapper), II (deep wrapper as introduced), III (deep wrapper as previously described). Tracing their execution on nested checks, dependent contracts or flat contract with contract code, III eventually adds more nested handle frames and produces the most reduction steps. Both I and II preserve strictly a single handle frame on the "top", II's continuation has a handle re-installed but is dormant. Because I is a shallow handler, it does not need extra steps to remove the handler on value continuation and reduces some reduction steps.
+For whole-program handlers, we actually have three different wrappers instead of introduced two. The other unmentioned wrapper is similarly to the shallow wrapper it wraps the whole if else clause but using the deep whole-program handler wrapper. Let call them by compiler I (shallow wrapper), II (deep wrapper as introduced), III (deep wrapper as previously described). Tracing their execution on nested checks, dependent contracts or flat contract with contract code, III eventually adds more nested handle frames and produces the most reduction steps. Both I and II preserve strictly a single handle frame on the "top", II's continuation has a handle re-installed but is dormant. Because I is a shallow handler, it does not need extra steps to remove the handler on value continuation and reduces some reduction steps.
 
-We proved that regardless of local or non-local compiler, shallow and deep handlers provide the same equivalence to #langc semantics with some [minimal] overhead when using deep handlers. However, as previously stated, deep handlers are more practical and implemented widely. Users should implement our compilation model using shallow handlers, and use deep handlers only if the language only supports deep handlers, for example the Koka language.
+The simulation results cover the in-place shallow variant and the shallow and deep whole-program handler variants. The reduction-step observations above describe the modeled executions and do not establish a general runtime performance bound.
 
 == Recursion handlers
 
-For non-local compiler wrappers, a recursive handler (shallow) or a recursive wrapper (deep) are used. Both of these install recursive functions onto the handler code, this might not work, for example in Koka#footnote(link("https://github.com/koka-lang/koka/discussions/824")[https://github.com/koka-lang/koka/discussions/824]). If recursion is not supported, then the user can only use local compiler, which provides the same contracts semantics without the extras.
+For whole-program handler wrappers, a recursive handler (shallow) or a recursive wrapper (deep) are used. Both of these install recursive functions onto the handler code, this might not work, for example in Koka#footnote(link("https://github.com/koka-lang/koka/discussions/824")[https://github.com/koka-lang/koka/discussions/824]). If the required recursion is not supported, the in-place handler variant is another approach for the modeled contract semantics; it does not by itself provide the shared checking policies explored with whole-program handlers.
 
 == System $F^epsilon$ and CBPV
 
@@ -49,7 +60,7 @@ Our formal models can model simple contracts into effects, but it cannot assert 
 
 == Practicality
 
-The OCaml implementation has proven practical of the formal model, by using attributes to mark contracts, and let the rewritter to resemble the [non-local] compiler model. The practicality is proven through building a Current-Environment-Storage-Continuation (CESK) machine with some important functionalities protected with contracts. With the correct contract usage, we eliminate writing code for malformed cases. Although in the context of OCaml, it does not provide much usefulness compared to pattern matching where every cases are considered.
+The OCaml implementation illustrates an application of the formal model, by using attributes to mark contracts, and let the rewritter to resemble the whole-program handler compilation model. The implementation is illustrated by building a Current-Environment-Storage-Continuation (CESK) machine with some important functionalities protected with contracts. With the correct contract usage, we eliminate writing code for malformed cases. Although in the context of OCaml, it does not provide much usefulness compared to pattern matching where every cases are considered.
 
 == Comparison to Racket
 
