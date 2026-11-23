@@ -65,32 +65,27 @@ by itself can provide these specifications. Our thesis is therefore:
 
 #pad(left: 3em)[
   #emph[
-    It is sufficient to express multiple contract specifications with only effects and effect handlers.
+    Effects and effect handlers can implement functional contract system through
+    local rewrites, and they can also implement richer contract systems through
+    whole program transformations.
   ]
 ]
 
-In particular, the basic specifications that must be met are functional, and
-dependent contracts. Other specifications that are of interest are those related
-to contract's state, and side-effects.
-
 == Contributions
 
-We validated our thesis by defining formal models of contracts (monitors), and effect
-handlers, called #langc and #lange respectively. Then we provide a translation from
-#langc into #lange, erasing all contracts. Using simulation proof, we prove that any
-translated program maintain their contracts semantics. In particular, our contributations are:
+We define two formal models of software contracts, #langc, and effect handlers, #lange.
+These two models serve as the basis for our contributions:
 
-- Three compilation schemes from #langc to #lange, each correponses to different compilation
-  strategy based on different capabilities of #lange.
+- Three translations from well-typed #langc programs to #lange. The translations
+  produce well-typed #lange programs, and preserve the semantics of source program.
+  The translations' properties are formally proven. We also provide Redex models
+  based on these translations with examples.
 
-- Formal simulation proofs for the three compilation schemes, ensuring semantics equivalance.
-  Equivalance is understood as outputing a similar value, or same blame party if source program
-  blames. Accompanied these formal proofs are Redex models with examples.
-
-- An OCaml implementation following a formal compilation scheme, with extensions to
-  non-basic contract specifications, including adaptations of option contracts by
-  @christos2013option, trace contracts by @cameron2023trace, and effectful contracts
-  by @cameron2024effectful.
+- An OCaml implementation based on effectful checking, with examples exploring
+  behaviors inspired by option contracts @christos2013option, trace contracts
+  @cameron2023trace, and effectful contracts @cameron2024effectful. These examples
+  further prove our thesis on the richness of contracts obtained from contract
+  checking as effects and effect handlers.
 
 == Organization
 
