@@ -3,9 +3,28 @@
 
 #show: great-theorems-init
 
+// Inherit only the chapter component, even inside deeply nested sections.
+// rich-counters 0.2.1 otherwise truncates the heading counter using a loop
+// whose discarded pop values fail to join on newer Typst versions.
+#let chapter-counter = (
+  at: loc => {
+    let value = if loc == none { counter(heading).final() } else { counter(heading).at(loc) }
+    (value.first(),)
+  },
+  inherited_levels: 0,
+  last_update_location: (level, loc) => {
+    let headings = if loc == none { query(heading) } else { query(selector(heading).before(loc)) }
+    for h in headings.rev() {
+      if h.level == 1 and h.numbering != none { return h.location() }
+    }
+    none
+  },
+)
+
 #let mathcounter = rich-counter(
   identifier: "mathblocks",
   inherited_levels: 1,
+  inherited_from: chapter-counter,
 )
 
 // Appendix theorem environments, numbered by their enclosing appendix heading.
