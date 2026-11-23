@@ -4,7 +4,13 @@
 #import "/models/language.typ": *
 #import "/utils.typ": load-bib, no-ref
 
-#import "/proofs/setup.typ": rn
+#import "@preview/great-theorems:0.1.2": great-theorems-init
+
+#import "/proofs/setup.typ": appendix-theorem, rn
+
+#show: great-theorems-init
+// Body statements share the chapter-scoped counter with the appendices.
+#let theorem = appendix-theorem.with(numbering: "1.1")
 
 #show: no-ref
 
@@ -185,6 +191,20 @@ must first have all the $op_i$ defined in $Sigma(l)$. Type of $op_i : forall alp
 ]
 
 The rest of the typing rules are in @effects-type-rules.
+
+=== Type Safety <effects-type-safety>
+
+Following @ningning2020effect, #lange (with additions to System $F^epsilon$) enjoys type safety through progress and preservation. Preservation also preserve effect in its judgement.
+
+#theorem(title: [#lange Progress])[
+
+If $type(dot, e_1, tau, eff: mteff)$ then $e_1$ is a value or $e_1 = eblame(p)$ or $e_1 estep e_2$.
+] <lange-effects-progress>
+
+#theorem(title: [#lange Preservation])[
+
+If $type(dot, e_1, tau, eff: mteff)$ and $e_1 estep e_2$ then $type(dot, e_2, tau, eff: mteff)$.
+] <lange-effects-preservation>
 
 #include "/models/effects.typ"
 #include "/models/effects-type-rules.typ"

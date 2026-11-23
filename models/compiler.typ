@@ -18,12 +18,12 @@
         name: [Compile-Flat],
         $compile(type(Gamma,e_1,tau -> boolt), e_3)$,
         $compile(type(Gamma,e_2,tau), e_4)$,
-        $compile(type(Gamma,mon(k,l,j,flat(e_1),e_2),tau), apply(perform(effcheck, tau: tau), tuple(k, tuple(e_3, e_4))))$,
+        $compile(type(Gamma,mon(k,l,j,flat(e_1),e_2),tau), apply(perform(effcheck, tau: tau^*), tuple(k, tuple(e_3, e_4))))$,
       )),
       prooftree(rule(
         name: [Compile-Func],
         // $x,f in.not "dom"(Gamma)$,
-        $compile(type(Gamma,e_1,tau_2), e_2)$,
+        $compile(type(Gamma,e_1,tau_1 -> tau_2), e_2)$,
         $compile(type(Gamma,
             lambda f : tau_1 -> tau_2. lambda x : tau_1. mon(k,l,j,kappa_2,apply(f, mon(l,k,j,kappa_1,x))),
             (tau_1 -> tau_2) -> (tau_1 -> tau_2)),
@@ -56,10 +56,10 @@
     v(2em),
     rule-set(
       prooftree(rule(
-        name: [Local-Compile-Flat],
+        name: [In-Place-Handler-Compile-Flat],
         $compile(type(Gamma,e_1,tau -> boolt), e_3,m:l)$,
         $compile(type(Gamma,e_2,tau), e_4,m:l)$,
-        $compile(type(Gamma,mon(k,l,j,flat(e_1),e_2),tau), apply(handler(heffcheck,m:s), apply(perform(effcheck, tau: tau), tuple(k, tuple(e_3, e_4)))),m:l)$,
+        $compile(type(Gamma,mon(k,l,j,flat(e_1),e_2),tau), apply(handler(heffcheck,m:s), (lambda \_ : unit. apply(perform(effcheck, tau: tau^*), tuple(k, tuple(e_3, e_4))))),m:l)$,
       )),
     ),
     v(2em),

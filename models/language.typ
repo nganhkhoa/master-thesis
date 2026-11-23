@@ -151,7 +151,7 @@
 #let heffcheck = $ekw("h")_effcheck$
 #let heffstate = $ekw("h")_effstate$
 // Compilation derivations record the compiler variant above the arrow:
-// d = deep, s = shallow, l = local. Deep is the default for generic rules.
+// d = deep, s = shallow, l = in-place handler. Deep is the default for generic rules.
 #let compile(src, target, m: none) = {
   if m != none or m == l {
     $#src med attach(arrow.r.tail, tr: l) med #target$

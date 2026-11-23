@@ -3,6 +3,13 @@
 
 #import "/models/language.typ": *
 #import "/utils.typ": load-bib, no-ref
+#import "@preview/great-theorems:0.1.2": great-theorems-init
+
+#import "/proofs/setup.typ": appendix-theorem
+
+#show: great-theorems-init
+// Body statements share the chapter-scoped counter with the appendices.
+#let theorem = appendix-theorem.with(numbering: "1.1")
 
 #show: no-ref
 
@@ -102,6 +109,30 @@ $mon(k,l,j,tuple(kappa_1,kappa_2),e) = apply((lambda v. tuple(mon(k,l,j,kappa_1,
 During evaluation, two new expressions might arise, $check(k,j,e,v)$ and $blame(k,j)$, along with a new value type $guard(v,kappa,k,l,j)$. During evaluation if a contract is violated it reduces into $blame(k,j)$ with two labels $k$ the party responsible (to blamed), and $j$ the contract-providing party. A monitor of a flat contract reduces to a $check(k,j,e,v)$, indicating that a contract checking is happening, with checking code $e$ and value $v$. Checking code evaluates to true or false. If true, check is removed off value, else blame is returned using the labels of check. For other contract types, a monitor turns into a dormant $guard(v,kappa,k,l,j)$, treated as a function value. When it is applied to a value, it breaks down the contract to monitor the argument, and the function's result.
 
 To type #langc, we need a new type $con(tau)$ to type contracts. The type of flat contract depends on the predicate input type, $flat(e) : con(tau)$ where $e : tau -> boolt$. Functional and dependent contracts are typed $con(tau_1 -> tau_2)$ each corresponse to domain contract type, and codomain contract type. A monitor $mon(k,l,j,kappa,v)$ is then typed easily by making sure the contract $kappa$ is typed $con(dot)$ of protected value $v$ type. To ensure type safety is hold, $check(k,j,e,v)$, $guard(v,kappa,k,l,j)$ and $blame(k,j)$ expressions must be typed as well. $blame(k,j)$ accepts any type; $check(k,j,e,v)$ checking code $e$ is typed bool, and the expression type resonates with value $v$; $guard(v,kappa,k,l,j)$ shares the same type with protected value $v$, with contract $kappa$ has contract type of type of $v$ as well.
+
+=== Type Safety
+
+#langc is safe by progress and preservation.
+
+#theorem(title: [#langc Type Safety])[
+
+  1. If $type(dot, e, tau)$ and $e cstep e'$ then $type(dot,e',tau)$.
+  2. If $type(dot, e, tau)$ then $e$ is a value or $e = blame(k,j)$ or $e cstep e'$ for some $e'$.
+] <langc-Type-Safety>
+
+=== Contract Erasure
+
+#let erase(e) = $"erase"(#e)$
+
+#langc satisfies the erasure theorem by erasure function $erase(e)$ as a homomorphic function over expressions $e in langc$ that removes monitors.
+
+$erase(mon(k,l,j,kappa,e)) = erase(e)$.
+
+
+#theorem(title: "Contract Erasure Theorem")[
+
+  If $e' = erase(e)$ and $e cstep1 b$, then $e' step1 b$.
+] <langc-contract-erasure>
 
 #include "/models/contracts.typ"
 #include "/models/contracts-type-rules.typ"

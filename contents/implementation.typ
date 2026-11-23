@@ -19,11 +19,11 @@ Our formal models are implemented in Redex and in OCaml. While the Redex models 
 
 == Redex models
 
-We model three languages: #langb, #langc, #lange, and two compilers one for local, and non-local. To model the compiler, we create a Redex union language of #langc and #lange, and define a judgement `(compile C:Γ C:x C:τ E:x)` where `C:` belongs to #langc and `E:` belongs to #lange, and the input output model is `(compile I I O O)`. The interesting compilation rules are displayed in @redex-compiler-non-local. @redex-compiler-local shows the local version compiler where all rules are kept except for the flat compilation rule accompanied by a handler.
+We model three languages: #langb, #langc, #lange, and two compiler variants, one using in-place handlers and the other using a whole-program handler. To model the compiler, we create a Redex union language of #langc and #lange, and define a judgement `(compile C:Γ C:x C:τ E:x)` where `C:` belongs to #langc and `E:` belongs to #lange, and the input output model is `(compile I I O O)`. The interesting compilation rules are displayed in @redex-compiler-non-local. @redex-compiler-local shows the in-place-handler compiler variant where all rules are kept except for the flat compilation rule accompanied by a handler.
 
-For non-local compiler, their wrappers must be created accordingly to @redex-shallow-compiler-wrapper (using shallow handlers) or to @redex-deep-compiler-wrapper (using deep handlers). We use `genericeff` as a common effect list consisting of the single contract checking effect identifier for type checking.
+For the whole-program-handler compiler variant, the wrapper must be created according to @redex-shallow-compiler-wrapper (using shallow handlers) or to @redex-deep-compiler-wrapper (using deep handlers). We use `genericeff` as a common effect list consisting of the single contract checking effect identifier for type checking.
 
-#figure(caption: "Non-local compiler")[
+#figure(caption: "Compiler for a whole-program handler")[
 ```racket
 [(compile C:Γ C:e_1 (C:τ -> bool) E:e_1)
  (compile C:Γ C:e_2 C:τ E:e_2)
@@ -62,7 +62,7 @@ For non-local compiler, their wrappers must be created accordingly to @redex-sha
 ```
 ]<redex-compiler-non-local>
 
-#figure(caption: "Local compiler")[
+#figure(caption: "Compiler with in-place handlers")[
 ```racket
 [(compile C:Γ C:e_1 (C:τ -> bool) E:e_1)
  (compile C:Γ C:e_2 C:τ E:e_2)
@@ -79,7 +79,7 @@ For non-local compiler, their wrappers must be created accordingly to @redex-sha
 ```
 ] <redex-compiler-local>
 
-#figure(caption: "Shallow handler wrapper for non-local compiler")[
+#figure(caption: "Shallow whole-program handler wrapper")[
 ```racket
 (define-term h-check
   ((effcheck
@@ -95,7 +95,7 @@ For non-local compiler, their wrappers must be created accordingly to @redex-sha
 ] <redex-shallow-compiler-wrapper>
 
 
-#figure(caption: "Deep handler wrapper for non-local compiler")[
+#figure(caption: "Deep whole-program handler wrapper")[
 ```racket
 (define-term h-check
   ((effcheck
