@@ -16,7 +16,7 @@
 
 #let tc(t) = $#t^*$
 #let hc = $effs(heffcheck)$
-#let wrap(tau, e) = $apply(kw("wrap")[#tau], (lambda \_ : unit. #e))$
+#let wrap(tau, e) = $apply(kw("wrap")_s[#tau], (lambda \_ : unit. #e))$
 #let rel(e) = $accent(#e, tilde)$
 #let treq(a,b) = $"EQ"(#a,#b)$
 #let hcheck = $kw("H")$
@@ -42,7 +42,7 @@ Proof for a compiler from $langc$ to $lange$ using shallow handler, where the co
     [$mu h. handler({effcheck -> lambda tuple(l,tuple(e,v)). lambda k. apply(h,(lambda \_. ife(apply(e,v),apply(k,v),eblame(l))))}, m: s)$]
   ),
 
-  [$kw("wrap")$], [$=$],
+  [$kw("wrap")_s$], [$=$],
   grid.cell(align: left,
     [$Lambda alpha. med lambda f: unit -> alpha. apply(hcheck, f)$]
   ),
@@ -241,7 +241,7 @@ Before we define relations that will be used in the simulation proof below. We d
   If $E^* ~ rel(E)^*$, $e ~ rel(e)$ and $e$ has no check in evaluation position, then $E^*[e] ~ rel(E)^*[rel(e)]$.
 ] <compiler-shallow-relation-context>
 
-#proof[
+#proof(of: <compiler-shallow-relation-context>)[
 By induction on $E$. Follows similarly to @compiler-relation-is-closed because the relations ($R_e,R_E$) is same.
 
 // - Case $E = square.stroked$
@@ -288,23 +288,23 @@ By induction on $E$. Follows similarly to @compiler-relation-is-closed because t
   If $e ~ rel(e)$ and $v ~ rel(v)$ then $e[x:=v] ~ rel(e)[x:=rel(v)]$.
 ] <compiler-shallow-relation-substitution>
 
-#proof[
+#proof(of: <compiler-shallow-relation-substitution>)[
 By induction on $e ~ e'$. Follows @compiler-relation-subst because relations ($R_v,R_e$) are the same.
 ]
 
 #lemma(title: "Compiler is subset of relation")[
 
-  If $compile(type(Gamma,e_1,tau),e_2, m: s)$ then $e_1 ~ e^*_2$.
+  If $compile(type(Gamma,e_1,tau),e_2)$ then $e_1 ~ e^*_2$.
 ] <compiler-shallow-compiler-is-relation>
 
-#proof[
+#proof(of: <compiler-shallow-compiler-is-relation>)[
 
-By induction on structure of $compile(type(Gamma,e_1,tau),e_2, m: s)$.
+By induction on structure of $compile(type(Gamma,e_1,tau),e_2)$.
 
 - Case #prooftree(rule(
-    $compile(type(Gamma,e_3,tau -> boolt), e_5, m: s)$,
-    $compile(type(Gamma,e_4,tau), e_6, m: s)$,
-    $compile(type(Gamma,mon(k,l,j,flat(e_3),e_4),tau), apply(perform(effcheck, tau: tau), tuple(k, tuple(e_5, e_6))), m: s)$,
+    $compile(type(Gamma,e_3,tau -> boolt), e_5)$,
+    $compile(type(Gamma,e_4,tau), e_6)$,
+    $compile(type(Gamma,mon(k,l,j,flat(e_3),e_4),tau), apply(perform(effcheck, tau: tau), tuple(k, tuple(e_5, e_6))))$,
   ))
 
   #derivation((
@@ -315,12 +315,12 @@ By induction on structure of $compile(type(Gamma,e_1,tau),e_2, m: s)$.
   ))
 
 - Case #prooftree(rule(
-        $compile(type(Gamma,e_3,tau_1 -> tau_2), e_4, m: s)$,
+        $compile(type(Gamma,e_3,tau_1 -> tau_2), e_4)$,
         $compile(type(Gamma,
             lambda f. lambda x. mon(k,l,j,kappa_2,apply(f, mon(l,k,j,kappa_1,x))),
             (tau_1 -> tau_2) -> (tau_1 -> tau_2)),
-          e_5, m: s)$,
-        $compile(type(Gamma,mon(k,l,j,kappa_1->kappa_2,e_3),tau_1 -> tau_2),apply(e_5, e_4), m: s)$,
+          e_5)$,
+        $compile(type(Gamma,mon(k,l,j,kappa_1->kappa_2,e_3),tau_1 -> tau_2),apply(e_5, e_4))$,
       ))
 
   #derivation((
@@ -331,12 +331,12 @@ By induction on structure of $compile(type(Gamma,e_1,tau),e_2, m: s)$.
   ))
 
 - Case #prooftree(rule(
-        $compile(type(Gamma,e_3,tau_1 -> tau_2), e_4, m: s)$,
+        $compile(type(Gamma,e_3,tau_1 -> tau_2), e_4)$,
         $compile(type(Gamma,
             lambda f. lambda x. apply((lambda y. mon(k,l,j,kappa_2,apply(f, mon(l,k,j,kappa_1,x)))), mon(l,j,j,kappa_1,x)),
             (tau_1 -> tau_2) -> (tau_1 -> tau_2)),
-          e_5, m: s)$,
-        $compile(type(Gamma,mon(k,l,j,dep(kappa_1, lambda y. kappa_2),e_3),tau_1 -> tau_2),apply(e_5, e_4), m: s)$,
+          e_5)$,
+        $compile(type(Gamma,mon(k,l,j,dep(kappa_1, lambda y. kappa_2),e_3),tau_1 -> tau_2),apply(e_5, e_4))$,
       ))
 
 
@@ -357,7 +357,7 @@ By induction on structure of $compile(type(Gamma,e_1,tau),e_2, m: s)$.
   $E^* ~ E'^*$ and $e ~ e'_0$ and $e' = E'^*[e'_0]$.
 ] <compiler-shallow-relation-find-E>
 
-#proof[
+#proof(of: <compiler-shallow-relation-find-E>)[
 
 By induction on the check-free context $E^*$. Follows @compiler-relation-context-decomposition because relations ($R_E,R_e$) are the same.
 ]
@@ -438,18 +438,18 @@ By induction on the check-free context $E^*$. Follows @compiler-relation-context
 
 ] <compiler-shallow-context-breakdown>
 
-#proof[
+#proof(of: <compiler-shallow-context-breakdown>)[
 By induction on the structure of $E$. Follows @compiler-context-breakdown because the contexts $E,E^+,E^*$ are the same.
 ]
 
-#lemma("Context Breakdown Helper")[
+#lemma(title: "Context Breakdown Helper")[
 
 If $E^+_1 != square.stroked$ then there is a $E^+_2$, $E^+_2 = K[E^+_1]$.
 
 Where $K = apply(square.stroked,e) | apply(v,square.stroked) | mon(k,l,j,kappa,square.stroked) | check(k,j,square.stroked,v)$
 ] <compiler-shallow-context-breakdown-1>
 
-#proof[
+#proof(of: <compiler-shallow-context-breakdown-1>)[
 By induction on the structure of $E^+_1$. Follows @compiler-context-breakdown-1 because the context $E^+$ is the same.
 ]
 
@@ -474,7 +474,7 @@ By induction on the structure of $E^+_1$. Follows @compiler-context-breakdown-1 
 
     // compiling and wrapping
     node((0, 1), $e'$),
-    node((0, 2), $wrap(tau, e')$),
+    node((0, 2), $wrap(tc(tau), e')$),
     edge((1, 0), (0, 1), "->", $#compiles-into$, label-side: right),
     edge((0, 1), (0, 2), "->", [wrap], label-side: right),
     edge((0, 2), (1, 2), "->", $estep1$, label-side: right),
@@ -517,13 +517,8 @@ treq(e,e') = cases(
 )
 $
 
-#theorem()[
-  If $compile(type(dot,e,tau),e', m: s)$ and $e^* = "untyped"(wrap(tau,e'))$ and $e cstep1 r$ then $e^* estep1 rel(r)$.
-
-  Where $r$ is a value $v$ or $blame(k,j)$.
-]
-
-#proof[
+#proof(of: <compiler-shallow-correctness>)[
+  Let $e^* = "untyped"(rn("T2")(e))$.
   #derivation((
     ($e^* estep1 handle(heffcheck,e^*_1,m:s)$, [@compiler-shallow-wrap-step-eq]),
     ($treq(e, e^*_1)$, [@compiler-shallow-wrap-step-eq]),
@@ -534,10 +529,10 @@ $
 
 #lemma(title: "Wrapped compiled program steps to an equivalent state with source program")[
 
-  If $compile(type(dot,e,tau),e', m: s)$ and $e^*_1 = "untyped"(wrap(tau,e'))$ then it exists $e^*_2$ such that $e^*_1 estep1 handle(heffcheck, e^*_2, m:s)$ and $treq(e,e^*_2)$.
+  If $compile(type(dot,e,tau),e')$ and $e^*_1 = "untyped"(wrap(tc(tau),e'))$ then it exists $e^*_2$ such that $e^*_1 estep1 handle(heffcheck, e^*_2, m:s)$ and $treq(e,e^*_2)$.
 ] <compiler-shallow-wrap-step-eq>
 
-#proof[
+#proof(of: <compiler-shallow-wrap-step-eq>)[
   #derivation((
     ($e ~ e'^*$, [@compiler-shallow-compiler-is-relation]),
     ($treq(e,e'^*)$, [Case 1]),
@@ -550,7 +545,7 @@ $
   If $e cstep1 r$ and $treq(e,e')$ then $handle(heffcheck,e', m:s) estep1 rel(r)$.
 ] <compiler-shallow-full-simulation>
 
-#proof[
+#proof(of: <compiler-shallow-full-simulation>)[
   By induction on $e cstep1 r$
 
   - Case $r cstep1 r$

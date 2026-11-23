@@ -13,8 +13,7 @@
 #show: great-theorems-init
 #show link: text.with(fill: blue)
 
-#import "/proofs/setup.typ": appendix-theorem, appendix-lemma, derivation, rn
-#let theorem = appendix-theorem
+#import "/proofs/setup.typ": appendix-lemma, derivation, rn
 #let lemma = appendix-lemma
 
 #let remark = mathblock(
@@ -28,7 +27,7 @@
 
 #let proof = proofblock()
 
-= #langb Safety Theorem
+= #langb Safety Theorem <proof-langb-safety>
 
 We prove type safety of #langb. The language has no mutable cells, so the store never changes and a step is just $e step e'$.
 
@@ -38,13 +37,7 @@ Each binary operator $o in {+, -, and, or}$ has a signature $o : tau_a times tau
 
 == Type Safety
 
-#theorem(title: [#langb Type Safety])[
-
-  1. If $type(dot, e, tau)$ and $e step e'$ then $type(dot,e',tau)$
-  2. If $type(dot, e, tau)$ then $e$ is a value or $e step e'$ for some $e'$.
-] <langb-Type-Safety>
-
-#proof[
+#proof(of: <langb-Type-Safety>)[
   By @langb-Preservation and @langb-Progress.
 ]
 
@@ -63,7 +56,7 @@ Each binary operator $o in {+, -, and, or}$ has a signature $o : tau_a times tau
 ]
 
 #lemma(title: [#langb Progress])[
-  If $type(dot, e_1, tau)$ then $e_1$ is a value $e_1 step e_2$ for some $e_2$.
+  If $type(dot, e_1, tau)$ then $e_1$ is a value or $e_1 step e_2$ for some $e_2$.
 ] <langb-Progress>
 
 #proof(of: <langb-Progress>)[
@@ -98,7 +91,7 @@ Each binary operator $o in {+, -, and, or}$ has a signature $o : tau_a times tau
   - If $tau = tuple(tau_1, tau_2)$ then $v = tuple(v_1, v_2)$ with $type(Gamma, v_1, tau_1)$ and $type(Gamma, v_2, tau_2)$.
 ] <langb-canonical>
 
-#proof[
+#proof(of: <langb-canonical>)[
   By type rules T-Num, T-Bool, T-Unit, T-Lambda, T-Tuple.
 ]
 
@@ -106,7 +99,7 @@ Each binary operator $o in {+, -, and, or}$ has a signature $o : tau_a times tau
   If $type(Gamma, E[e], tau)$ then there is $tau_1$ such that $type(Gamma, e, tau_1)$, and for every $e'$ with $type(Gamma, e', tau_1)$ we have $type(Gamma, E[e'], tau)$.
 ] <langb-decomposition>
 
-#proof[
+#proof(of: <langb-decomposition>)[
   By induction on $E$.
 
   - Case $E = square.stroked$. Take $tau_1 = tau$. The premise is $type(Gamma, e, tau)$, and the conclusion follows immediately.
@@ -128,7 +121,7 @@ Each binary operator $o in {+, -, and, or}$ has a signature $o : tau_a times tau
   If $type(Gamma, e_1, tau)$ and $e_1 stepx e_2$ then $type(Gamma, e_2, tau)$.
 ] <langb-redex-preservation>
 
-#proof[
+#proof(of: <langb-redex-preservation>)[
   By cases on $e_1 stepx e_2$.
 
   - Case S-App, $apply((lambda x : tau_1. e), v) stepx e[x:=v]$.
@@ -146,7 +139,7 @@ Each binary operator $o in {+, -, and, or}$ has a signature $o : tau_a times tau
   If $type(Gamma\, x : tau_1, e, tau)$ and $type(Gamma, e_1, tau_1)$ then $type(Gamma, e[x:=e_1], tau)$.
 ] <langb-substitution>
 
-#proof[
+#proof(of: <langb-substitution>)[
   By induction on the derivation of $type(Gamma\, x : tau_1, e, tau)$.
 
   - Case T-Var with $e = x$. Then $type(Gamma\, x : tau_1, x, tau_1)$ and $tau = tau_1$.

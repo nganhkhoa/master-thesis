@@ -223,7 +223,7 @@ Before we define relations that will be used in the simulation proof below. We d
   If $E^* ~ rel(E)^*$, $e ~ rel(e)$ and $e$ has no check in evaluation position, then $E^*[e] ~ rel(E)^*[rel(e)]$.
 ] <compiler-local-relation-context>
 
-#proof[
+#proof(of: <compiler-local-relation-context>)[
 By induction on $E^* ~ rel(E)^*$. Follows similarly to @compiler-relation-is-closed because the relations ($R_e,R_E$) are the same.
 ]
 
@@ -232,7 +232,7 @@ By induction on $E^* ~ rel(E)^*$. Follows similarly to @compiler-relation-is-clo
   If $e ~ rel(e)$ and $v ~ rel(v)$ then $e[x:=v] ~ rel(e)[x:=rel(v)]$.
 ] <compiler-local-relation-substitution>
 
-#proof[
+#proof(of: <compiler-local-relation-substitution>)[
 By induction on $e ~ e'$. Follows @compiler-relation-subst because relations ($R_v,R_e$) are the same. For this compiler, there is a single case that has their relation different from Deep/Shallow compilers.
 
 - Case $mon(k,l,j,flat(e_1),e_2) ~ handle(heffcheck,apply(perform(effcheck),tuple(k,tuple(rel(e)_1,rel(e)_2))),m:s)$
@@ -252,7 +252,7 @@ By induction on $e ~ e'$. Follows @compiler-relation-subst because relations ($R
   $E^* ~ E'^*$ and $e ~ e'_0$ and $e' = E'^*[e'_0]$.
 ] <compiler-local-relation-find-E>
 
-#proof[
+#proof(of: <compiler-local-relation-find-E>)[
 
 By induction on the check-free context $E^*$. Follows @compiler-relation-context-decomposition because relations ($R_E,R_e$) are the same.
 ]
@@ -268,7 +268,7 @@ By induction on the check-free context $E^*$. Follows @compiler-relation-context
 
 ] <compiler-local-context-breakdown>
 
-#proof[
+#proof(of: <compiler-local-context-breakdown>)[
 By induction on the structure of $E$. Follows @compiler-context-breakdown because the contexts $E,E^+,E^*$ are the same.
 ]
 
@@ -277,7 +277,7 @@ By induction on the structure of $E$. Follows @compiler-context-breakdown becaus
 If $compile(type(Gamma,e,tau),e', m: l)$ then $e ~ e'$
 ] <compiler-local-compiler-is-relation>
 
-#proof[
+#proof(of: <compiler-local-compiler-is-relation>)[
 
 By induction on structure of $compile(type(Gamma,e_1,tau),e_2, m: l)$.
 
@@ -344,14 +344,7 @@ treq(e,e') = cases(
 $
 
 
-#theorem()[
-
-If $e cstep1 b$ and $compile(type(dot,e,tau),e', m: l)$ then $e' estep1 b$
-
-Runs without a wrapper because the local handler resolves the contract effect in-place.
-]
-
-#proof[
+#proof(of: <compiler-local-correctness>)[
   #derivation((
     ($e ~ e'$, [@compiler-local-compiler-is-relation]),
     ($treq(e,e')$, [Case 1 EQ]),
@@ -367,7 +360,7 @@ If $treq(e, e')$ and $e cstep1 r$ then $e' estep1 rel(r)$.
 Where $r = v | blame(k,j)$ and $rel(r) = rel(v) | eblame(k)$
 ] <compiler-local-multistep-simulation>
 
-#proof[
+#proof(of: <compiler-local-multistep-simulation>)[
 
 By induction on the structure of $e cstep1 r$
 
@@ -404,7 +397,7 @@ By induction on the structure of $e cstep1 r$
 If $treq(e_1, e'_1)$ and $e_1 cstep e_2$ then exists $e'_2$ that $e'_1 estep1 e'_2$ and $treq(e_2, e'_2)$
 ] <compiler-local-step-simulation>
 
-#proof[
+#proof(of: <compiler-local-step-simulation>)[
 
 By case analysis on $e_1 cstep e_2$.
 

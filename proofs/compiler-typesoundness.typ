@@ -29,7 +29,8 @@ $
 Sigma(heffcheck) = {effcheck : forall alpha. tuple(blab, tuple(teff(alpha,hc,boolt), alpha)) -> alpha}
 $
 
-#block(width: 100%)[
+#figure(
+  block(width: 100%)[
   #rect(stroke: 0.5pt, inset: 5pt)[
     $tc(dot.op) : langc tau -> lange tau$
   ]
@@ -48,19 +49,16 @@ $
     [$tc((tau_1 -> tau_2))$], [$=$], [$teff(tc(tau_1),hc,tc(tau_2))$],
     [$tc((x_1 : tau_1, ..., x_n : tau_n))$], [$=$], [$x_1 : tc(tau_1), ..., x_n : tc(tau_n)$],
   )
-]
+  ],
+  caption: [Type conversion],
+) <type-conversion>
 
 == Compiler Type Preservation
 
 
-#theorem(title: "Compiler Type Preservation")[
+#proof(of: <compiler-type-ts-preservation>)[
 
-  If $compile(type(Gamma,e,tau),e', m: d)$ then $type(tc(Gamma),e',tc(tau),eff: hc)$.
-] <compiler-type-ts-preservation>
-
-#proof[
-
-By induction on structure of $compile(type(Gamma,e,tau),e', m: d)$.
+By induction on structure of $compile(type(Gamma,e,tau),e')$.
 
 - Case $e = x$, $e = n$, $e = b$, $e = unit$
 
@@ -71,8 +69,8 @@ By induction on structure of $compile(type(Gamma,e,tau),e', m: d)$.
   ))
 
 - Case #prooftree(rule(
-    $compile(type(Gamma\, x : tau_1, e, tau_2), e'', m: d)$,
-    $compile(type(Gamma, lambda x : tau_1. e, tau_1 -> tau_2), lambda x : tc(tau_1). e'', m: d)$,
+    $compile(type(Gamma\, x : tau_1, e, tau_2), e'')$,
+    $compile(type(Gamma, lambda x : tau_1. e, tau_1 -> tau_2), lambda x : tc(tau_1). e'')$,
   ))
 
   #derivation((
@@ -83,9 +81,9 @@ By induction on structure of $compile(type(Gamma,e,tau),e', m: d)$.
   ))
 
 - Case #prooftree(rule(
-    $compile(type(Gamma, e_1, tau_1 -> tau_2), e'_1, m: d)$,
-    $compile(type(Gamma, e_2, tau_1), e'_2, m: d)$,
-    $compile(type(Gamma, apply(e_1,e_2), tau_2), apply(e'_1,e'_2), m: d)$,
+    $compile(type(Gamma, e_1, tau_1 -> tau_2), e'_1)$,
+    $compile(type(Gamma, e_2, tau_1), e'_2)$,
+    $compile(type(Gamma, apply(e_1,e_2), tau_2), apply(e'_1,e'_2))$,
   ))
 
   #derivation((
@@ -106,9 +104,9 @@ By induction on structure of $compile(type(Gamma,e,tau),e', m: d)$.
   For $mu x : tau. e$, the binder is $x : tc(tau)$, and the I.H. is used under $tc(Gamma)\, x : tc(tau)$.
 
 - Case #prooftree(rule(
-    $compile(type(Gamma,e_3,tau -> boolt), e_5, m: d)$,
-    $compile(type(Gamma,e_4,tau), e_6, m: d)$,
-    $compile(type(Gamma,mon(k,l,j,flat(e_3),e_4),tau), apply(perform(effcheck, tau: tc(tau)), tuple(k, tuple(e_5, e_6))), m: d)$,
+    $compile(type(Gamma,e_3,tau -> boolt), e_5)$,
+    $compile(type(Gamma,e_4,tau), e_6)$,
+    $compile(type(Gamma,mon(k,l,j,flat(e_3),e_4),tau), apply(perform(effcheck, tau: tc(tau)), tuple(k, tuple(e_5, e_6))))$,
   ))
 
   #derivation((
@@ -120,12 +118,12 @@ By induction on structure of $compile(type(Gamma,e,tau),e', m: d)$.
   This is the only rule that introduces $heffcheck$.
 
 - Case #prooftree(rule(
-    $compile(type(Gamma,e_1,tau_1 -> tau_2), e_2, m: d)$,
+    $compile(type(Gamma,e_1,tau_1 -> tau_2), e_2)$,
     $compile(type(Gamma,
         lambda f : tau_1 -> tau_2. lambda x : tau_1. mon(k,l,j,kappa_2,apply(f, mon(l,k,j,kappa_1,x))),
         (tau_1 -> tau_2) -> (tau_1 -> tau_2)),
-      e_3, m: d)$,
-    $compile(type(Gamma,mon(k,l,j,kappa_1->kappa_2,e_1),tau_1 -> tau_2),apply(e_3, e_2), m: d)$,
+      e_3)$,
+    $compile(type(Gamma,mon(k,l,j,kappa_1->kappa_2,e_1),tau_1 -> tau_2),apply(e_3, e_2))$,
   ))
 
   #derivation((
@@ -136,9 +134,9 @@ By induction on structure of $compile(type(Gamma,e,tau),e', m: d)$.
   ))
 
 - Case #prooftree(rule(
-    $compile(type(Gamma,e_1,tau_1 -> tau_2), e_2, m: d)$,
-    $compile(type(Gamma, e_w, (tau_1 -> tau_2) -> (tau_1 -> tau_2)), e_3, m: d)$,
-    $compile(type(Gamma,mon(k,l,j,dep(kappa_1, lambda y. kappa_2),e_1),tau_1 -> tau_2),apply(e_3, e_2), m: d)$,
+    $compile(type(Gamma,e_1,tau_1 -> tau_2), e_2)$,
+    $compile(type(Gamma, e_w, (tau_1 -> tau_2) -> (tau_1 -> tau_2)), e_3)$,
+    $compile(type(Gamma,mon(k,l,j,dep(kappa_1, lambda y. kappa_2),e_1),tau_1 -> tau_2),apply(e_3, e_2))$,
   ))
 
   where $e_w = lambda f : tau_1 -> tau_2. lambda x : tau_1. mon(k,l,j,kappa_2[y:=mon(l,j,j,kappa_1,x)],apply(f, mon(l,k,j,kappa_1,x)))$
@@ -153,10 +151,10 @@ By induction on structure of $compile(type(Gamma,e,tau),e', m: d)$.
 
 - Case #prooftree(rule(
     $x in.not "dom"(Gamma)$,
-    $compile(type(Gamma\,x:tuple(tau_1,tau_2),mon(k,l,j,kappa_1,injl(x)),tau_1), e_1, m: d)$,
-    $compile(type(Gamma\,x:tuple(tau_1,tau_2),mon(k,l,j,kappa_2,injr(x)),tau_2), e_2, m: d)$,
-    $compile(type(Gamma,e,tuple(tau_1,tau_2)),e_3, m: d)$,
-    $compile(type(Gamma,mon(k,l,j,tuple(kappa_1,kappa_2),e),tuple(tau_1,tau_2)), apply((lambda x : tc(tuple(tau_1,tau_2)). tuple(e_1,e_2)),e_3), m: d)$,
+    $compile(type(Gamma\,x:tuple(tau_1,tau_2),mon(k,l,j,kappa_1,injl(x)),tau_1), e_1)$,
+    $compile(type(Gamma\,x:tuple(tau_1,tau_2),mon(k,l,j,kappa_2,injr(x)),tau_2), e_2)$,
+    $compile(type(Gamma,e,tuple(tau_1,tau_2)),e_3)$,
+    $compile(type(Gamma,mon(k,l,j,tuple(kappa_1,kappa_2),e),tuple(tau_1,tau_2)), apply((lambda x : tc(tuple(tau_1,tau_2)). tuple(e_1,e_2)),e_3))$,
   ))
 
   #derivation((
@@ -178,7 +176,7 @@ By induction on structure of $compile(type(Gamma,e,tau),e', m: d)$.
   $type(Gamma, apply(perform(effcheck, tau: tau), tuple(k, tuple(e_1, e_2))), tau, eff: hc)$.
 ] <compiler-type-ts-perform>
 
-#proof[
+#proof(of: <compiler-type-ts-perform>)[
   #derivation((
     ($type(Gamma, perform(effcheck, tau: tau), teff(tuple(blab, tuple(teff(tau,hc,boolt), tau)), hc, tau), type: "val")$,
       [#rn("T-E-Perform"), $alpha := tau, epsilon := mteff$]),
@@ -204,12 +202,7 @@ $
 
 Note that $h_w$ signature matches $Sigma(heffcheck)$ if we replace $alpha$ with $beta$.
 
-#theorem(title: "Compiler Effect Safety with wrapper deep handler")[
-
-  If $compile(type(dot.op,e,tau),e', m: d)$ then $type(dot.op, wrap(tc(tau),e',d), tc(tau), eff: mteff)$.
-] <compiler-type-ts-effect-safety>
-
-#proof[
+#proof(of: <compiler-type-ts-effect-safety>)[
   #derivation((
     ($type(dot.op,e',tc(tau),eff: hc)$, [@compiler-type-ts-preservation]),
     ($type(dot.op, lambda \_ : unit. e', teff(unit,hc,tc(tau)), type: "val")$, rn("T-E-Abs")),
@@ -224,7 +217,7 @@ Note that $h_w$ signature matches $Sigma(heffcheck)$ if we replace $alpha$ with 
   $type(dot.op, wrapd, forall alpha. teff((teff(unit,hc,alpha)),mteff,alpha), type: "val")$
 ] <compiler-type-ts-wrap>
 
-#proof[
+#proof(of: <compiler-type-ts-wrap>)[
 
   Assume contexts $Gamma_w = w : forall alpha. teff((teff(unit,hc,alpha)),mteff,alpha)$.
 
@@ -261,12 +254,7 @@ $
 
 Note that $h_w$ signature matches $Sigma(heffcheck)$ if we replace $alpha$ with $beta$.
 
-#theorem(title: "Compiler Effect Safety with wrapper shallow handler")[
-
-  If $compile(type(dot.op,e,tau),e', m: s)$ then $type(dot.op, wrap(tc(tau),e',s), tc(tau), eff: mteff)$.
-] <compiler-type-ts-effect-safety-shallow>
-
-#proof[
+#proof(of: <compiler-type-ts-effect-safety-shallow>)[
   #derivation((
     ($type(dot.op,e',tc(tau),eff: hc)$, [@compiler-type-ts-preservation]),
     ($type(dot.op, lambda \_ : unit. e', teff(unit,hc,tc(tau)), type: "val")$, rn("T-E-Abs")),
@@ -281,7 +269,7 @@ Note that $h_w$ signature matches $Sigma(heffcheck)$ if we replace $alpha$ with 
   $type(dot.op, wrap_s, forall alpha. teff((teff(unit,hc,alpha)),mteff,alpha), type: "val")$
 ] <compiler-type-ts-wrap-shallow>
 
-#proof[
+#proof(of: <compiler-type-ts-wrap-shallow>)[
 
   Assume $Gamma_w = h : forall alpha. teff((teff(unit,hc,alpha)),mteff,alpha)$.
 

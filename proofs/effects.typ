@@ -97,7 +97,7 @@ First we redefine some "operations" and rules that change when when adding the a
 If $type(Gamma, E, tau_1 -> tau, eff:epsilon,type:"ec")$ and $type(Gamma,e,tau_1,eff:effs(effextr(E),epsilon))$ then $type(Gamma,E[e],tau,eff:epsilon)$
 ] <lange-evaluation-context-typing>
 
-#proof[
+#proof(of: <lange-evaluation-context-typing>)[
 
 Induction on the evaluation context typing $type(Gamma, E, tau_1 -> tau, eff:epsilon, type:"ec")$.
 
@@ -135,7 +135,7 @@ Induction on the evaluation context typing $type(Gamma, E, tau_1 -> tau, eff:eps
 If $type(dot,E[e],tau,eff:epsilon)$ then there exists $tau_1$ such that $type(dot,E,tau_1->tau,eff:epsilon,type:"ec")$ and $type(dot,e,tau_1,eff:effs(effextr(E),epsilon))$
 ] <lange-effect-correspondence>
 
-#proof[
+#proof(of: <lange-effect-correspondence>)[
 
 By induction on $E$.
 
@@ -179,7 +179,7 @@ By induction on $E$.
 If $type(dot,E[apply(perform(op,tau:overline(tau)),v)],tau,eff:mteff)$ then $E$ has the form $E_1 dot handle(h,dot,m:m,eff:epsilon) dot E_2$ with $op in.not bop(E_2)$ and $op -> f in h$.
 ] <lange-well-typed-handled>
 
-#proof[
+#proof(of: <lange-well-typed-handled>)[
   #derivation((
     ($type(dot,E[apply(perform(op,tau:overline(tau)),v)],tau,eff:mteff)$, [Given]),
     ($type(dot,apply(perform(op,tau:overline(tau)),v),tau_1,eff:effextr(E))$, [@lange-effect-correspondence]),
@@ -197,7 +197,7 @@ If $type(dot,E[apply(perform(op,tau:overline(tau)),v)],tau,eff:mteff)$ then $E$ 
 If $type(dot,E[apply(perform(op,tau:overline(tau)),v)],tau,eff:epsilon)$ with $op in.not bop(E)$, then $op in Sigma(l)$ and $l in epsilon$, i.e. effect types cannot be discarded without a handler.
 ] <lange-meaningful-effect-type>
 
-#proof[
+#proof(of: <lange-meaningful-effect-type>)[
   #derivation((
     ($type(dot,E[apply(perform(op,tau:overline(tau)),v)],tau,eff:epsilon)$, [Given]),
     ($type(dot,apply(perform(op,tau:overline(tau)),v),tau_1,eff:effs(effextr(E),epsilon))$, [@lange-effect-correspondence]),
@@ -211,12 +211,7 @@ If $type(dot,E[apply(perform(op,tau:overline(tau)),v)],tau,eff:epsilon)$ with $o
 
 == Type Safety Theorem
 
-#theorem(title: [#lange Progress])[
-
-If $type(dot, e_1, tau, eff: mteff)$ then $e_1$ is a value or $e_1 = eblame(p)$ or $e_1 estep e_2$.
-] <lange-effects-progress>
-
-#proof[
+#proof(of: <lange-effects-progress>)[
   By @lange-progress-with-effect, $e_1$ is a value, or $e_1 = eblame(p)$, or $e_1 estep e_2$, or $e_1 = E[apply(perform(op, tau:overline(tau)), v)]$ with $op in.not bop(E)$ and $op in Sigma(l)$. The last case is impossible:
   #derivation((
     ($type(dot, E[apply(perform(op, tau:overline(tau)), v)], tau, eff: mteff)$, "Given"),
@@ -234,7 +229,7 @@ If $type(dot, e_1, tau, eff: epsilon)$ then either
   - $e_1 = E[apply(perform(op,tau:overline(tau)),v)]$ where $op : forall overline(alpha). tau_1 -> tau_2 in Sigma(l)$, and $op in.not bop(E)$.
 ] <lange-progress-with-effect>
 
-#proof[
+#proof(of: <lange-progress-with-effect>)[
 By induction on $type(dot,e_1,tau,eff:epsilon)$
 
 - Case $e_1 = v$, trivially true
@@ -342,12 +337,7 @@ By induction on $type(dot,e_1,tau,eff:epsilon)$
 - Other cases follow similarly.
 ]
 
-#theorem(title: [#lange Preservation])[
-
-If $type(dot, e_1, tau, eff: mteff)$ and $e_1 estep e_2$ then $type(dot, e_2, tau, eff: mteff)$.
-] <lange-effects-preservation>
-
-#proof[
+#proof(of: <lange-effects-preservation>)[
   By cases on the step.
 
   - Case $e_1 = E[e_3] estep E[e_4] = e_2$ and $e_3 estepx e_4$.
@@ -371,7 +361,7 @@ If $type(dot, e_1, tau, eff: mteff)$ and $e_1 estep e_2$ then $type(dot, e_2, ta
 If $type(dot, e_1, tau, eff: epsilon)$ and $e_1 estepx e_2$ then $type(dot, e_2, tau, eff: epsilon)$.
 ] <lange-small-step-preservation>
 
-#proof[
+#proof(of: <lange-small-step-preservation>)[
   By cases on $e_1 estepx e_2$.
 
   - Case $apply((lambda^epsilon x : tau_1. e), v) estepx e[x:=v]$.
@@ -498,7 +488,7 @@ If $type(Gamma_1\,Gamma_2,v,tau_1,type:"val")$ then the following hold:
 - If $type(Gamma_1\,x:tau_1\,Gamma_2,m : h,tau,type:"ops",eff:l | epsilon)$, then $type(Gamma_1\,Gamma_2,m : h[x:=v],tau,type:"ops",eff:l | epsilon)$.
 ] <lange-var-substitution>
 
-#proof[
+#proof(of: <lange-var-substitution>)[
 By mutual induction on typing, following Lemma 18 of @ningning2020effect. Rename bound variables fresh as needed.
 
 - Case $v_0 = x$.
@@ -604,7 +594,7 @@ If $attach(tack.r.short, br: "wf") tau_1 : k_1$, then the following hold:
 - If $type(Gamma,m : h,tau,type:"ops",eff:l | epsilon)$, then $type(Gamma[alpha:=tau_1],m : h[alpha:=tau_1],tau[alpha:=tau_1],type:"ops",eff:l | epsilon[alpha:=tau_1])$.
 ] <lange-type-var-substitution>
 
-#proof[
+#proof(of: <lange-type-var-substitution>)[
 By mutual induction on typing, following Lemma 20 of @ningning2020effect. Rename bound variables fresh as needed; effect labels are constants and operation signatures are closed except for their bound variables.
 
 - Case $e = v$.
@@ -692,7 +682,7 @@ By mutual induction on typing, following Lemma 20 of @ningning2020effect. Rename
 If $type(Gamma,v,tau,type:"val")$ then $type(Gamma,v,tau,eff:epsilon)$, for any well-formed effect $epsilon$.
 ] <lange-values-any-effect>
 
-#proof[
+#proof(of: <lange-values-any-effect>)[
   #derivation((
     ($type(Gamma,v,tau,type:"val")$, [Given]),
     ($type(Gamma,v,tau,eff:epsilon)$, rn("T-E-Val")),

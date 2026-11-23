@@ -59,15 +59,11 @@
 
 // *Results.* Blame is not a value. A program either reduces to a value, reduces to $blame(k, j)$, or diverges.
 
-#theorem(title: [#langc Type Safety])[
 
-  1. If $type(dot, e, tau)$ and $e cstep e'$ then $type(dot,e',tau)$.
-  2. If $type(dot, e, tau)$ then $e$ is a value or $e = blame(k,j)$ or $e cstep e'$ for some $e'$.
-] <langc-Type-Safety>
-
-#proof[
+#proof(of: <langc-Type-Safety>)[
   By @langc-Preservation and @langc-Progress.
 ]
+
 
 
 #lemma(title: [#langc Preservation])[
@@ -89,6 +85,7 @@
       ($type(Gamma, blame(k, j), tau)$, rn("Type-C-Blame")),
     ))
 ]
+
 
 #lemma(title: [#langc Progress])[
 
@@ -142,6 +139,7 @@ If $type(Gamma, e_1, tau)$ then $e_1$ is a value, or $e_1 = blame(k, j)$, or the
 //   If the step is Step-C, then $E[e] cstep E[e']$ by Step-C with the composed context. If it is Step-C-Blame, $e = E'[blame(k, j)]$ with $E' != square.stroked$, so $E[E'] != square.stroked$ and $E[e] cstep blame(k, j)$ by Step-C-Blame.
 // ]
 
+
 #lemma(title: [Canonical forms])[
   If $type(Gamma, v, tau)$ then either:
 
@@ -149,16 +147,17 @@ If $type(Gamma, e_1, tau)$ then $e_1$ is a value, or $e_1 = blame(k, j)$, or the
   - If $tau = tau_1 -> tau_2$ then $v = lambda x : tau_1. e$ or $v = guard(v',kappa,k,l,j)$ where $kappa = kappa_1 -> kappa_2$ or $kappa = dep(kappa_1,lambda y. kappa_2)$
 ] <langc-canonical>
 
-#proof[
+#proof(of: <langc-canonical>)[
   Trivial by type inversion.
 ]
+
 
 #lemma(title: [Substitution Expression])[
 
   If $type(Gamma, e_1, tau_1)$ and $type(Gamma\, x : tau_1, e, tau)$ then $type(Gamma, e[x:=e_1], tau)$.
 ] <langc-substitution-expression>
 
-#proof[
+#proof(of: <langc-substitution-expression>)[
   By induction on $type(Gamma\,x:tau_1,e,tau)$. The cases of #langb are those of @langb-substitution.
 
   - Case $type(Gamma\,x:tau_1,mon(k,l,j,kappa,e_2),tau)$
@@ -183,12 +182,13 @@ If $type(Gamma, e_1, tau)$ then $e_1$ is a value, or $e_1 = blame(k, j)$, or the
 ]
 
 
+
 #lemma(title: [Substitution Contract])[
 
   If $type(Gamma, kappa, tau_1)$ and $type(Gamma\, x : tau_1, kappa, con(tau))$ then $type(Gamma, kappa[x:=e_1], con(tau))$.
 ] <langc-substitution-contract>
 
-#proof[
+#proof(of: <langc-substitution-contract>)[
 
   - Case $type(Gamma\,x:tau_1,flat(e),con(tau))$
     #derivation((
@@ -212,11 +212,12 @@ If $type(Gamma, e_1, tau)$ then $e_1$ is a value, or $e_1 = blame(k, j)$, or the
     ))
 ]
 
+
 #lemma(title: [Decomposition])[
   If $type(Gamma, E[e], tau)$ then there is $tau_1$ such that $type(Gamma, e, tau_1)$, and for every $e'$ with $type(Gamma, e', tau_1)$ we have $type(Gamma, E[e'], tau)$.
 ] <langc-decomposition>
 
-#proof[
+#proof(of: <langc-decomposition>)[
   By induction on $E$. The frames of #langb are as in @langb-decomposition. Two frames are new.
 
   - Case $E = mon(k, l, j, kappa, E_0)$.
@@ -240,11 +241,12 @@ If $type(Gamma, e_1, tau)$ then $e_1$ is a value, or $e_1 = blame(k, j)$, or the
     ))
 ]
 
+
 #lemma(title: [Redex preservation])[
   If $type(Gamma, e_1, tau)$ and $e_1 cstepx e_2$ then $type(Gamma, e_2, tau)$.
 ] <langc-redex-preservation>
 
-#proof[
+#proof(of: <langc-redex-preservation>)[
   By cases on $e_1 cstepx e_2$. The reductions of #langb are as in @langb-redex-preservation, using @langc-substitution-expression for S-App and S-Fix.
 
   - Case $check(k, j, trueb, v) cstepx v$.

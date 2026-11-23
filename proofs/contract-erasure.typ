@@ -21,10 +21,6 @@
 
 = #langc Erasure Theorem
 
-Define erasure compiler $E$ as a homomorphic function over expressions of #langc with a single transformation:
-
-$compile(type(Gamma,mon(k,l,j,kappa,e),tau), e)$
-
 #let erase(e) = $"erase"(#e)$
 
 == Relation
@@ -149,12 +145,30 @@ We define context $F$ that is contexts without $check(k,j,E,v)$.
   )
 ]
 
+
+
+
+
+We define the predicate that will be used for simulation. // The beauty of the predicate $ereq(e,e')$ is that $e = E[blame(k,j)]$ returns false, so we can skip this case in simulation proof.
+
+#block(width: 100%)[
+  #align(center)[
+    $ereq(e,e') = cases(
+      "true" & "if" e ~ e' "and" e eq.not F[check(k,j,e_0,v)],
+      "true" & "if" e = F[check(k,j,e_0,v)] "and" e' = relate(F)[relate(v)],
+      "false" & "otherwise",
+    )$
+  ]
+]
+
+
+
 #lemma(title: "Relation is closed under check-free contexts")[
 
   If $e ~ relate(e)$ and $F ~ relate(F)$, then $F[e] ~ relate(F)[relate(e)]$.
 ] <langc-relation-is-correct>
 
-#proof[
+#proof(of: <langc-relation-is-correct>)[
 
 By induction on $F ~ relate(F)$.
 
@@ -180,12 +194,13 @@ By induction on $F ~ relate(F)$.
 - Similarly for other cases
 ]
 
+
 #lemma(title: "Relation Decomposition Through Contexts")[
 
   If $e_1 ~ e'_1$, $e_1 = E[e_2]$, and $e_2$ is a redex, then there are $relate(E)$ and $relate(e)_2$ such that $E ~ relate(E)$ and $e_2 ~ relate(e)_2$ and $e'_1 = relate(E)[relate(e)_2]$.
 ] <langc-context-decomposition-relation>
 
-#proof[
+#proof(of: <langc-context-decomposition-relation>)[
 By induction on the check-free context $E$.
 
 - Case $E = square.stroked$
@@ -245,12 +260,13 @@ By induction on the check-free context $E$.
 - Other check-free context cases follow similarly.
 ]
 
+
 #lemma(title: "Relation is closed under substitution")[
 
   If $e ~ relate(e)$ and $v ~ relate(v)$, then $e[x:=v] ~ relate(e)[x:=relate(v)]$ for every $x$.
 ] <langc-relation-substitution>
 
-#proof[
+#proof(of: <langc-relation-substitution>)[
 
 By I.H. on $e ~ relate(e)$.
 
@@ -285,6 +301,7 @@ By I.H. on $e ~ relate(e)$.
 - Similarly with other cases. Lambda case avoid same variable by replacement $e[x:=v]$ to free variables of $e$.
 ]
 
+
 #lemma(title: "Evaluation-context decomposition")[
 
 Forall context $E$, either:
@@ -292,7 +309,7 @@ Forall context $E$, either:
 - $E = F[check(k,j,E',v)]$ (get the first check)
 ] <langc-erasure-context-decomposition>
 
-#proof[
+#proof(of: <langc-erasure-context-decomposition>)[
   By induction on $E$.
 
 - Case $square.stroked$
@@ -335,24 +352,12 @@ Forall context $E$, either:
 - Other cases follows similarly
 ]
 
-We define the predicate that will be used for simulation. The beauty of the predicate $ereq(e,e')$ is that $e = E[blame(k,j)]$ returns false, so we can skip this case in simulation proof.
-
-#block(width: 100%)[
-  #align(center)[
-    $ereq(e,e') = cases(
-      "true" & "if" e ~ e' "and" e eq.not F[check(k,j,e_0,v)],
-      "true" & "if" e = F[check(k,j,e_0,v)] "and" e' = relate(F)[relate(v)],
-      "false" & "otherwise",
-    )$
-  ]
-]
-
 #lemma(title: "Erasure satisfies the state predicate")[
 
   If $e' = erase(e)$, then $ereq(e,e')$.
 ] <langc-erasure-is-relation>
 
-#proof[
+#proof(of: <langc-erasure-is-relation>)[
 I.H on $e' = erase(e)$.
 
 Because the compiler doesn't compile check (runtime expression), we never get the second clause of $"EQ"$. Therefore, $e eq.not F[check(k,j,e_0,v)]$, and all child nodes of $e$ also not this form.
@@ -442,18 +447,15 @@ Because the compiler doesn't compile check (runtime expression), we never get th
   )
 ] <langc-erasure-proof-strategy>
 
-#theorem(title: "Contract Erasure Theorem")[
 
-  If $e' = erase(e)$ and $e cstep1 b$, then $e' step1 b$.
-] <langc-contract-erasure>
-
-#proof[
+#proof(of: <langc-contract-erasure>)[
 
 #derivation((
   ($ereq(e,e')$, [@langc-erasure-is-relation]),
   ($e' step1 b$, [@langc-erasure-multistep-simulation]),
 ))
 ]
+
 
 #lemma(title: "Erasure Multistep Simulation")[
 
@@ -464,7 +466,7 @@ ${(e,e') | e cstep1 b "and" (e,e') in "EQ"}$. This active filter prevents $e cst
 
 Now if we check the argument for $"EQ"$, we can actually filter out $E[blame(k,j)]$ because it doesn't fit two clauses. So we only care about the check expression.
 
-#proof[
+#proof(of: <langc-erasure-multistep-simulation>)[
 
 By induction on $e cstep1 b$.
 
@@ -521,12 +523,13 @@ By induction on $e cstep1 b$.
 
 ]
 
+
 #lemma(title: "Erasure Step Simulation")[
 
   If $ereq(e_1,e'_1)$, $e_1 cstep e_2$, and $e_2 eq.not E_2[blame(k,j)]$, then there is $e'_2$ such that $e'_1 step1 e'_2$ and $ereq(e_2,e'_2)$.
 ] <langc-erasure-step-simulation>
 
-#proof[
+#proof(of: <langc-erasure-step-simulation>)[
 
 By case analysis of $ereq(e_1,e'_1)$:
 
