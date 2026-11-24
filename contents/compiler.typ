@@ -267,6 +267,8 @@ Adapting this translation to the trace contracts of @cameron2023trace, where tra
 
 == Effectful Contracts
 
+=== Theory
+
 #let coneff(kappa_1,kappa_2) = $#kappa_1 gt.closed #kappa_2$
 
 @cameron2024effectful shows how contracts should be updated to integrate them into effect handlers languages. They classify these four terms, of which three of them are added to build the Effectful Contracts system:
@@ -296,6 +298,8 @@ During effect perform, all contracts will be merged, so the effect's input is pr
 
 *Contract-Effect Contracts* provides an automatic to install handlers without writing the handler. This is embedded as a contract type, $lozenge.stroked h in kappa$. They allow conjuction of contracts with this, $kappa inter.sq lozenge.stroked h$ and during runtime, the corresponding Contract-Effect Handler $handle(h, eff:lozenge.stroked, dot)$ is created.
 
+=== Main-Effect Contracts Adaptation
+
 Our translation can be extended to provide Main-Effect Contracts. Assumed that effectful contract $mon(k,l,j,coneff(kappa_1,kappa_2),e)$, and other monitor expressions are added directly to $lange$, now protected expression $e$ can invoke effects. First, let $kappa_1,kappa_2$ are contracts that perform no effects, so only main program code can perform effects. Then, the translation for effectful contract is to create a new scoped handler over $e$. The below should describe our translation idea without focusing on typing.
 
 #rule-set(
@@ -312,25 +316,38 @@ Our translation can be extended to provide Main-Effect Contracts. Assumed that e
 
 This compiler ensures that if we have nested effectful contracts, they will be invoked and the above handler(s) catchs. Of course, the main effect handler remains at the top. The checking order for input is inside-to-outside, and for output is outside-to-inside. Because the checking is subsequent, there should be no difference in semantics. However, this remains a suggestion without any proof.
 
-Adapting Contract-Effect Handlers and Contract-Handler Contracts into the whole-program shallow handler translation is not a straightforward approach. The authors separate handlers between main program and contract checking code, which we can adapt by ensuring that the contract handler we installed is not accessible to main program code. We also know that because the contract handler is outside the whole program, any effects throwing at the contract validation code can be caught by another handler installed above. It gives an idea that for Contract-Effect Handlers $handle(h, eff:lozenge.stroked,dot)$, it is moved to the outside of the program. Similarly Contract-Handler Contracts $lozenge.stroked h$ is converted to a Contract-Effect Handlers and is put outside.
 
-However, the Contract-Effect Handlers suggestive translation might have a problem with lambdas. Consider this program $f = lambda \_. mon(k,l,j,kappa_1 -> kappa_2 inter.sq lozenge h, f')$. Let $g = apply(f,unit)$, and run $g$ two times. The handler $h$ should be two distinctive handler instances, but because of the encoding, there is only a single handler instance. This might break handlers with states, where two instances cannot share the same state.
+=== Contract-Handler Contracts Adaptation
 
-Adapting this idea, we show that the same contract state can be rewritten into stacking handlers in @shallow-state-handler-2, where the state handler $H_2$ is placed at the outermost position. During execution, the contract checking code shape is $apply(H_2, apply(handle(h_1,ife(e, apply(k,v), eblame(k)),m:s),s))$ for $e$ the contract checking code. If $e$ invokes #effstateget,#effstateset, handler $H_2$ catches.
+Contract-Effect Handlers and Contract-Handler Contracts are tricky to implement into our translation(s). These two pieces support contracts interaction, by using state-encoding handler. Because this handler is accessible to the contract code only, and it is generated during runtime, contracts can have different scope to access states. If scoping is not important, global state(s) can be used, as per trace contract adaptation, translation #rn("T2") has already supported contract interaction.
 
+// #figure(caption: "Shallow check handler with contract-controlled state outside handler")[
+//   $
+//   H_1 &= mu H. handler(h_1, m: s) \
+//   H_2 &= mu H. handler(h_2, m: d) \
+//   h_1(effcheck) &= lambda tuple(l,tuple(p,v)). lambda k.
+//     apply(H,(lambda \_. ife(apply(p,v),apply(k,v),eblame(l)))) \
+//   h_2(effstateget) &= lambda u. lambda k. lambda s.
+//     apply(apply(H,lambda \_. apply(k,s)),s) \
+//   h_2(effstateset) &= lambda s'. lambda k. lambda s.
+//     apply(apply(H,lambda \_. apply(k,s')),s'). \
+//   kw("wrap")_s &= lambda f. apply(apply(H_2,(apply(H_1,lambda \_. f))),s)
+//   $
+// ] <shallow-state-handler-2>
 
-#figure(caption: "Shallow check handler with contract-controlled state outside handler")[
-  $
-  H_1 &= mu H. handler(h_1, m: s) \
-  H_2 &= mu H. handler(h_2, m: d) \
-  h_1(effcheck) &= lambda tuple(l,tuple(p,v)). lambda k.
-    apply(H,(lambda \_. ife(apply(p,v),apply(k,v),eblame(l)))) \
-  h_2(effstateget) &= lambda u. lambda k. lambda s.
-    apply(apply(H,lambda \_. apply(k,s)),s) \
-  h_2(effstateset) &= lambda s'. lambda k. lambda s.
-    apply(apply(H,lambda \_. apply(k,s')),s'). \
-  kw("wrap")_s &= lambda f. apply(apply(H_2,(apply(H_1,lambda \_. f))),s)
-  $
-] <shallow-state-handler-2>
+However, if contract scoping is preferred, adapting this new contract type is not straightforward. If we look closely, wrappers $wrapd,wraps$ can appear in the program at many places, if we do not care about sharing states. Then, Contract-Handler Contracts can install a new handler scope, with the wrappers to handle contract checking. Doing it this way separates the checking of contract, and contract effect states. Following the semantics of Contract-Handler Contracts, the protected value must be a _function accepting one argument_. The following compilation should be suffice:
 
-With the limitation that all effects are scoped under a single handler, and dynamic handlers are unsupported, this approach can be used to implement _all contract capabilities_ specified by @cameron2024effectful.
+#rule-set(
+  prooftree(rule(
+    name: [Compile-ContractHandler],
+    $compile(type(Gamma,e,tau_1 -> tau_2),e')$,
+    $compile(type(Gamma,h,tau_h),h')$,
+    $compile(type(Gamma,mon(k,l,j,lozenge.stroked h,e),tau_1 -> tau_2), apply((lambda f : tau_1 -> tau_2. lambda x : tau_1. apply(h',(lambda \_. wraps (lambda \_. apply(f,x))))), e'))$,
+  ))
+)
+
+Where $compile(type(Gamma,h,tau_h),h')$ compiles the handler functions because they may contain monitors. The compiled program still need to be wrapped under $wrapd$ or $wraps$. During runtime, the contracts' effects are handled under the contract handler scope. Because $wraps (lambda \_. apply(f,x))$ returns a value (or blame), the contract handler is removed on completion.
+
+=== Adaption conclusion
+
+These are suggestive compilations/adaptions of Effectful Software Contracts. While the adaptations of Main-Effect Contracts, and Contract-Handler Contracts adaptions are reasonable, we have not proven their semantics equivalence compared to the original semantics. However, in @chapter-implementation, we show that our #rn("T2") translation with support for Main-Effect Contracts, and using the global state is sufficient to implement the capabilities mentioned by @cameron2024effectful: #rn("ALLOW CALL"), #rn("EXCEPTION"), #rn("FRAMING"), #rn("GHOST STATE"), #rn("MUST CALL"), #rn("NON-REENTRANCE"), #rn("PURE"), #rn("RESTRICTED EFFECTS"), #rn("TERMINATION"), and #rn("UNION CONTRACTS").

@@ -5,7 +5,7 @@
 #import "@preview/codly-languages:0.1.1": *
 
 #import "/models/language.typ": *
-#import "/proofs/setup.typ": appendix-theorem, appendix-lemma, proof
+#import "/proofs/setup.typ": appendix-theorem, appendix-lemma, proof, rn
 #import "/utils.typ": load-bib, no-ref
 
 #show raw.where(block: true): codly.new
@@ -19,9 +19,11 @@ Our formal models are implemented in Redex and in OCaml. While the Redex models 
 
 == Redex models
 
-We model three languages: #langb, #langc, #lange, and two compiler variants, one using in-place handlers and the other using a whole-program handler. To model the compiler, we create a Redex union language of #langc and #lange, and define a judgement `(compile C:Γ C:x C:τ E:x)` where `C:` belongs to #langc and `E:` belongs to #lange, and the input output model is `(compile I I O O)`. The interesting compilation rules are displayed in @redex-compiler-non-local. @redex-compiler-local shows the in-place-handler compiler variant where all rules are kept except for the flat compilation rule accompanied by a handler.
+We model three languages: #langb, #langc, #lange, and two compiler variants, one using in-place handlers and the other using a whole-program handler. To model the compiler, we create a Redex union language of #langc and #lange, and define a judgement
 
-For the whole-program-handler compiler variant, the wrapper must be created according to @redex-shallow-compiler-wrapper (using shallow handlers) or to @redex-deep-compiler-wrapper (using deep handlers). We use `genericeff` as a common effect list consisting of the single contract checking effect identifier for type checking.
+`(compile C:Γ C:x C:τ E:x)`
+
+where `C:` belongs to #langc and `E:` belongs to #lange, and the input output model is `(compile I I O O)`. The interesting compilation rules are displayed in @redex-compiler-non-local. @redex-compiler-local shows the in-place-handler compiler variant where all rules are kept except for the flat compilation rule accompanied by a handler. The compiler inserts the contract-checking effect $heffcheck$. In the shallow Redex model, `genericeff` is `(con)`, the effect row of computations that may perform checks; a `perform` annotation instead records the tail of its effect row, and the wrapper's handler has an empty ambient effect. For the #rn("T1") and #rn("T2") translations, wrappers must be applied. The wrappers in Redex for #rn("T1") is in @redex-deep-compiler-wrapper and for #rn("T2") is in @redex-shallow-compiler-wrapper.
 
 #figure(caption: "Compiler for a whole-program handler")[
 ```racket
@@ -73,41 +75,48 @@ For the whole-program-handler compiler variant, the wrapper must be created acco
                (Λ β (λ (𝒞) x β (λ (𝒞) k β
                  (if ((injl x) (injr x))
                      (k (injr x))
-                     (error 99991))))))))
+                     (error (injl x)))))))))
            (λ (𝒞) ignored unit
              ((perform (𝒞) 𝒞 C:τ) (t E:e_1 E:e_2)))))]
 ```
 ] <redex-compiler-local>
 
-#figure(caption: "Shallow whole-program handler wrapper")[
-```racket
-(define-term h-check
-  ((effcheck
-     (Λ α (λ genericeff x α (λ genericeff k α
-       ((w α) (λ genericeff _ unit
-         (if ((injl x) (injr x))
-             (k (injr x))
-             (error 99991))))))))))
 
-(define-term wrap
-  (μ w unit (Λ α (λ genericeff f unit ((s-handler genericeff h-check) f)))))
-```
-] <redex-shallow-compiler-wrapper>
-
-
-#figure(caption: "Deep whole-program handler wrapper")[
+#figure(caption: [#rn("T1") wrapper])[
 ```racket
 (define-term h-check
   ((effcheck
      (Λ α (λ genericeff x α (λ genericeff k α
        (if ((w bool) (λ genericeff _ unit ((injl x) (injr x))))
            (k (injr x))
-           (error 99991))))))))
+           (error (injl x)))))))))
 
 (define-term wrap
   (μ w unit (Λ α (λ genericeff f unit ((d-handler genericeff h-check) f)))))
 ```
 ] <redex-deep-compiler-wrapper>
+
+#figure(caption: [#rn("T2") wrapper])[
+```racket
+(define-term effcheck 𝒞)
+
+(define-term h-check
+  ((effcheck
+     (Λ α (λ () x (t party (t (α -> (con) bool) α))
+       (λ () k (α -> (con) β)
+         (h (λ (con) _ unit
+           (if ((injl (injr x)) (injr (injr x)))
+               (k (injr (injr x)))
+               (blame (injl x)))))))))))
+
+(define-term H-check
+  (μ h ((unit -> (con) β) -> () β) (s-handler () h-check)))
+
+(define-term wrap
+  (Λ β (λ () f (unit -> (con) β) (H-check f))))
+```
+] <redex-shallow-compiler-wrapper>
+
 
 == OCaml implementation
 
@@ -133,22 +142,27 @@ In @ocaml-contract-attributes is the list of some contract attributes syntax. Us
   [`[%mon c ~pos:p ~neg:n ~loc:j] e`], [Place contract `c` on `e` with explicit labels],
 )) <ocaml-contract-attributes>
 
-Our rewritter supports three main types of contracts, flat, functional, and dependent. Firstly, a flat contract is a function that takes a value and returns boolean. Secondly, since contracts can be nested far inside by the use of functional and dpendent contracts, the structured syntax is recursive: if `c_1,c_2` is a contract, then `c_1 @-> c_2` and `dep c_1 (fun x -> c_2)` are contracts. During the writing of contracts, for brewvity, users can use identifiers to a function (must be already in-scope) instead of writing the contract code in full.
+Our rewritter supports three main types of contracts, flat, functional, and dependent. Firstly, a flat contract is a function that takes a value and returns boolean. Secondly, since contracts can be nested far inside by the use of functional and dpendent contracts, the structured syntax is recursive: if `c_1,c_2` is a contract, then `c_1 @-> c_2` is a functional contract and `dep c_1 (fun x -> c_2)` is a dependent contract. During the writing of contracts, for brewvity, users can use identifiers to a functions in-scope during compilation, instead of writing the contract code in full.
 
-Because OCaml is a curry-by-default language, we take that same approach to introduce contracts for multi-parameters functions. For functional contracts, the syntax is clear and precise. For dependent contract, the syntax creates a nested structure that is unnatural to the human eyes. We provide a different syntax for dependent contracts that is inspired by Racket's contract macro, `[@contract dep_args [(arg_1, c_1); ...] (fun arg_1 arg_2 ... -> e)]`. The new syntax is purely for human users, it will be expanded into the nested structure accordingly during the rewriting process before compiling into contract checking code. Below is the example syntax for functional and dependent contracts annotation.
+Because OCaml is a curried-by-default language, we take that same approach to introduce contracts for multi-parameters functions. For functional contracts, the syntax is clear and precise. For dependent contract, the syntax creates a nested structure that is unnatural to the human eyes. We provide a different syntax for dependent contracts that is inspired by Racket's contract macro, `[@contract dep_args [(arg_1, c_1); ...] (fun arg_1 arg_2 ... -> e)]`. The new syntax is purely for human users, it will be expanded into the nested structure accordingly during the rewriting process before compiling into contract checking code. Below is the example syntax for functional and dependent contracts annotation.
 
 ```ocaml
+(* this is a functional contract *)
 let [@contract c_1 @-> c_2 @-> c_3]
   f x y = e
+
+(* this is a dependent contract *)
 let [@contract dep c_1 (fun x -> (dep c_2 (fun y -> c_3)))]
   g x y = e
+
+(* this is a dependent contract with a better syntax *)
 let [@contract dep_args [(x,c_1); (y,c_2)] (fun x y -> c_3)]
   h x y = e
 ```
 
 The macro unwraps functional and dependent contracts with lambdas until flat contract and simply convert it to an effect invocation. Accordingly to our formal model, there is only one effect, defined as in @ocaml-check-effect. Labels are automatically added, and during the lambdas unrolling, labels are swapped in the correct manner.
 
-#figure[
+#figure(caption: [OCaml Contract Checking Effect])[
 ```ocaml
 type label = string
 type _ Effect.t +=
@@ -182,10 +196,14 @@ let () = [%contract_main_states]
 ```
 ] <ocaml-example-contract-states>
 
-=== Boxes and Vectors contracts
+// === Boxes and Vectors contracts
 
-Our OCaml implementation provides special types of boxes and vectors that acts similarly to Racket's chaperone#footnote([Opaque proxies around objects with support for contracts]). Our boxes and vectors are encoded as structs with methods. They should not be called directly, but through the provided functions. For example, a box is created using `Box.create`, and its content can be obtained by calling `Box.get`. Through this encoding, we obtain an opaque box/vector with methods as functions. Contracts can now be added directly through these functions. We provide attributes `[@contract box c]` and `[@contract vector c]` that installs the contract `c` to boxes/vectors get/set methods. The rewritter will create a new struct object and install the contracts into the methods. This approach breaks the equality of boxes/vectors but replicates the opaque implementation of chaperone.
+// Our OCaml implementation provides special types of boxes and vectors that acts similarly to Racket's chaperone#footnote([Opaque proxies around objects with support for contracts]). Our boxes and vectors are encoded as structs with methods. They should not be called directly, but through the provided functions. For example, a box is created using `Box.create`, and its content can be obtained by calling `Box.get`. Through this encoding, we obtain an opaque box/vector with methods as functions. Contracts can now be added directly through these functions. We provide attributes `[@contract box c]` and `[@contract vector c]` that installs the contract `c` to boxes/vectors get/set methods. The rewritter will create a new struct object and install the contracts into the methods. This approach breaks the equality of boxes/vectors but replicates the opaque implementation of chaperone.
 
-=== Mismatch with the formal models
+=== Effectful Contracts
 
-Although OCaml provides a similar model to #lange which we can adapt to add contracts ($mon(k,l,j,kappa,e)$) and compile them away using the rules as defined in @compiler-rules, there is a slight difference between the formal models and the OCaml rewritter. One of the more obvious and important mismatch is dependent contracts input. In the formal models, we build up the new contract $mon(k,l,j,dep(kappa_1,lambda y. kappa_2),e)$ for codomain as $kappa_2[y:=mon(l,j,j,kappa_1,x)]$ where $x$ is created fresh during lambda padding. In our model, if $y$ appears multiple times in $kappa_2$ then the same contract runs that many times. In a language where there is no mutable boxes, such as #lange, running the same code multiple times has no difference from running it once. However, OCaml has mutable boxes, and to be careful, we adjusted the implementation to run the contract once, unless it's a function.
+
+
+// === Mismatch with the formal models
+
+// Although OCaml provides a similar model to #lange which we can adapt to add contracts ($mon(k,l,j,kappa,e)$) and compile them away using the rules as defined in @compiler-rules, there is a slight difference between the formal models and the OCaml rewritter. One of the more obvious and important mismatch is dependent contracts input. In the formal models, we build up the new contract $mon(k,l,j,dep(kappa_1,lambda y. kappa_2),e)$ for codomain as $kappa_2[y:=mon(l,j,j,kappa_1,x)]$ where $x$ is created fresh during lambda padding. In our model, if $y$ appears multiple times in $kappa_2$ then the same contract runs that many times. In a language where there is no mutable boxes, such as #lange, running the same code multiple times has no difference from running it once. However, OCaml has mutable boxes, and to be careful, we adjusted the implementation to run the contract once, unless it's a function.

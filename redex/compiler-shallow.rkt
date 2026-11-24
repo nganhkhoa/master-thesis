@@ -321,6 +321,23 @@
 (module+ test
   (require rackunit)
 
+  ;; Guard the paper's exact recursive-handler placement: a shallow
+  ;; continuation is bare, so H must surround the entire conditional, not
+  ;; merely the predicate or the call to k.
+  (check-true
+   (alpha-equivalent?
+    Effects (term wrap)
+    (term (Λ β (λ () f (unit -> (con) β)
+                 ((μ h ((unit -> (con) β) -> () β)
+                    (s-handler ()
+                     ((𝒞 (Λ α (λ () x (t party (t (α -> (con) bool) α))
+                               (λ () k (α -> (con) β)
+                                 (h (λ (con) _ unit
+                                      (if ((injl (injr x)) (injr (injr x)))
+                                          (k (injr (injr x)))
+                                          (blame (injl x))))))))))))
+                  f))))))
+
   ;; Check real target derivations, not just the shape of generated terms.
   (define Σ-check
     (term ((con : (𝒞 -> (∀ α ((t party (t (α -> (con) bool) α)) -> () α)))))))

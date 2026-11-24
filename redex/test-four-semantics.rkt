@@ -65,6 +65,20 @@
                (mon k l j (flat (λ x num false)) 3))))
    'blame)
 
+  ;; A predicate can itself perform a check. Test successful nesting, inner
+  ;; blame, and outer blame after a successful nested check. The following
+  ;; monitor in the continuation also ensures reinstallation persists.
+  (all-four (add (mon outer client site
+                      (flat (λ x num (mon inner client site
+                                          (flat (λ b bool true)) true))) 2)
+                 (mon later client site (flat (λ x num true)) 3)) 5)
+  (all-four (mon outer client site
+                 (flat (λ x num (mon inner client site
+                                     (flat (λ b bool false)) true))) 2) blame)
+  (all-four (mon outer client site
+                 (flat (λ x num (mon inner client site
+                                     (flat (λ b bool true)) false))) 2) blame)
+
   ;; Flat contracts.
   (all-four (mon k l j (flat (λ x num true)) 7) 7)
   (all-four (mon k l j (flat (λ x num false)) 7) blame)

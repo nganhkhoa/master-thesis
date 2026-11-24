@@ -72,6 +72,7 @@
 
   // --- Heading Configuration ---
   set heading(numbering: "1.1")
+  show heading.where(level: 1): set heading(supplement: [Chapter])
 
   show heading.where(level: 1): it => {
     pagebreak(weak: true)
