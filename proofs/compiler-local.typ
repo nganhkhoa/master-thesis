@@ -18,24 +18,11 @@
 #let treq(a,b) = $"EQ"(#a,#b)$
 #let wrap(tau, e) = $apply(kw("wrap")[#tau], (lambda \_. #e))$
 
-= #langc to #lange Compiler Correctness \ (Local Handler)
+= Translation #rn("T3") Equivalence
 
-In this part, we provide the proof for a compiler version using local handler. Instead of a global handler outside, a flat contract is compiled into an effect and handle it on the spot. All other compilation rules stay the same. Semantics of handlers can be either Deep or Shallow. However, because Deep Handlers push a new (unused) handler each time a check is performed, Shallow Handlers are chosen for this compiler implementation.
-
+Proof for translation #rn("T3") with handlers installed in-place of perform in flat contract compilation.
 
 #align(center)[
-#v(1em)
-#rule-set(
-  prooftree(rule(
-    name: [Compile-Flat],
-    $compile(type(Gamma,e_1,tau -> boolt), e_3, m: l)$,
-    $compile(type(Gamma,e_2,tau), e_4, m: l)$,
-    $compile(type(Gamma,mon(k,l,j,flat(e_1),e_2),tau), handle(heffcheck,(apply(perform(effcheck, tau: tau), tuple(k, tuple(e_3, e_4)))), m: s), m: l)$,
-  ))
-)
-
-#v(2em)
-
 #grid(
   columns: (auto,auto,auto),
   align: (right,center,left),
@@ -233,7 +220,7 @@ By induction on $E^* ~ rel(E)^*$. Follows similarly to @compiler-relation-is-clo
 ] <compiler-local-relation-substitution>
 
 #proof(of: <compiler-local-relation-substitution>)[
-By induction on $e ~ e'$. Follows @compiler-relation-subst because relations ($R_v,R_e$) are the same. For this compiler, there is a single case that has their relation different from Deep/Shallow compilers.
+By induction on $e ~ e'$. Follows @compiler-relation-subst because relations ($R_v,R_e$) are the same. For this translation, there is a single case that has their relation different from #rn("T1"),#rn("T2") equivalence proofs.
 
 - Case $mon(k,l,j,flat(e_1),e_2) ~ handle(heffcheck,apply(perform(effcheck),tuple(k,tuple(rel(e)_1,rel(e)_2))),m:s)$
 
@@ -331,7 +318,7 @@ By induction on structure of $compile(type(Gamma,e_1,tau),e_2, m: l)$.
 
 ]
 
-== Correctness Theorem
+== Translation Equivalence
 
 $
 treq(e,e') = cases(
@@ -345,15 +332,17 @@ $
 
 
 #proof(of: <compiler-local-correctness>)[
+  Where $r = v | blame(k,j)$ and $rel(r) = rel(v) | eblame(k)$
+
   #derivation((
     ($e ~ e'$, [@compiler-local-compiler-is-relation]),
     ($treq(e,e')$, [Case 1 EQ]),
-    ($e' estep1 rel(b) = b$, [@compiler-local-multistep-simulation]),
+    ($e' estep1 rel(r)$, [@compiler-local-multistep-simulation]),
   ))
 ]
 
 
-#lemma()[
+#lemma(title: "EQ predicate simulation")[
 
 If $treq(e, e')$ and $e cstep1 r$ then $e' estep1 rel(r)$.
 
@@ -412,7 +401,7 @@ By case analysis on $e_1 cstep e_2$.
 
 - $E[e_3] cstep E[e_4]$ where $e_3 cstepx e_4$ is a redex
 
-  Proof Sketch: $E = E^+[E^*[check(k,j,square.stroked,v)]]$, then casing on $E^+$ structure. At the same time, EQ predicate will allow one case analysis ($e_1 ?= E'[check(k',j',e',v')]$). If $E^+ = square.stroked$, use @compiler-local-relation-find-E to find equivalent $rel(E)^*$, else, by EQ case 2 identify the shape of $e'_1$ by $E^+$ relation.
+  Proof Sketch: $E = E^+[E^*[check(k,j,square.stroked,v)]]$, then casing on $E^+$ structure. At the same time, EQ predicate will allow one case analysis ($e_1 eq.quest E'[check(k',j',e',v')]$). If $E^+ = square.stroked$, use @compiler-local-relation-find-E to find equivalent $rel(E)^*$, else, by EQ case 2 identify the shape of $e'_1$ by $E^+$ relation.
 
 
   - Case $e_3 = mon(k,l,j,flat(e),v) cstepx check(k,j,apply(e,v),v) = e_4$

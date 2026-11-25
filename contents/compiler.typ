@@ -208,6 +208,8 @@ This intercepting handler is best described as contract hijacking. It allows use
 
 == States (and Trace Contracts) <compiler-formal-states>
 
+=== Trace Contracts
+
 #let trace(v_1,v_2) = $ckw("tr") #v_1 med #v_2$
 #let co(alpha,v) = $ckw("co") #alpha med #v$
 
@@ -223,11 +225,33 @@ where $("add!" alpha med v) cstep alpha$, and updates the global list with $alph
 
 During run-time, a global list of addresses is maintained. It is repsonsible for the generation of $alpha$ address each time the collector is created. Using this global list, predicate trace contract predicate $v_p$ can access previous contracts invoked values.
 
-The *whole-program shallow handler* can encode states natively. In @effects-example, we demonstrated that states are encoded by providing the initial state and the handler form is $lambda x. lambda k. lambda s. e$ where $x,k,s$ are perform value, continuation, and state respectively. Applying the same idea, we extend the handler with two new effects, $effstateget,effstateset$, representing get state and set state respecively.
+=== States and Trace Contracts Adaptation
 
-We demonstrate how state(s) can be encoded effortlessly in the shallow whole-program handler variant. @shallow-state-handler shows the effect handler adapted to receive and handle a state variable. While executing the condition $apply(p,v)$, it can invoke effect $effstateget,effstateset$ to obtain the current state, or set the current state. Since the state is provided as an extra argument, to obtain the result of the execution the wrapper must be a function that accepts the state(s).
+All translations are capable of encoding states by providing them a states handler. This handler, with get and set operations for each states, is initialized with the initial values for each state. Different states are supported through lambdas encoding or tuples. @states-handler demonstrates a states handler for two different states value, with a wrapper that takes in the translated program. The handler is deep to allow multiple calls into the states handler, if shallow handler is used, then use the recursive form like #wraps handler.
 
-#figure(caption: "Shallow check handler with contract-controlled state")[
+#figure(caption: [States handler])[
+  $
+  H &= handler(h_s, m: d) \
+  h_s(effstateget^1) &= lambda u. lambda k. lambda s_1. lambda s_2.
+    apply(apply(k,s_1),s_1) \
+  h_s(effstateset^1) &= lambda s'_1. lambda k. lambda s_1. lambda s_2.
+    apply(apply(k,s'_1),s'_1) \
+  h_s(effstateget^2) &= lambda u. lambda k. lambda s_1. lambda s_2.
+    apply(apply(k,s_2),s_2) \
+  h_s(effstateset^2) &= lambda s'_2. lambda k. lambda s_1. lambda s_2.
+    apply(apply(k,s'_2),s'_2) \
+
+  e & "is source program in" langc \
+  e' &= rn("T1")(e) "or" rn("T2")(e) "or" rn("T3")(e) \
+
+
+  kw("wrap") &= lambda f. apply(apply(apply(H,(lambda \_. apply((lambda r. lambda s_1. lambda s_2. r),f))),s_1),s_2)
+  $
+] <states-handler>
+
+The state handler can be attached into the #wraps handler. Because the the translation #rn("T2") is neatly placed under a handler across the program invocation, states handler can be merged into contract checking handler as in @shallow-state-handler.
+
+#figure(caption: [States handler merged in #rn("T2")])[
   $
   H &= mu H. handler(h_s, m: s) \
   h_s(effcheck) &= lambda tuple(l,tuple(p,v)). lambda k. lambda s.
@@ -240,34 +264,13 @@ We demonstrate how state(s) can be encoded effortlessly in the shallow whole-pro
   $
 ] <shallow-state-handler>
 
+Because the formal model by @cameron2023trace is un-typed with first-class contracts, we can only give a suggestion how one should adapt trace contracts into the states handler. For each trace contract $trace(v_b,v_p)$, a new state is defined with an identifier. Contract constructor is not needed anymore since the state is created before the program run. The predicate $v_p$ is invoked on each function's input can obtain the state through get operation, and set the new state using set operation of the given state.
 
-The current encoding of contract state is limited to a single value. It is easy to expand into multiple state variables. Since the handler always accepts three arguments (type, value, continuation), the rest can be functions. The body of the handler is changed into $lambda s_1. ... lambda s_i. e$ form, where $e$ is the main handler code. And for each state, we provide a pair of effects ($effstateget^i,effstateset^i$) that returns and updates the corresponding $s_i$. Wrapper must be updated to ignore states $s_i$ and return the result only. The wrapper must also provide all initial states to ensure execution.
-
-#figure(caption: "Shallow check handler with contract-controlled multiple states")[
-  $
-  H &= mu H. handler(h_s, m: s) \
-  h_s(effcheck) &= lambda tuple(l,tuple(p,v)). lambda k. lambda s_1. lambda s_2.
-    apply(apply(apply(H,(lambda \_. ife(apply(p,v),apply(k,v),eblame(l)))), s_1), s_2) \
-  h_s(effstateget^1) &= lambda u. lambda k. lambda s_1. lambda s_2.
-    apply(apply(H,lambda \_. apply(k,s_1)),s_1) \
-  h_s(effstateset^1) &= lambda s'_1. lambda k. lambda s_1. lambda s_2.
-    apply(apply(H,lambda \_. apply(k,s'_1)),s'_1). \
-  h_s(effstateget^2) &= lambda u. lambda k. lambda s_1. lambda s_2.
-    apply(apply(H,lambda \_. apply(k,s_2)),s_2) \
-  h_s(effstateset^2) &= lambda s'_2. lambda k. lambda s_1. lambda s_2.
-    apply(apply(H,lambda \_. apply(k,s'_2)),s'_2). \
-
-  kw("wrap")_s &= lambda f. apply(apply(apply(H,(lambda \_. apply((lambda r. lambda s_1. lambda s_2. r),f))),s_1),s_2)
-  $
-] <shallow-multi-state-handler>
-
-A slightly different encoding is to use tuples $tuple(s_1,tuple(s_2,tuple(s_3,...)))$, which is only available for languages with tuples support. If we have multiple tuple spaces and index-able projection $pi_i$, the handler can be written easier without a series of nested left/right injections.
-
-Adapting this translation to the trace contracts of @cameron2023trace, where trace contracts $trace(v_b,v_p)$ defines a new state provided to the handler. Because the formal model of trace contracts is un-typed with first-class contracts, we can only provide a suggestive translation idea. Consider contract constructor $v_b$ is a functional contract where its domain or codomain contains $co(alpha,v_p)$, which is interpreted as contract predicate $v_p$ with a state. Therefore, calling $v_p$ is similar to set new state, and $v_p$ gets the current state as input.
+It is suggestive that one moves away from trace contracts, and introduce their own state contract that is easier for compilation. Our OCaml implementation, in @chapter-implementation, does exactly this.
 
 == Effectful Contracts
 
-=== Theory
+=== Effectful Software Contracts
 
 #let coneff(kappa_1,kappa_2) = $#kappa_1 gt.closed #kappa_2$
 
@@ -315,7 +318,6 @@ Our translation can be extended to provide Main-Effect Contracts. Assumed that e
 )
 
 This compiler ensures that if we have nested effectful contracts, they will be invoked and the above handler(s) catchs. Of course, the main effect handler remains at the top. The checking order for input is inside-to-outside, and for output is outside-to-inside. Because the checking is subsequent, there should be no difference in semantics. However, this remains a suggestion without any proof.
-
 
 === Contract-Handler Contracts Adaptation
 

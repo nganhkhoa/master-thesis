@@ -1,5 +1,5 @@
-#import "/setup.typ": setupdoc
-#show: setupdoc
+#import "/setup.typ": setup-model
+#show: setup-model
 
 #import "@preview/simplebnf:0.1.2": *
 #import "@preview/codly:1.3.0": *

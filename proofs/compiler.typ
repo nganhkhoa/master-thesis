@@ -16,11 +16,11 @@
 
 #let tc(t) = $#t^*$
 #let hc = $effs(heffcheck)$
-#let wrap(tau, e) = $apply(kw("wrap")_d[#tau], (lambda \_ : unit. #e))$
+#let wrap(tau, e) = $apply(kw("wrap")_d [#tau], (lambda \_ : unit. #e))$
 #let rel(e) = $accent(#e, tilde)$
 #let treq(a,b) = $"EQ"(#a,#b)$
 
-= #langc to #lange Compiler Correctness \ (Deep Handler)
+= Translation #rn("T1") Equivalance
 
 == Overview
 
@@ -33,7 +33,7 @@ Proof for a compiler from $langc$ to $lange$ using the deep handler, where the c
   [$heffcheck : lab$],
   [$=$],
   grid.cell(align: left,
-    [${effcheck -> forall alpha. tuple(blab, tuple(alpha -> boolt, alpha)) -> alpha}$]),
+    [${effcheck -> forall alpha. tuple(blab, tuple(teff(alpha,effs(heffcheck),boolt), alpha)) -> alpha}$]),
 
   [$kw("wrap")_d$], [$=$],
   grid.cell(align: left,
@@ -736,7 +736,7 @@ By induction on structure of $compile(type(Gamma,e_1,tau),e_2)$.
 - Other cases are similar.
 ]
 
-== Compiler Correctness
+== Translation Equivalence
 
 @compiler-proof-strategy shows the structure of the proof. The source program $e$ compiles to $e'$, and the target program runs $e'$ under $kw("wrap")$. After the handler is installed, the target reaches a state $e''_0$ with $treq(e,e''_0)$ (@compiler-wrap-step-eq). From then on, every source step $e_i cstep e_(i+1)$ is matched by zero or more target steps $e''_i estep1 e''_(i+1)$ that keep $treq(e_(i+1),e''_(i+1))$ (@compiler-simulation). Chaining the squares (@compiler-full-simulation), the source result $r$ and the target result $rel(r)$ are related: a value goes to its related value, and $blame(k,j)$ goes to $eblame(k)$.
 
@@ -804,14 +804,28 @@ $
 
 
 #proof(of: <compiler-correctness>)[
+  Where $r = v | blame(k,j)$ and $rel(r) = rel(v) | eblame(k)$
+
   Let $e^* = "untyped"(rn("T1")(e))$.
 
   #derivation((
     ($e^* estep1 e'_1$, [@compiler-wrap-step-eq]),
     ($treq(e,e'_1)$, [@compiler-wrap-step-eq]),
-    ($e'_1 estep1 b$, [@compiler-full-simulation]),
-    ($e^* estep1 b$, "Combining steps"),
   ))
+
+  - Case $e cstep1 b$
+
+    #derivation((
+      ($e'_1 estep1 b$, [@compiler-full-simulation]),
+      ($e^* estep1 b$, "Combining steps"),
+    ))
+
+  - Case $e cstep1 blame(k,j)$
+
+    #derivation((
+      ($e'_1 estep1 eblame(k)$, [@compiler-full-simulation]),
+      ($e^* estep1 eblame(k)$, "Combining steps"),
+    ))
 ]
 
 #lemma(title: "Wrapped program steps into an EQ state with source")[

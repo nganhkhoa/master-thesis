@@ -15,7 +15,7 @@
 
 #let tc(t) = $#t^*$
 #let hc = $effs(heffcheck)$
-#let wrap(tau, e, m) = $apply(kw("wrap")_(#m)[#tau], (lambda \_ : unit. #e))$
+#let wrap(tau, e, m) = $apply(kw("wrap")_(#m) [#tau], (lambda \_ : unit. #e))$
 #let wrapd = $kw("wrap")_d$
 #let wraps = $kw("wrap")_s$
 
@@ -28,6 +28,8 @@ The environment that will be used to type check target programs has the followin
 $
 Sigma(heffcheck) = {effcheck : forall alpha. tuple(blab, tuple(teff(alpha,hc,boolt), alpha)) -> alpha}
 $
+
+Figure @type-conversion shows the type conversion operator $tc(dot.op)$ during compilation. The rule inserts $heffcheck$ to function types, recursively. Abusing the syntax to environment $Gamma$ where variables' type are converted.
 
 #figure(
   block(width: 100%)[
@@ -168,6 +170,28 @@ By induction on structure of $compile(type(Gamma,e,tau),e')$.
   ))
 ]
 
+#proof(of: <compiler-type-ts-in-place>)[
+  Similarly to @compiler-type-ts-preservation, except that it does not need type conversion, and adapts for flat contract. The signature for $heffcheck$ removes the effect annotation because every flat contract has its own handler.
+
+$
+Sigma(heffcheck) = {effcheck : forall alpha. tuple(blab, tuple(alpha -> boolt, alpha)) -> alpha}
+$
+
+
+- Case #prooftree(rule(
+      $compile(type(Gamma,e_1,tau -> boolt), e_3,m:l)$,
+      $compile(type(Gamma,e_2,tau), e_4,m:l)$,
+      $compile(type(Gamma,mon(k,l,j,flat(e_1),e_2),tau), apply(handler(heffcheck,m:s), (lambda \_ : unit. apply(perform(effcheck, tau: tau^*), tuple(k, tuple(e_3, e_4))))),m:l)$,
+    ))
+
+  #derivation((
+    ($type(Gamma, e_3, tau -> boolt, eff: mteff)$, "I.H."),
+    ($type(Gamma, e_4, tau, eff: mteff)$, "I.H."),
+    ($type(Gamma, apply(perform(effcheck, tau: tau), tuple(k, tuple(e_3, e_4))), tau, eff: heffcheck)$, []),
+    ($type(Gamma, apply(handler(heffcheck,m:s), (lambda \_ : unit. apply(perform(effcheck, tau: tau^*), tuple(k, tuple(e_3, e_4))))), tau, eff:mteff)$, []),
+  ))
+]
+
 
 #lemma(title: "Perform Type")[
 
@@ -191,7 +215,7 @@ By induction on structure of $compile(type(Gamma,e,tau),e')$.
   ))
 ]
 
-== Wrapped Compiled Program Typing (Deep Handler)
+== Translations #rn("T1") Type Equivalence
 
 The deep handler wrapper from the compiler equivalence proof removes $heffcheck$ from the effect row. We rewrite the wrapper as follows:
 
@@ -212,7 +236,7 @@ Note that $h_w$ signature matches $Sigma(heffcheck)$ if we replace $alpha$ with 
 ]
 
 
-#lemma(title: "Type of wrap deep handler")[
+#lemma(title: [Type of #wrapd])[
 
   $type(dot.op, wrapd, forall alpha. teff((teff(unit,hc,alpha)),mteff,alpha), type: "val")$
 ] <compiler-type-ts-wrap>
@@ -243,12 +267,12 @@ Note that $h_w$ signature matches $Sigma(heffcheck)$ if we replace $alpha$ with 
   ))
 ]
 
-== Wrapped Compiled Program Typing (Shallow Handler)
+== Translation #rn("T2") Type Equivalence
 
 #let hcheck = $kw("H")$
 
 $
-kw("wrap") = & Lambda alpha. med lambda f: unit -> alpha. apply(hcheck, f) \
+wraps = & Lambda alpha. med lambda f: unit -> alpha. apply(hcheck, f) \
 hcheck = & mu h. handler({effcheck -> lambda tuple(l,tuple(e,v)). lambda k. apply(h,(lambda \_. ife(apply(e,v),apply(k,v),eblame(l))))}, m: s)
 $
 
@@ -264,7 +288,7 @@ Note that $h_w$ signature matches $Sigma(heffcheck)$ if we replace $alpha$ with 
 ]
 
 
-#lemma(title: "Type of wrap shallow handler")[
+#lemma(title: [Type of #wraps])[
 
   $type(dot.op, wrap_s, forall alpha. teff((teff(unit,hc,alpha)),mteff,alpha), type: "val")$
 ] <compiler-type-ts-wrap-shallow>
@@ -280,5 +304,14 @@ Note that $h_w$ signature matches $Sigma(heffcheck)$ if we replace $alpha$ with 
     ($type(Gamma_w, lambda f : teff(unit,hc,alpha). apply(handler(hcheck, m: s), f), teff((teff(unit,hc,alpha)),mteff,alpha), type: "val")$, rn("T-E-Abs")),
     ($type(dot.op, Lambda alpha. lambda f. apply(handler(hcheck, m: s), f), forall alpha. teff((teff(unit,hc,alpha)),mteff,alpha), type: "val")$, rn("T-E-TAbs")),
     ($type(dot.op, wrap_s, forall alpha. teff((teff(unit,hc,alpha)),mteff,alpha), type: "val")$, rn("T-Fix")),
+  ))
+]
+
+== Translation #rn("T3") Type Equivalence
+
+#proof(of: <compiler-type-ts-effect-safety-local>)[
+
+  #derivation((
+    ($type(dot.op, e', tau)$, [@compiler-type-ts-in-place]),
   ))
 ]

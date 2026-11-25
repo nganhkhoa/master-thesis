@@ -30,3 +30,14 @@
 
   body
 }
+
+// Models can be compiled on their own or included in the thesis. The thesis
+// declares <thesis-document> once; avoid resetting its page and text settings
+// when a model is included there.
+#let setup-model(body) = context {
+  if query(<thesis-document>).len() == 0 {
+    setupdoc(body)
+  } else {
+    body
+  }
+}

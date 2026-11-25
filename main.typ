@@ -1,3 +1,5 @@
+#metadata(none) <thesis-document>
+
 #import "/setup.typ": setupdoc
 #show: setupdoc
 

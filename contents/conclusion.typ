@@ -6,7 +6,7 @@
 #import "@preview/great-theorems:0.1.2": great-theorems-init
 
 #import "/models/language.typ": *
-#import "/proofs/setup.typ": appendix-theorem, appendix-lemma, appendix-number, proof
+#import "/proofs/setup.typ": appendix-theorem, appendix-lemma, appendix-number, proof, rn
 
 #import "/utils.typ": load-bib, no-ref
 
@@ -57,6 +57,50 @@ For whole-program handler wrappers, a recursive handler (shallow) or a recursive
 == Effectful Contracts
 
 Our formal models can model simple contracts into effects, but it cannot assert any certainty whether it can also model effectful contracts. Effectful contracts requires contracts for two types of effects, main program effects, and contract effects. The effectful contract model manipulates the contracts by installing contract dynamically, which can be a hurdle to model those contracts into effects. Although a simple observation that effectful contracts basically install checks at effect's entry and effect's exit (continuation invocation), we are unsure if such compilation is possible.
+
+// #figure(
+//   caption: [Detailed comparison matrix, adapted from Table 1 of @cameron2024effectful.],
+//   kind: table,
+//   supplement: [Table],
+// )[
+//   #set text(size: 7pt)
+//   #let mark = [•]
+//   #let heading-label(label) = rotate(-90deg, reflow: true, box(width: 1in, label))
+//   #table(
+//     columns: (2.25in, ..((0.36in,) * 10)),
+//     align: (right, ..((center,) * 10)),
+//     inset: (x: 1pt, y: 3pt),
+//     stroke: none,
+//     table.hline(stroke: 0.7pt),
+//     [], heading-label[Allow call], heading-label[Exceptions],
+//     heading-label[Framing], heading-label[Ghost state], heading-label[Must call],
+//     heading-label[Non-reentrant], heading-label[Pure],
+//     heading-label[Restricted effect], heading-label[Termination],
+//     heading-label[Union contracts],
+//     table.hline(stroke: 0.5pt),
+//     [@patrice2006beyond], [], mark, mark, mark, [], [], mark, [], mark, [],
+//     [@jesse2010stateful], [], [], mark, [], [], [], [], [], [], [],
+//     [@avraham2011safe], [], mark, mark, mark, [], [], mark, [], [], [],
+//     [@disney2011temporal], mark, [], mark, mark, [], mark, mark, [], [], [],
+//     [@matthias2015blame], [], [], [], [], [], [], [], [], [], mark,
+//     [@christophe2015computational], mark, [], [], [], mark, mark, [], [], [], [],
+//     [@scott2016extensible], mark, [], [], [], mark, mark, mark, [], [], [],
+//     [@christos2016oh], mark, [], [], [], mark, mark, [], [], [], [],
+//     [@felipe2016side], [], [], mark, [], [], [], mark, mark, [], [],
+//     [@jack2018the], [], [], [], [], [], [], [], [], [], mark,
+//     [@phuc2019size], [], [], [], [], [], [], [], [], mark, [],
+//     [@cameron2023trace], mark, [], [], mark, mark, mark, mark, [], [], [],
+//     [Effect-Handler Contracts], mark, mark, mark, mark, mark, mark, mark, mark, mark, mark,
+//     [Translation #rn("T2") + Main-Effect Contracts], mark, mark, mark, mark, mark, mark, mark, mark, mark, mark,
+//     table.hline(stroke: 0.7pt),
+//   )
+// ] <capability-comparison>
+
+The final row records the selected capability examples described in
+@chapter-implementation. Its marks indicate illustrative implementations, not
+full support for every property in the original matrix: the examples rely on
+instrumentation and, for stateful checks, global state. They do not establish
+semantic equivalence with effect-handler contracts.
 
 == Practicality
 

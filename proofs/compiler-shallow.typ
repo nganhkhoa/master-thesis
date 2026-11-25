@@ -16,17 +16,16 @@
 
 #let tc(t) = $#t^*$
 #let hc = $effs(heffcheck)$
-#let wrap(tau, e) = $apply(kw("wrap")_s[#tau], (lambda \_ : unit. #e))$
+#let wrap(tau, e) = $apply(kw("wrap")_s [#tau], (lambda \_ : unit. #e))$
 #let rel(e) = $accent(#e, tilde)$
 #let treq(a,b) = $"EQ"(#a,#b)$
 #let hcheck = $kw("H")$
 
-= #langc to #lange Compiler Correctness \ (Shallow Handler)
+= Translation #rn("T2") Equivalance
 
 == Overview
 
-Proof for a compiler from $langc$ to $lange$ using shallow handler, where the continuation does not reinstall the handler.
-
+Proof for translation #rn("T2") where the wrapper is using the shallow handler.
 
 #grid(
   columns: (auto,auto,auto),
@@ -35,7 +34,7 @@ Proof for a compiler from $langc$ to $lange$ using shallow handler, where the co
   [$heffcheck : lab$],
   [$=$],
   grid.cell(align: left,
-    [${effcheck -> forall alpha. tuple(blab, tuple(alpha -> boolt, alpha)) -> alpha}$]),
+    [${effcheck -> forall alpha. tuple(blab, tuple(teff(alpha,effs(heffcheck),boolt), alpha)) -> alpha}$]),
 
   [$hcheck$], [$=$],
   grid.cell(align: left,
@@ -51,8 +50,6 @@ Proof for a compiler from $langc$ to $lange$ using shallow handler, where the co
 )
 
 The handler clause re-installs $hcheck$ around the rest of the program by itself, instead of the continuation doing it. So the whole program always runs under exactly one $handle(heffcheck, dot, m: s)$ at the top, and the predicate of a check runs under the same handler as the program. We write $handle(heffcheck, e, m: s)$ for the program running under the handler of $hcheck$.
-
-Compared to the deep semantics, there are no states without handle, and there is no nested handle for predicates. This makes the relation much simpler.
 
 #line(length: 100%)
 
@@ -453,7 +450,7 @@ Where $K = apply(square.stroked,e) | apply(v,square.stroked) | mon(k,l,j,kappa,s
 By induction on the structure of $E^+_1$. Follows @compiler-context-breakdown-1 because the context $E^+$ is the same.
 ]
 
-== Compiler Correctness
+== Translation Equivalence
 
 @compiler-shallow-proof-strategy shows the structure of the proof. The source program $e$ compiles to $e'$, and the target program runs $e'$ under $kw("wrap")$. After the handler is installed, the target reaches a state $e''_0$ with $treq(e,e''_0)$ (@compiler-shallow-wrap-step-eq). From then on, every source step $e_i cstep e_(i+1)$ is matched by zero or more target steps $e''_i estep1 e''_(i+1)$ that keep $treq(e_(i+1),e''_(i+1))$ (@compiler-shallow-simulation). Chaining the squares (@compiler-shallow-full-simulation), the source result $r$ and the target result $rel(r)$ are related: a value goes to its related value, and $blame(k,j)$ goes to $eblame(k)$.
 
@@ -518,7 +515,10 @@ treq(e,e') = cases(
 $
 
 #proof(of: <compiler-shallow-correctness>)[
+  Where $r = v | blame(k,j)$ and $rel(r) = rel(v) | eblame(k)$
+
   Let $e^* = "untyped"(rn("T2")(e))$.
+
   #derivation((
     ($e^* estep1 handle(heffcheck,e^*_1,m:s)$, [@compiler-shallow-wrap-step-eq]),
     ($treq(e, e^*_1)$, [@compiler-shallow-wrap-step-eq]),
@@ -614,7 +614,7 @@ By case analysis on $e_1 cstep e_2$ with respect to $treq(e_1,e'_1)$.
 
   // Overview: Because $e_1 != v$ and $e_1 != E[blame(k,j)]$, it *must* matches case 2. Therefore, $e_1 = E^+[E^*[e]]$, and $e'_1 = handle(heffcheck,rel(E)^+[rel(E)^*[rel(e)]], m:s)$. We know the shape of $e_1$ by both EQ predicate and the case analysis, we can try to unify them together. Most cases can unify $E=E^+[E^*]$ naturally. The cases where it breaks is $e_3=check(k,j,b_4,v_4)$, where we identify $E^+ = E[check(k,j,square.stroked,v_4)], E^*=square.stroked$, and $e_1 = E^+[E^*[b_4]]$, then the relation holds.
 
-  Proof Sketch: $E = E^+[E^*[check(k,j,square.stroked,v)]]$, then casing on $E^+$ structure. At the same time, EQ predicate will allow one case analysis ($e_1 ?= E'[check(k',j',e',v')]$). If $E^+ = square.stroked$, use @compiler-shallow-relation-find-E to find equivalent $rel(E)^*$, else, by EQ case 2 identify the shape of $e'_1$ by $E^+$ relation.
+  Proof Sketch: $E = E^+[E^*[check(k,j,square.stroked,v)]]$, then casing on $E^+$ structure. At the same time, EQ predicate will allow one case analysis ($e_1 eq.quest E'[check(k',j',e',v')]$). If $E^+ = square.stroked$, use @compiler-shallow-relation-find-E to find equivalent $rel(E)^*$, else, by EQ case 2 identify the shape of $e'_1$ by $E^+$ relation.
 
 
   - Case $e_3 = mon(k,l,j,flat(e),v) cstepx check(k,j,apply(e,v),v) = e_4$
