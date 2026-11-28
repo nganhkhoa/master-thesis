@@ -15,59 +15,27 @@
 
 = Introduction
 
-Software correctness depends not only on the types of values, but also on properties
-of those values. For example, a function that accepts an integer may require that
-number to be in some range, and its result must resonates with the input. _Software
-contracts_ can express these requirements and constrain them during runtime using
-_monitors_. A monitor is attached to a value, and when that value is passed on as a
-function argument, function return, or function invocation, it validates and reports
-violations. Implementing monitors requires checks to be inserted at the appropriate
-location. @robert2013icfp introduced monitors and provided a semantics for higher-order
-functional contracts. The authors also provided monitors for dependent contracts where
-function's result contracts can use the function's input, and must be constrained.
+In software engineering, correctness is crucial but hard to achieve. Correctness is understood as the desired behaviors of a single function or a group of functions, such as a protocol. Programmers often write specifications to describe their desired behaviors. Types and type systems are an example of a specification. However, some behaviors may be outside what type systems can express. Consider a withdrawal function `withdraw(balance, amount)` withdrawing a certain amount from the balance and returning the new balance. Type systems are likely troubled to express the user's balance is subtracted by the correct amount. For these complex behaviors, programmers often write assertions code inserted at function's entrace or exit. These entrace and exit assertions form an abstraction that is best known as "Design by Contracts". If any assertion fails, the execution stops. In some implementations, an execution is thrown.
 
-In addition to value validations, monitors must also report blame. Each monitor is
-appended with labels, where each label represents a party, for use when a blame is
-reported. @christos2011on instructed what these labels are and how should them be
-exchanged during monitor execution such that it reports the correct party responsible
-for the violation.
+Contracts, first appeared in Eiffel @meyer1992eiffel in the late 1980s, is a specification notion for complex runtime behaviors. Instead of assertions, users write pre-conditions and post-conditions and attach them to functions. Their long development have standardized the basic contract system, consisting of _flat_, _function_, and _dependent_ contracts. A flat contract is a predicate over values that are static, such as numbers, or strings. Function contract gives each argument its own contract and a contract for the function's result. Dependent contract extends function contract to allow arguments usage in the result's contract, which is useful to guarantee conformance between the function's output and its inputs. Furthermore, @robert2002contracts introduced contracts support for higher-order functions, where functions can be used as arguments. Contracts must always be satisfied, or the execution is stopped and a _blame_ is reported. Blames give contracts meaning, by reporting the responsible party for the violation.
 
-Functional contracts are restricted to its own execution and this limitation restricts
-several contract types where interaction between them is crucial. For example,
-protocol conformance requires knowing if the previous steps have been conducted;
-or a [strictly] recursive function requires each recursive step's input to reduce.
-Multiple works attempted this problem, of which the work by @cameron2023trace stands out.
-The authors introduced Trace Contracts which provide monitors with a global state queue
-where different contracts can use to communicate.
+// In function contracts, blame separates between the party providing the arguments, and the party providing the function. Dependent contract blaming is more tricky because contract calls contract, which makes the party unobvious. Fortunately, @christos2012complete showed how blames for dependent contracts should be implemented.
 
-Functions may trigger side-effects, such as exceptions, and one wishes to constrains them,
-either to allow some exceptions, or restrict pure functions. Recently, @cameron2024effectful
-adapted monitors to effects in a language with effect handlers. Their work, Effectful
-Contracts, superseeded Trace Contracts. Not only can these contracts provide contract
-interaction, but also restrict side-effects. To understand their work, one should get
-familiar with effects and effect handlers.
+Using the above contract system, a programmer can write a specification for the withdrawal example, ensuring the balance is correctly withdrawn. The specification is a dependent contract, when the function returns with the new balance, it takes the original balance and amount arguments to validate. Going a step further, the programmer can implement a banking protocol taking a withdrawal function, for different currency system. By placing a contract over the banking protocol argument, the programmer can still guarantee any withdrawal functions' behavior. In an update, the programmer modifies the function into `withdraw(user,amount)`, where a user object is provided instead of his balance. Now, the programmer wants to ensure only the user object is modified. The contract system discussed thus far cannot express this requirement.
 
-Effects and their handlers model side-effects systems using two basic constructions:
-perform, and handlers. Effects are named with their definitions provided through a
-handler previously installed. A simple analogy, effects are functions where their
-body can be changed depending on the environment. Using some specific structures,
-effect handlers can be used to model states without using mutable boxes.
+// blame is too big here that we don't use anywhere else
+
+The basic contract system has difficulties expressing guarantees about effectful code. Programs, more often than not, are effectful by mutation, or exceptions, etc. The contract research community has spent years coming up with different contract systems for each type of effects because the literature then lacked a universal effect system. Recently, [algebraic] effect handlers @gordon2013handling emerged as the universal effect system. Under the context of effect handlers, @cameron2024effectful designed an _effectful contract_ system capable of expressing contracts for effectful code universally, through an introduction of a new contract type: _effect-handler contracts_. Their system can express contracts for mutation, exceptions, protocols ordering, etc., allowing richer contracts to be expressed. In the updated example, the programmer can now write effectful contract(s) storing the original user's balance and use them on function exit, furthermore guarantee mutation against the user's balance only.
 
 == Thesis
 
-Through observations, contracts are similar to side-effects, and it proposes an idea:
-implementing contracts using effects and effect handlers. While Effectful Contracts
-create a new contract type for effects, our idea treats contracts as if they are
-side-effects, contract checking is performing a checking effect. Our claim is that
-if contracts can be modeled into effects and effect handlers, and effectful contracts
-can build highly complex contract specifications, then effects and effect handlers
-by itself can provide these specifications. Our thesis is therefore:
+My observation is that contract checkings are a type of effects and can be modeled by effect handlers. Contracts should not interfere with the logic of a correct execution. Therefore, every contract checking is considered a side-effects, one that adds nothing during a correct execution. Because effect handlers implement a universal effect system, they should therefore be able to express contract checking natively. In connection to effectful contract system, effect handlers should be implemented with only effect handlers.
+
+My work tries to understand to what extend can effect handlers implement a contract system. More importantly, can effect handlers be used to implement an effectful contract system. If yes, then how much code should be changed. The thesis follows:
 
 #pad(left: 3em)[
   #emph[
-    Effects and effect handlers can implement functional contract system through
-    local rewrites, and they can also implement richer contract systems through
-    whole program transformations.
+    An effectful contract system can be built from algebraic effect handlers through whole-program translation.
   ]
 ]
 
@@ -82,18 +50,18 @@ These two models serve as the basis for our contributions:
   based on these translations with examples.
 
 - An OCaml implementation based on effectful checking, with examples exploring
-  behaviors inspired by option contracts @christos2013option, trace contracts
-  @cameron2023trace, and effectful contracts @cameron2024effectful. These examples
+  contracts behaviors such as Option contracts @christos2013option, Trace contracts
+  @cameron2023trace, and Effectful contracts @cameron2024effectful. These examples
   further prove our thesis on the richness of contracts obtained from contract
   checking as effects and effect handlers.
 
 == Organization
 
 The rest of this dissertation is organized as follows. @chapter-background introduces
-the PCF language (called #langb), with its extension to contracts as CPCF (called #langc),
-and a model of effect handler language (called #lange). @chapter-compiler describes the
-analytical process designing translations from #langc to #lange. Following the formal
-model in the previous chapter, @chapter-implementation shows how it is implemented in
+the #langb language modeled under the PCF language by @gordon1977lcf; the #langc language extending #langb with contracts extensions;
+and the #lange language extending #langb into System $F^epsilon$ of @ningning2020effect. @chapter-compiler describes the
+analytical process of designing three translations from #langc to #lange, and their formal models. Following the formal
+models in the previous chapter, @chapter-implementation discusses their implementation in
 Redex, and OCaml. Finally, @chapter-conclusion gives the final remarks based on the results
 obtained from our experiements, and some observations. All formal proofs are provided in
 the appendices.

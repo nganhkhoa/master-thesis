@@ -20,7 +20,7 @@
 
 = Compiler <chapter-compiler>
 
-In this chapter we describe a compiler from #langc to #lange. Before the formal compilation rules are introduced, we give a short tour on the analysis of designing the rules. First off, the rules are inspired by the compilation of @robert2013icfp. All contracts can be compiled recursively by padding a new lambda for functional contracts, unfolding until flat contract. Through observation, instead of compiling flat contracts into $ife(apply(p,v),v,"blame")$, this phrase is pushed into the handler and an effect is performed. Immediately, we can see an easy compilation strategy.
+In this chapter we describe a compiler from #langc to #lange. Before the formal compilation rules are introduced, we give a short tour on the analysis of designing the rules. First off, the rules are inspired by the compilation of @robert2002contracts. All contracts can be compiled recursively by padding a new lambda for functional contracts, unfolding until flat contract. Through observation, instead of compiling flat contracts into $ife(apply(p,v),v,"blame")$, this phrase is pushed into the handler and an effect is performed. Immediately, we can see an easy compilation strategy.
 
 $apply(handler({effcheck^1 -> lambda \_. lambda k. ife(apply(p,v),apply(k,v),"blame")}, m:s), (lambda \_. (apply(perform(effcheck^1), unit))))$
 
